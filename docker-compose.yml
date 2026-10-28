@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: evolix/meetly:latest
+    container_name: meetly_app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=mysql://meetly_user:${DB_PASSWORD:-secure_meetly_db_pass_2026}@db:3306/meetly
+      - SESSION_SECRET=${SESSION_SECRET:-change_in_production_to_a_long_random_hex_string}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - MODERATOR_KEY=${MODERATOR_KEY:-change_in_production_to_a_secure_moderator_secret}
+      - STUN_SERVERS=${STUN_SERVERS:-stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302}
+      # Optional TURN server configuration for NAT traversal
+      - TURN_SERVER_URL=${TURN_SERVER_URL:-}
+      - TURN_USERNAME=${TURN_USERNAME:-}
+      - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - meetly_net
+
+  db:
+    image: mysql:8.0
+    container_name: meetly_db
+    restart: unless-stopped
+    # Do NOT expose port 3306 to host for security; accessible only via internal bridge network
+    expose:
+      - "3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-super_secure_root_password_2026}
+      MYSQL_DATABASE: meetly
+      MYSQL_USER: meetly_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secure_meetly_db_pass_2026}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "meetly_user", "-p${DB_PASSWORD:-secure_meetly_db_pass_2026}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - meetly_net
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  meetly_net:
+    driver: bridge

@@ -1,14 +1,19 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertSafetyReport,
   InsertUser,
+  SafetyReport,
   safetyReports,
   users,
 } from "../drizzle/schema";
 import { config } from "./config";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+
+// In-memory safety reports fallback for staging/ephemeral modes without MySQL
+const inMemoryReports: SafetyReport[] = [];
+const MAX_IN_MEMORY_REPORTS = 500;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -100,8 +105,101 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-export async function insertSafetyReport(report: InsertSafetyReport) {
+export async function insertSafetyReport(report: InsertSafetyReport): Promise<void> {
+  const createdRecord: SafetyReport = {
+    id: report.id,
+    category: report.category,
+    reporterSessionHash: report.reporterSessionHash,
+    reportedSessionHash: report.reportedSessionHash,
+    description: report.description ?? null,
+    selectedExcerpt: report.selectedExcerpt ?? null,
+    status: report.status ?? "open",
+    createdAt: new Date(),
+  };
+
+  inMemoryReports.unshift(createdRecord);
+  if (inMemoryReports.length > MAX_IN_MEMORY_REPORTS) {
+    inMemoryReports.pop();
+  }
+
   const db = await getDb();
-  if (!db) throw new Error("Safety report storage is temporarily unavailable.");
-  await db.insert(safetyReports).values(report);
+  if (db) {
+    try {
+      await db.insert(safetyReports).values(report);
+      return;
+    } catch (error) {
+      console.error("[Database] Error writing safety report to MySQL, preserved in-memory:", error);
+    }
+  } else {
+    console.info("[Safety] Report recorded in memory buffer (MySQL not configured).");
+  }
+}
+
+export async function listSafetyReports(options: {
+  status?: string;
+  limit?: number;
+} = {}): Promise<SafetyReport[]> {
+  const limit = options.limit ?? 50;
+  const db = await getDb();
+
+  if (db) {
+    try {
+      if (options.status) {
+        return await db
+          .select()
+          .from(safetyReports)
+          .where(eq(safetyReports.status, options.status as any))
+          .orderBy(desc(safetyReports.createdAt))
+          .limit(limit);
+      }
+      return await db
+        .select()
+        .from(safetyReports)
+        .orderBy(desc(safetyReports.createdAt))
+        .limit(limit);
+    } catch (error) {
+      console.warn("[Database] Failed to list reports from DB, falling back to memory:", error);
+    }
+  }
+
+  return inMemoryReports
+    .filter(r => !options.status || r.status === options.status)
+    .slice(0, limit);
+}
+
+export async function updateSafetyReportStatus(
+  id: string,
+  status: "open" | "reviewed" | "actioned" | "closed"
+): Promise<boolean> {
+  const memReport = inMemoryReports.find(r => r.id === id);
+  if (memReport) {
+    memReport.status = status;
+  }
+
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .update(safetyReports)
+        .set({ status })
+        .where(eq(safetyReports.id, id));
+      return true;
+    } catch (error) {
+      console.error("[Database] Failed to update report status:", error);
+      return Boolean(memReport);
+    }
+  }
+
+  return Boolean(memReport);
+}
+
+export async function getSafetyReportStats() {
+  const reports = await listSafetyReports({ limit: 1000 });
+  return {
+    total: reports.length,
+    open: reports.filter(r => r.status === "open").length,
+    reviewed: reports.filter(r => r.status === "reviewed").length,
+    actioned: reports.filter(r => r.status === "actioned").length,
+    closed: reports.filter(r => r.status === "closed").length,
+  };
 }

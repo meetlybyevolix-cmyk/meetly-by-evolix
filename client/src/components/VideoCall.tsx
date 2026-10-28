@@ -179,6 +179,20 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
             );
           }
         };
+        connection.oniceconnectionstatechange = () => {
+          if (
+            connection.iceConnectionState === "connected" ||
+            connection.iceConnectionState === "completed"
+          ) {
+            setCallState("active");
+          } else if (connection.iceConnectionState === "failed") {
+            sendControl({ type: "video-stop" });
+            stopLocalMedia();
+            setMessage(
+              "A direct video connection could not be established on this network. Your camera and microphone are off; you can keep chatting by text."
+            );
+          }
+        };
         setCallState("connecting");
         const queued = pendingSignalsRef.current.splice(0);
         for (const signal of queued) await applySignal(signal);

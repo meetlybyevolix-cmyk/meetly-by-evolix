@@ -283,11 +283,18 @@ export function subscribe(sessionId: string, listener: Listener) {
 
 export function onClientConnect(sessionId: string) {
   const timer = disconnectTimers.get(sessionId);
+  const wasDisconnected = Boolean(timer);
   if (timer) clearTimeout(timer);
   disconnectTimers.delete(sessionId);
   const session = sessions.get(sessionId);
   if (session?.state === "searching" && !session.roomId)
     queue.set(sessionId, queue.get(sessionId) ?? Date.now());
+  if (session && wasDisconnected) {
+    const partnerId = activePartnerId(session);
+    if (partnerId) {
+      emit(partnerId, { type: "notice", message: "Your chat partner reconnected." });
+    }
+  }
 }
 
 export function onClientDisconnect(sessionId: string) {
@@ -301,6 +308,13 @@ export function onClientDisconnect(sessionId: string) {
   queue.delete(sessionId);
   const prior = disconnectTimers.get(sessionId);
   if (prior) clearTimeout(prior);
+
+  // Notify active partner of temporary disconnect
+  const partnerId = activePartnerId(session);
+  if (partnerId) {
+    emit(partnerId, { type: "notice", message: "Your chat partner disconnected. Waiting up to 45s for reconnect..." });
+  }
+
   disconnectTimers.set(
     sessionId,
     setTimeout(() => {

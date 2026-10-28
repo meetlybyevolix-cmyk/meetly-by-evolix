@@ -35,6 +35,7 @@ type WireEvent =
     }
   | { type: "message"; message: Message }
   | { type: "notice"; message: string }
+  | { type: "stats"; onlineCount: number }
   | { type: "video-status"; readyCount: number; active: boolean }
   | { type: "video-start"; offerer: boolean }
   | { type: "video-signal"; signal: unknown }
@@ -209,6 +210,17 @@ export default function Home() {
   const block = trpc.chat.block.useMutation();
   const report = trpc.chat.report.useMutation();
 
+  const statsQuery = trpc.chat.stats.useQuery(undefined, {
+    refetchInterval: 10_000,
+  });
+  const [onlineCount, setOnlineCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (typeof statsQuery.data?.onlineCount === "number") {
+      setOnlineCount(statsQuery.data.onlineCount);
+    }
+  }, [statsQuery.data?.onlineCount]);
+
   useEffect(() => {
     try {
       const token = sessionStorage.getItem("meetly-session");
@@ -249,6 +261,8 @@ export default function Home() {
             );
           } else if (update.type === "notice") {
             setNotice(update.message);
+          } else if (update.type === "stats") {
+            if (typeof update.onlineCount === "number") setOnlineCount(update.onlineCount);
           } else if (update.type === "state") {
             if (update.mediaMode) setMediaMode(update.mediaMode);
             if (update.state === "chat") {
@@ -531,9 +545,9 @@ export default function Home() {
       <header className="topbar">
         <Brand />
         <div className="topbar-right">
-          <span className="text-mode-pill">
+          <span className="text-mode-pill" title={`${onlineCount} active sessions`}>
             <span className="live-dot" />
-            Text · opt-in video
+            {onlineCount > 0 ? `${onlineCount} online` : "Online"} · text & video
           </span>
           <Link href="/safety" className="top-link">
             <CircleHelp size={16} />
@@ -597,7 +611,7 @@ export default function Home() {
                 </span>
                 <span>
                   <Check size={15} />
-                  Leave any time
+                  {onlineCount > 0 ? `${onlineCount} online now` : "Leave any time"}
                 </span>
               </div>
             </section>

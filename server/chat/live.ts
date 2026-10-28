@@ -5,11 +5,13 @@ import { config } from "../config";
 import {
   assertVideoRequestLimit,
   forwardVideoSignal,
+  getOnlineStats,
   getSession,
   getState,
   markVideoReady,
   onClientConnect,
   onClientDisconnect,
+  sendChatMessage,
   stopVideo,
   subscribe,
 } from "./service";
@@ -134,12 +136,21 @@ export function registerChatSocket(
             webSocket.send(JSON.stringify(event));
         });
         webSocket.send(JSON.stringify({ type: "state", ...getState(session) }));
+        webSocket.send(JSON.stringify({ type: "stats", ...getOnlineStats() }));
         return;
       }
 
       const session = getSession(authenticatedToken);
       if (!session) {
         webSocket.close(4401, "Session expired");
+        return;
+      }
+      if (payload.type === "message" && typeof (payload as any).text === "string") {
+        try {
+          sendChatMessage(session, (payload as any).text);
+        } catch (error) {
+          webSocket.send(JSON.stringify({ type: "notice", message: error instanceof Error ? error.message : "Message failed" }));
+        }
         return;
       }
       if (payload.type === "video-ready") {

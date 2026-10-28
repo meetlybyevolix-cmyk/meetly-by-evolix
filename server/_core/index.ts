@@ -5,6 +5,11 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { config } from "../config";
 import { registerChatSocket, closeChatSocket } from "../chat/live";
 import { appRouter } from "../routers";
+import {
+  listSafetyReports,
+  updateSafetyReportStatus,
+  getSafetyReportStats,
+} from "../db";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -78,6 +83,66 @@ async function startServer() {
     res.set("Cache-Control", "no-store").json({
       iceServers: config.iceServers,
     });
+  });
+
+  // Moderation Authentication Middleware
+  const requireModerationAuth = (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    const configuredKey = process.env.MODERATOR_KEY || process.env.ADMIN_KEY;
+    if (!configuredKey) {
+      if (config.nodeEnv === "development") {
+        return next();
+      }
+      return res
+        .status(401)
+        .json({ error: "Moderation API key is not configured on server" });
+    }
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : req.headers["x-moderator-key"];
+    if (token === configuredKey) {
+      return next();
+    }
+    return res.status(403).json({ error: "Unauthorized moderation access" });
+  };
+
+  // Moderation API Endpoints
+  app.get("/api/moderation/reports", requireModerationAuth, async (req, res) => {
+    try {
+      const reports = await listSafetyReports({
+        status: req.query.status as string,
+        limit: Number(req.query.limit) || 50,
+      });
+      res.json({ reports });
+    } catch {
+      res.status(500).json({ error: "Failed to list safety reports" });
+    }
+  });
+
+  app.post("/api/moderation/reports/:id", requireModerationAuth, async (req, res) => {
+    try {
+      const { status } = req.body;
+      if (!["open", "reviewed", "actioned", "closed"].includes(status)) {
+        return res.status(400).json({ error: "Invalid status value" });
+      }
+      const updated = await updateSafetyReportStatus(req.params.id, status);
+      res.json({ success: updated });
+    } catch {
+      res.status(500).json({ error: "Failed to update report status" });
+    }
+  });
+
+  app.get("/api/moderation/stats", requireModerationAuth, async (_req, res) => {
+    try {
+      const stats = await getSafetyReportStats();
+      res.json({ stats });
+    } catch {
+      res.status(500).json({ error: "Failed to fetch moderation stats" });
+    }
   });
 
   // tRPC API

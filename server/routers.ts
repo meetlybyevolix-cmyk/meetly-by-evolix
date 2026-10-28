@@ -123,7 +123,7 @@ export const appRouter = router({
     }),
     state: anonymousChatProcedure.query(({ ctx }) => getState(ctx.chatSession)),
     search: anonymousChatProcedure
-      .input(z.object({ preferences: preferencesSchema }).optional())
+      .input(z.object({ preferences: preferencesSchema.optional() }).optional())
       .mutation(({ ctx, input }) => {
         try {
           assertSearchLimit(ctx.chatSession);
