@@ -2,13 +2,15 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { config } from "../config";
+import { config, generateIceServers } from "../config";
 import { registerChatSocket, closeChatSocket } from "../chat/live";
+import { getSession, getOnlineStats } from "../chat/service";
 import { appRouter } from "../routers";
 import {
   listSafetyReports,
   updateSafetyReportStatus,
   getSafetyReportStats,
+  ReportPriority,
 } from "../db";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -78,10 +80,33 @@ async function startServer() {
   app.get("/api/health", healthHandler);
   app.get("/healthz", healthHandler);
 
-  // ICE Servers Configuration Endpoint (Configurable STUN/TURN for WebRTC)
-  app.get("/api/ice-servers", (_req, res) => {
+  // Readiness Probe Endpoint
+  app.get("/api/ready", (_req, res) => {
+    const memory = process.memoryUsage();
+    const heapRatio = memory.heapUsed / memory.heapTotal;
+    if (heapRatio > 0.95) {
+      return res.status(503).json({
+        status: "overloaded",
+        reason: "Heap memory usage exceeded 95%",
+        uptime: process.uptime(),
+      });
+    }
     res.set("Cache-Control", "no-store").json({
-      iceServers: config.iceServers,
+      status: "ready",
+      service: "Meetly",
+      uptime: process.uptime(),
+      heapUsedMb: Math.round(memory.heapUsed / 1024 / 1024),
+    });
+  });
+
+  // ICE Servers Configuration Endpoint (Configurable STUN/TURN with Ephemeral Credential Generation)
+  app.get("/api/ice-servers", (req, res) => {
+    const sessionToken =
+      (req.headers["x-meetly-session"] as string) ||
+      (req.query.token as string);
+    const session = getSession(sessionToken);
+    res.set("Cache-Control", "no-store").json({
+      iceServers: generateIceServers(session?.id),
     });
   });
 
@@ -115,6 +140,7 @@ async function startServer() {
     try {
       const reports = await listSafetyReports({
         status: req.query.status as string,
+        priority: req.query.priority as ReportPriority,
         limit: Number(req.query.limit) || 50,
       });
       res.json({ reports });
@@ -145,6 +171,33 @@ async function startServer() {
     }
   });
 
+  // Metrics Endpoint (Operator & Observability)
+  app.get("/api/metrics", requireModerationAuth, async (_req, res) => {
+    try {
+      const memory = process.memoryUsage();
+      const online = getOnlineStats();
+      const safety = await getSafetyReportStats();
+      res.json({
+        service: "Meetly",
+        timestamp: Date.now(),
+        uptimeSeconds: Math.floor(process.uptime()),
+        memory: {
+          heapUsedMb: Math.round(memory.heapUsed / 1024 / 1024),
+          heapTotalMb: Math.round(memory.heapTotal / 1024 / 1024),
+          rssMb: Math.round(memory.rss / 1024 / 1024),
+        },
+        traffic: {
+          activeSessions: online.activeSessions,
+          activeRooms: online.activeRooms,
+          queuedUsers: online.queuedUsers,
+        },
+        safety,
+      });
+    } catch {
+      res.status(500).json({ error: "Failed to generate metrics" });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
@@ -163,9 +216,6 @@ async function startServer() {
   }
 
   const port = config.port;
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error(`Invalid PORT configuration: ${port}`);
-  }
 
   server.on("error", error => {
     console.error("[Server Error]", error.message);

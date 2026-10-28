@@ -1,26 +1,44 @@
 import {
   Camera,
   CameraOff,
+  Flag,
   Mic,
   MicOff,
+  PhoneOff,
   ShieldAlert,
+  SkipForward,
   Video,
-  VideoOff,
+  Volume2,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type VideoSignal =
-  | { kind: "description"; descriptionType: "offer" | "answer"; sdp: string }
+export type VideoSignal =
+  | { kind: "description"; descriptionType: "offer" | "answer" | "rollback"; sdp: string }
   | { kind: "candidate"; candidate: RTCIceCandidateInit };
-type VideoEvent =
+
+export type VideoEvent =
   | { type: "video-status"; readyCount: number; active: boolean }
-  | { type: "video-start"; offerer: boolean }
+  | { type: "video-start"; offerer: boolean; polite?: boolean }
   | { type: "video-signal"; signal: VideoSignal }
   | { type: "video-stopped"; message: string }
   | { type: "video-error"; message: string };
-type CallState = "idle" | "requesting" | "waiting" | "connecting" | "active";
 
-export default function VideoCall({ socket }: { socket: WebSocket | null }) {
+export type CallState = "idle" | "requesting" | "waiting" | "connecting" | "active";
+
+export interface VideoCallProps {
+  socket: WebSocket | null;
+  onNext?: () => void;
+  onEnd?: () => void;
+  onReport?: () => void;
+  onBlock?: () => void;
+}
+
+export default function VideoCall({
+  socket,
+  onNext,
+  onEnd,
+  onReport,
+}: VideoCallProps) {
   const [callState, setCallState] = useState<CallState>("idle");
   const [readyCount, setReadyCount] = useState(0);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -28,19 +46,28 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
   const [message, setMessage] = useState("");
+  const [connectionType, setConnectionType] = useState<string>("Negotiating...");
   const [needsPlayback, setNeedsPlayback] = useState(false);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const pendingSignalsRef = useRef<VideoSignal[]>([]);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
   const permissionRequestRef = useRef(0);
+
+  // W3C Perfect Negotiation state references
+  const politeRef = useRef<boolean>(false);
+  const makingOfferRef = useRef<boolean>(false);
+  const ignoreOfferRef = useRef<boolean>(false);
+  const isSettingRemoteAnswerPendingRef = useRef<boolean>(false);
+
   const iceServersRef = useRef<RTCIceServer[]>([
     { urls: "stun:stun.l.google.com:19302" },
   ]);
 
+  // Fetch dynamic ICE configuration (STUN + Ephemeral Coturn TURN credentials)
   useEffect(() => {
     fetch("/api/ice-servers")
       .then(res => res.json())
@@ -71,16 +98,22 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
       connection.ontrack = null;
       connection.onicecandidate = null;
       connection.onconnectionstatechange = null;
+      connection.oniceconnectionstatechange = null;
+      connection.onnegotiationneeded = null;
       connection.close();
     }
     localStreamRef.current?.getTracks().forEach(track => track.stop());
     remoteStreamRef.current?.getTracks().forEach(track => track.stop());
     localStreamRef.current = null;
     remoteStreamRef.current = null;
-    pendingSignalsRef.current = [];
     pendingIceRef.current = [];
+    makingOfferRef.current = false;
+    ignoreOfferRef.current = false;
+    isSettingRemoteAnswerPendingRef.current = false;
+
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+
     if (updateState) {
       setLocalStream(null);
       setRemoteStream(null);
@@ -88,57 +121,114 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
       setCameraEnabled(true);
       setMicEnabled(true);
       setNeedsPlayback(false);
+      setConnectionType("Negotiating...");
     }
   }, []);
 
+  // Inspect WebRTC stats to determine if connection is direct (P2P) or relayed (TURN)
+  const inspectConnectionType = useCallback(async (connection: RTCPeerConnection) => {
+    try {
+      const stats = await connection.getStats();
+      let relayed = false;
+      stats.forEach(report => {
+        if (report.type === "candidate-pair" && report.state === "succeeded") {
+          const localCand = stats.get(report.localCandidateId);
+          const remoteCand = stats.get(report.remoteCandidateId);
+          if (localCand?.candidateType === "relay" || remoteCand?.candidateType === "relay") {
+            relayed = true;
+          }
+        }
+      });
+      setConnectionType(relayed ? "Relayed (TURN)" : "Direct (P2P)");
+    } catch {
+      setConnectionType("Active P2P");
+    }
+  }, []);
+
+  // Apply incoming WebRTC signaling with Perfect Negotiation glare handling
   const applySignal = useCallback(
     async (signal: VideoSignal) => {
       const connection = peerConnectionRef.current;
-      if (!connection) {
-        pendingSignalsRef.current.push(signal);
-        return;
-      }
+      if (!connection) return;
+
       try {
         if (signal.kind === "candidate") {
-          if (connection.remoteDescription)
-            await connection.addIceCandidate(signal.candidate);
-          else pendingIceRef.current.push(signal.candidate);
+          try {
+            if (connection.remoteDescription) {
+              await connection.addIceCandidate(signal.candidate);
+            } else {
+              pendingIceRef.current.push(signal.candidate);
+            }
+          } catch (err) {
+            if (!ignoreOfferRef.current) {
+              console.warn("[WebRTC] ICE candidate error:", err);
+            }
+          }
           return;
         }
-        await connection.setRemoteDescription({
-          type: signal.descriptionType,
+
+        // Description handling (Offer / Answer / Rollback)
+        const description: RTCSessionDescriptionInit = {
+          type: signal.descriptionType as RTCSdpType,
           sdp: signal.sdp,
-        });
-        if (signal.descriptionType === "offer") {
-          const answer = await connection.createAnswer();
-          await connection.setLocalDescription(answer);
+        };
+
+        const readyForOffer =
+          !makingOfferRef.current &&
+          (connection.signalingState === "stable" ||
+            isSettingRemoteAnswerPendingRef.current);
+        const offerCollision = description.type === "offer" && !readyForOffer;
+
+        ignoreOfferRef.current = !politeRef.current && offerCollision;
+        if (ignoreOfferRef.current) {
+          console.info("[WebRTC] Glare detected: impolite peer ignoring colliding offer");
+          return;
+        }
+
+        isSettingRemoteAnswerPendingRef.current = description.type === "answer";
+        await connection.setRemoteDescription(description);
+        isSettingRemoteAnswerPendingRef.current = false;
+
+        if (description.type === "offer") {
+          await connection.setLocalDescription();
           if (
             !sendControl({
               type: "video-signal",
               signal: {
                 kind: "description",
-                descriptionType: "answer",
-                sdp: connection.localDescription?.sdp ?? answer.sdp,
+                descriptionType: connection.localDescription!.type,
+                sdp: connection.localDescription!.sdp,
               },
             })
           ) {
-            throw new Error("Your signaling connection was interrupted.");
+            throw new Error("Signaling interrupted while sending answer.");
           }
         }
-        const bufferedCandidates = pendingIceRef.current.splice(0);
-        for (const candidate of bufferedCandidates)
-          await connection.addIceCandidate(candidate);
-      } catch {
+
+        // Flush buffered ICE candidates
+        const buffered = pendingIceRef.current.splice(0);
+        for (const candidate of buffered) {
+          try {
+            await connection.addIceCandidate(candidate);
+          } catch (e) {
+            if (!ignoreOfferRef.current) {
+              console.warn("[WebRTC] Buffered candidate error:", e);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[WebRTC] Signaling apply error:", error);
         setMessage(
-          "The video connection could not be negotiated. End video and try again, or continue by text."
+          "Video signaling encountered an interruption. End video and try again, or continue by text."
         );
       }
     },
     [sendControl]
   );
 
+  // Initialize peer connection with W3C Perfect Negotiation
   const createPeerConnection = useCallback(
-    async (offerer: boolean) => {
+    async (offerer: boolean, polite: boolean) => {
       if (peerConnectionRef.current) return;
       const stream = localStreamRef.current;
       if (!stream) {
@@ -146,20 +236,33 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
         sendControl({ type: "video-decline" });
         return;
       }
+
+      politeRef.current = polite;
+      makingOfferRef.current = false;
+      ignoreOfferRef.current = false;
+      isSettingRemoteAnswerPendingRef.current = false;
+
       try {
         const connection = new RTCPeerConnection({
           iceServers: iceServersRef.current,
         });
         peerConnectionRef.current = connection;
+
+        // Add local tracks to peer connection
         stream.getTracks().forEach(track => connection.addTrack(track, stream));
+
+        // Inbound tracks from stranger
         connection.ontrack = event => {
           const incoming = event.streams[0] ?? new MediaStream([event.track]);
           remoteStreamRef.current = incoming;
           setRemoteStream(incoming);
           setCallState("active");
+          void inspectConnectionType(connection);
         };
+
+        // Outbound ICE candidates
         connection.onicecandidate = event => {
-          if (event.candidate)
+          if (event.candidate) {
             sendControl({
               type: "video-signal",
               signal: {
@@ -167,67 +270,92 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
                 candidate: event.candidate.toJSON(),
               },
             });
-        };
-        connection.onconnectionstatechange = () => {
-          if (connection.connectionState === "connected")
-            setCallState("active");
-          if (connection.connectionState === "failed") {
-            sendControl({ type: "video-stop" });
-            stopLocalMedia();
-            setMessage(
-              "A direct video connection could not be established on this network. Your camera and microphone are off; you can keep chatting by text."
-            );
           }
         };
-        connection.oniceconnectionstatechange = () => {
-          if (
-            connection.iceConnectionState === "connected" ||
-            connection.iceConnectionState === "completed"
-          ) {
-            setCallState("active");
-          } else if (connection.iceConnectionState === "failed") {
-            sendControl({ type: "video-stop" });
-            stopLocalMedia();
-            setMessage(
-              "A direct video connection could not be established on this network. Your camera and microphone are off; you can keep chatting by text."
-            );
-          }
-        };
-        setCallState("connecting");
-        const queued = pendingSignalsRef.current.splice(0);
-        for (const signal of queued) await applySignal(signal);
-        if (offerer) {
-          const offer = await connection.createOffer();
-          await connection.setLocalDescription(offer);
-          if (
-            !sendControl({
+
+        // W3C Perfect Negotiation: onnegotiationneeded
+        connection.onnegotiationneeded = async () => {
+          try {
+            makingOfferRef.current = true;
+            await connection.setLocalDescription();
+            sendControl({
               type: "video-signal",
               signal: {
                 kind: "description",
-                descriptionType: "offer",
-                sdp: connection.localDescription?.sdp ?? offer.sdp,
+                descriptionType: connection.localDescription!.type,
+                sdp: connection.localDescription!.sdp,
               },
-            })
-          ) {
-            throw new Error("Your signaling connection was interrupted.");
+            });
+          } catch (err) {
+            console.error("[WebRTC] Negotiation needed error:", err);
+          } finally {
+            makingOfferRef.current = false;
           }
+        };
+
+        // Connection state monitoring
+        connection.onconnectionstatechange = () => {
+          const state = connection.connectionState;
+          if (state === "connected") {
+            setCallState("active");
+            void inspectConnectionType(connection);
+          } else if (state === "failed") {
+            if (!politeRef.current && connection.restartIce) {
+              console.info("[WebRTC] Connection failed, attempting ICE restart...");
+              connection.restartIce();
+            } else {
+              setMessage(
+                "A direct video connection could not be established on this network. Your camera and microphone are off; continue by text."
+              );
+              stopLocalMedia();
+            }
+          }
+        };
+
+        connection.oniceconnectionstatechange = () => {
+          const state = connection.iceConnectionState;
+          if (state === "connected" || state === "completed") {
+            setCallState("active");
+            void inspectConnectionType(connection);
+          } else if (state === "failed") {
+            if (!politeRef.current && connection.restartIce) {
+              connection.restartIce();
+            }
+          }
+        };
+
+        setCallState("connecting");
+
+        // Initial offer initiation if offerer
+        if (offerer) {
+          const offer = await connection.createOffer();
+          await connection.setLocalDescription(offer);
+          sendControl({
+            type: "video-signal",
+            signal: {
+              kind: "description",
+              descriptionType: connection.localDescription!.type,
+              sdp: connection.localDescription!.sdp,
+            },
+          });
         }
-      } catch {
+      } catch (err) {
+        console.error("[WebRTC] Peer connection initialization failed:", err);
         sendControl({ type: "video-stop" });
         stopLocalMedia();
-        setMessage(
-          "Video could not connect. Your camera and microphone are off; continue by text or try again."
-        );
+        setMessage("Video initialization failed. You can continue by text.");
       }
     },
-    [applySignal, sendControl, stopLocalMedia]
+    [inspectConnectionType, sendControl, stopLocalMedia]
   );
 
+  // WebSocket message listener for video signaling events
   useEffect(() => {
     if (!socket) {
       if (localStreamRef.current || peerConnectionRef.current) stopLocalMedia();
       return;
     }
+
     const onMessage = (event: MessageEvent) => {
       let update: VideoEvent;
       try {
@@ -235,115 +363,119 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
       } catch {
         return;
       }
-      if (
-        !update ||
-        typeof update !== "object" ||
-        !update.type?.startsWith("video-")
-      )
+      if (!update || typeof update !== "object" || !update.type?.startsWith("video-")) {
         return;
+      }
+
       if (update.type === "video-status") {
         setReadyCount(update.readyCount);
-        if (update.active)
-          setCallState(current =>
-            current === "waiting" ? "connecting" : current
-          );
+        if (update.active) {
+          setCallState(current => (current === "waiting" ? "connecting" : current));
+        }
       } else if (update.type === "video-start") {
         setMessage("");
-        void createPeerConnection(update.offerer);
+        const isPolite = update.polite ?? !update.offerer;
+        void createPeerConnection(update.offerer, isPolite);
       } else if (update.type === "video-signal") {
         void applySignal(update.signal);
       } else if (update.type === "video-stopped") {
         stopLocalMedia();
         setReadyCount(0);
         setMessage(
-          update.message ||
-            "Video stopped. The text conversation is still available."
+          update.message || "Video stopped. The text conversation is still available."
         );
       } else if (update.type === "video-error") {
         setMessage(update.message);
       }
     };
+
     const onClose = () => {
       stopLocalMedia();
       setReadyCount(0);
-      setMessage(
-        "The chat connection ended. Your camera and microphone are off."
-      );
+      setMessage("The chat connection ended. Your camera and microphone are off.");
     };
+
     socket.addEventListener("message", onMessage);
     socket.addEventListener("close", onClose);
+
     return () => {
       socket.removeEventListener("message", onMessage);
       socket.removeEventListener("close", onClose);
       if (localStreamRef.current || peerConnectionRef.current) {
-        if (socket.readyState === WebSocket.OPEN)
+        if (socket.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({ type: "video-stop" }));
+        }
         stopLocalMedia(false);
       }
     };
   }, [applySignal, createPeerConnection, socket, stopLocalMedia]);
 
+  // Bind streams to video DOM nodes
   useEffect(() => {
-    if (localVideoRef.current) localVideoRef.current.srcObject = localStream;
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = localStream;
+    }
   }, [localStream]);
+
   useEffect(() => {
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = remoteStream;
-      if (remoteStream)
+      if (remoteStream) {
         remoteVideoRef.current
           .play()
           .then(() => setNeedsPlayback(false))
           .catch(() => setNeedsPlayback(true));
+      }
     }
   }, [remoteStream]);
 
+  // User action: Join Video & Grant Browser Media Permissions
   const joinVideo = async () => {
-    if (
-      callState === "requesting" ||
-      callState === "waiting" ||
-      callState === "connecting" ||
-      callState === "active"
-    )
-      return;
+    if (callState !== "idle") return;
     setMessage("");
+
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      setMessage(
-        "The private chat connection is not ready yet. Please wait a moment and try again."
-      );
+      setMessage("Chat connection is not ready yet. Please wait a moment.");
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
       setMessage(
-        "This browser cannot access camera and microphone here. Use a supported browser over HTTPS or continue by text."
+        "This browser cannot access camera/microphone here. Please use HTTPS or continue by text."
       );
       return;
     }
+
     const requestId = ++permissionRequestRef.current;
     setCallState("requesting");
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        video: true,
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
       });
+
       if (permissionRequestRef.current !== requestId) {
         stream.getTracks().forEach(track => track.stop());
         return;
       }
+
       localStreamRef.current = stream;
       setLocalStream(stream);
       setCameraEnabled(stream.getVideoTracks().some(track => track.enabled));
       setMicEnabled(stream.getAudioTracks().some(track => track.enabled));
-      if (!sendControl({ type: "video-ready" }))
-        throw new Error(
-          "The private chat connection was interrupted before video consent could be shared."
-        );
+
+      if (!sendControl({ type: "video-ready" })) {
+        throw new Error("Chat connection was interrupted before video consent could be shared.");
+      }
       setCallState("waiting");
     } catch (error) {
       sendControl({ type: "video-decline" });
       stopLocalMedia();
       setMessage(
-        error instanceof Error &&
-          /denied|permission|notallowed/i.test(error.message)
+        error instanceof Error && /denied|permission|notallowed/i.test(error.message)
           ? "Camera or microphone permission was denied. Your text chat remains available."
           : error instanceof Error
             ? error.message
@@ -359,21 +491,13 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
     setMessage("Video stopped. The text conversation is still available.");
   };
 
-  const stayWithText = () => {
-    sendControl({ type: "video-decline" });
-    stopLocalMedia();
-    setReadyCount(0);
-    setMessage(
-      "You chose to stay with text. You can opt in to video later if both people agree."
-    );
-  };
-
   const toggleCamera = () => {
     const track = localStreamRef.current?.getVideoTracks()[0];
     if (!track) return;
     track.enabled = !track.enabled;
     setCameraEnabled(track.enabled);
   };
+
   const toggleMic = () => {
     const track = localStreamRef.current?.getAudioTracks()[0];
     if (!track) return;
@@ -381,37 +505,107 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
     setMicEnabled(track.enabled);
   };
 
+  const handleNextClick = () => {
+    stopLocalMedia(false);
+    if (onNext) onNext();
+  };
+
+  const handleEndClick = () => {
+    stopLocalMedia(false);
+    if (onEnd) onEnd();
+  };
+
   const partnerReady = readyCount > 0 && callState === "idle";
-  const waitingForPartner = callState === "waiting";
-  const callActive = callState === "active" || callState === "connecting";
+  const isVideoActive = callState === "active";
 
   return (
-    <section className="video-call-panel" aria-label="Optional video chat">
+    <section className="video-call-panel" aria-label="Stranger video chat">
+      {/* Video Call Header */}
       <div className="video-call-heading">
         <div className="video-title-icon">
           <Video size={17} />
         </div>
         <div>
-          <strong>Optional video chat</strong>
-          <span>Both people must choose to join before media is sent.</span>
+          <strong>Live Video Chat</strong>
+          <span>Both participants must opt in before camera is shared.</span>
         </div>
-        <span className="video-prototype-badge">No recording</span>
+        <span className="video-prototype-badge">
+          {isVideoActive ? `● ${connectionType}` : "P2P WebRTC"}
+        </span>
       </div>
+
+      {/* Honest Privacy Notice */}
       <div className="video-privacy-warning" role="note">
-        <ShieldAlert size={17} />
+        <ShieldAlert size={16} />
         <p>
-          <strong>Read before joining:</strong> This direct WebRTC connection
-          uses Google's public STUN service, not a privacy relay. The other
-          person and STUN provider may learn your network IP; some networks will
-          not connect. Your camera preview stays on your device until both
-          people opt in. Meetly does not record or store call media, but the
-          other person could capture their screen. Age is self-attested, and
-          staffed media moderation is not available.
+          <strong>Video Privacy:</strong> Calls are peer-to-peer using STUN/TURN relays. Meetly does not record your video. Camera preview remains local until both users opt in. Age is self-attested.
         </p>
       </div>
-      <div className="video-stage-grid">
-        <div className={`video-stage ${localStream ? "has-video" : ""}`}>
-          {localStream ? (
+
+      {/* Main Video Stage with Overlaid PiP Local Camera Preview */}
+      <div className="video-viewport-stage">
+        {/* Main Remote Video Area */}
+        <div className={`video-remote-container ${remoteStream ? "has-feed" : ""}`}>
+          {remoteStream ? (
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              aria-label="Stranger's live video"
+            />
+          ) : (
+            <div className="video-placeholder-hero">
+              <Video size={36} />
+              <h4>
+                {callState === "waiting"
+                  ? "Waiting for your partner to join video..."
+                  : partnerReady
+                    ? "Your chat partner is ready! Click Join Video below."
+                    : "Camera and microphone are off."}
+              </h4>
+              <p>
+                {callState === "idle" &&
+                  "Click 'Join Video' to start camera and microphone preview."}
+              </p>
+              {callState === "idle" && (
+                <button
+                  type="button"
+                  className="button button-primary"
+                  onClick={joinVideo}
+                >
+                  <Video size={16} />
+                  Join Video
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Status Badge */}
+          <div className="video-status-overlay">
+            <span
+              className={`status-pill ${
+                isVideoActive
+                  ? "live"
+                  : callState === "connecting"
+                    ? "connecting"
+                    : "idle"
+              }`}
+            >
+              <span className="status-dot" />
+              {isVideoActive
+                ? `Connected · ${connectionType}`
+                : callState === "connecting"
+                  ? "Connecting WebRTC..."
+                  : callState === "waiting"
+                    ? "Waiting for partner..."
+                    : "Ready"}
+            </span>
+          </div>
+        </div>
+
+        {/* Picture-in-Picture Local Camera Preview */}
+        {localStream && (
+          <div className="video-pip-container">
             <video
               ref={localVideoRef}
               autoPlay
@@ -419,128 +613,101 @@ export default function VideoCall({ socket }: { socket: WebSocket | null }) {
               muted
               aria-label="Your local camera preview"
             />
-          ) : (
-            <div className="video-placeholder">
-              <Camera size={24} />
-              <span>Your camera stays off until you choose Join video.</span>
-            </div>
-          )}
-          <span className="video-stage-label">You · local preview</span>
-        </div>
-        <div className={`video-stage ${remoteStream ? "has-video" : ""}`}>
-          {remoteStream ? (
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              aria-label="Your chat partner's live video"
-            />
-          ) : (
-            <div className="video-placeholder">
-              <Video size={24} />
-              <span>
-                {partnerReady
-                  ? "Your partner is ready if you choose to join."
-                  : "Your partner’s video appears only after you both opt in."}
-              </span>
-            </div>
-          )}
-          <span className="video-stage-label">Someone new</span>
-        </div>
+            {!cameraEnabled && (
+              <div className="pip-camera-off">
+                <CameraOff size={16} />
+                <span>Camera off</span>
+              </div>
+            )}
+            <span className="pip-label">You (Local)</span>
+          </div>
+        )}
+
+        {/* Video Control Bar Overlay */}
+        {localStream && (
+          <div className="video-controls-overlay" role="toolbar" aria-label="Video controls">
+            <button
+              type="button"
+              className={`video-ctrl-btn ${micEnabled ? "active" : "muted"}`}
+              onClick={toggleMic}
+              title={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
+              aria-label={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
+            >
+              {micEnabled ? <Mic size={18} /> : <MicOff size={18} />}
+            </button>
+
+            <button
+              type="button"
+              className={`video-ctrl-btn ${cameraEnabled ? "active" : "muted"}`}
+              onClick={toggleCamera}
+              title={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
+              aria-label={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
+            >
+              {cameraEnabled ? <Camera size={18} /> : <CameraOff size={18} />}
+            </button>
+
+            {onNext && (
+              <button
+                type="button"
+                className="video-ctrl-btn next"
+                onClick={handleNextClick}
+                title="Next Partner"
+                aria-label="Next Partner"
+              >
+                <SkipForward size={18} />
+                <span>Next</span>
+              </button>
+            )}
+
+            {onReport && (
+              <button
+                type="button"
+                className="video-ctrl-btn report"
+                onClick={onReport}
+                title="Report User"
+                aria-label="Report User"
+              >
+                <Flag size={17} />
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="video-ctrl-btn end"
+              onClick={handleEndClick || endVideo}
+              title="End Video Chat"
+              aria-label="End Video Chat"
+            >
+              <PhoneOff size={18} />
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Autoplay Audio Unblocker if browser restricted audio */}
       {needsPlayback && (
         <button
+          type="button"
           className="video-playback-button"
           onClick={() => {
-            void remoteVideoRef.current
-              ?.play()
-              .then(() => setNeedsPlayback(false))
-              .catch(() =>
-                setMessage("Tap to enable audio from your chat partner.")
-              );
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current
+                .play()
+                .then(() => setNeedsPlayback(false))
+                .catch(() => {});
+            }
           }}
         >
-          Enable call audio
+          <Volume2 size={14} /> Tap to enable partner audio
         </button>
       )}
+
+      {/* Error or Notice Message */}
       {message && (
-        <div className="video-call-message" role="status">
+        <div className="video-call-message" role="alert">
           {message}
         </div>
       )}
-      <div className="video-call-actions" aria-live="polite">
-        {callState === "idle" && (
-          <>
-            <span className="video-partner-state">
-              {partnerReady
-                ? "Your partner is ready; video still needs your consent."
-                : "Text chat continues unless you both opt in."}
-            </span>
-            <div className="video-action-buttons">
-              <button
-                className="button button-primary"
-                onClick={() => void joinVideo()}
-              >
-                <Video size={15} />
-                Join video
-              </button>
-              <button
-                className="button button-secondary"
-                onClick={stayWithText}
-              >
-                Stay with text
-              </button>
-            </div>
-          </>
-        )}
-        {callState === "requesting" && (
-          <span className="video-partner-state" role="status">
-            Waiting for browser camera and microphone permission…
-          </span>
-        )}
-        {waitingForPartner && (
-          <>
-            <span className="video-partner-state" role="status">
-              Your local preview is ready. Audio/video is not sent until the
-              other person opts in.
-            </span>
-            <button className="button button-secondary" onClick={endVideo}>
-              Cancel video
-            </button>
-          </>
-        )}
-        {callActive && (
-          <>
-            <span className="video-partner-state" role="status">
-              {callState === "active"
-                ? "Video connected · direct peer connection"
-                : "Setting up a direct connection…"}
-            </span>
-            <div className="video-action-buttons">
-              <button
-                className="toolbar-button"
-                onClick={toggleCamera}
-                aria-pressed={!cameraEnabled}
-              >
-                {cameraEnabled ? <Camera size={15} /> : <CameraOff size={15} />}
-                {cameraEnabled ? "Camera on" : "Camera off"}
-              </button>
-              <button
-                className="toolbar-button"
-                onClick={toggleMic}
-                aria-pressed={!micEnabled}
-              >
-                {micEnabled ? <Mic size={15} /> : <MicOff size={15} />}
-                {micEnabled ? "Mic on" : "Mic muted"}
-              </button>
-              <button className="button button-secondary" onClick={endVideo}>
-                <VideoOff size={15} />
-                End video
-              </button>
-            </div>
-          </>
-        )}
-      </div>
     </section>
   );
 }

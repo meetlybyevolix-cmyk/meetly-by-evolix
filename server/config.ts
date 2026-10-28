@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 
 export interface IceServerConfig {
   urls: string | string[];
@@ -14,10 +14,13 @@ export interface AppConfig {
   databaseUrl: string;
   sessionSecret: Buffer;
   corsOrigin: string;
+  turnRealm: string;
+  turnSharedSecret: string;
+  turnCredentialTtl: number;
   iceServers: IceServerConfig[];
 }
 
-function parseIceServers(): IceServerConfig[] {
+export function generateIceServers(sessionIdentifier?: string): IceServerConfig[] {
   const stunUrls = process.env.STUN_SERVERS
     ? process.env.STUN_SERVERS.split(",")
         .map(u => u.trim())
@@ -26,19 +29,40 @@ function parseIceServers(): IceServerConfig[] {
 
   const servers: IceServerConfig[] = [{ urls: stunUrls }];
 
-  if (process.env.TURN_SERVER_URL) {
-    const turnConfig: IceServerConfig = {
-      urls: process.env.TURN_SERVER_URL.split(",")
-        .map(u => u.trim())
-        .filter(Boolean),
-    };
-    if (process.env.TURN_USERNAME) {
+  const turnServersEnv = process.env.TURN_SERVERS || process.env.TURN_SERVER_URL;
+  const turnSharedSecret = process.env.TURN_SHARED_SECRET?.trim();
+
+  if (turnServersEnv) {
+    const urls = turnServersEnv
+      .split(",")
+      .map(u => u.trim())
+      .filter(Boolean);
+
+    if (turnSharedSecret) {
+      // RFC 5766 / Coturn REST API Ephemeral Time-Limited Credential Mechanism
+      const ttl = Number(process.env.TURN_CREDENTIAL_TTL || 86400);
+      const expiry = Math.floor(Date.now() / 1000) + ttl;
+      const username = sessionIdentifier
+        ? `${expiry}:${sessionIdentifier}`
+        : `${expiry}:${randomBytes(8).toString("hex")}`;
+      const credential = createHmac("sha1", turnSharedSecret)
+        .update(username)
+        .digest("base64");
+
+      servers.push({
+        urls,
+        username,
+        credential,
+      });
+    } else if (process.env.TURN_USERNAME) {
+      // Static credentials (e.g. basic testing)
+      const turnConfig: IceServerConfig = { urls };
       turnConfig.username = process.env.TURN_USERNAME;
+      if (process.env.TURN_CREDENTIAL) {
+        turnConfig.credential = process.env.TURN_CREDENTIAL;
+      }
+      servers.push(turnConfig);
     }
-    if (process.env.TURN_CREDENTIAL) {
-      turnConfig.credential = process.env.TURN_CREDENTIAL;
-    }
-    servers.push(turnConfig);
   }
 
   return servers;
@@ -56,5 +80,8 @@ export const config: AppConfig = {
   databaseUrl: process.env.DATABASE_URL || "",
   sessionSecret,
   corsOrigin: process.env.CORS_ORIGIN || "*",
-  iceServers: parseIceServers(),
+  turnRealm: process.env.TURN_REALM || "meetly.internal",
+  turnSharedSecret: process.env.TURN_SHARED_SECRET || "",
+  turnCredentialTtl: Number(process.env.TURN_CREDENTIAL_TTL || 86400),
+  iceServers: generateIceServers(),
 };

@@ -7,7 +7,7 @@
  * safety reports submitted by users.
  *
  * Usage:
- *   node scripts/moderation-cli.js list [status]
+ *   node scripts/moderation-cli.js list [status] [priority]
  *   node scripts/moderation-cli.js stats
  *   node scripts/moderation-cli.js action <reportId> <status>
  */
@@ -31,22 +31,25 @@ async function getStats() {
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
     const data = await res.json();
     console.log("\n--- Meetly Moderation Overview ---");
-    console.log(`Total Reports:    ${data.stats.total}`);
-    console.log(`Open (Pending):   ${data.stats.open}`);
-    console.log(`Reviewed:         ${data.stats.reviewed}`);
-    console.log(`Actioned:         ${data.stats.actioned}`);
-    console.log(`Closed:           ${data.stats.closed}`);
+    console.log(`Total Reports:         ${data.stats.total}`);
+    console.log(`Open (Pending):        ${data.stats.open}`);
+    console.log(`High Priority Open:    ${data.stats.highPriorityOpen ?? 0}`);
+    console.log(`Reviewed:              ${data.stats.reviewed}`);
+    console.log(`Actioned:              ${data.stats.actioned}`);
+    console.log(`Closed:                ${data.stats.closed}`);
     console.log("----------------------------------\n");
   } catch (err) {
     console.error("Failed to fetch stats:", err.message);
   }
 }
 
-async function listReports(status = "") {
+async function listReports(status = "", priority = "") {
   try {
-    const url = status
-      ? `${BASE_URL}/api/moderation/reports?status=${encodeURIComponent(status)}`
-      : `${BASE_URL}/api/moderation/reports`;
+    const params = new URLSearchParams();
+    if (status) params.set("status", status);
+    if (priority) params.set("priority", priority);
+
+    const url = `${BASE_URL}/api/moderation/reports?${params.toString()}`;
     const res = await fetch(url, { headers });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
     const data = await res.json();
@@ -56,8 +59,9 @@ async function listReports(status = "") {
       console.log("No reports matching criteria.");
     }
     for (const r of data.reports) {
+      const prioTag = r.priority === "high" ? "[HIGH PRIORITY]" : `[${(r.priority || "NORMAL").toUpperCase()}]`;
       console.log(`\nID:          ${r.id}`);
-      console.log(`Category:    ${r.category}`);
+      console.log(`Category:    ${r.category} ${prioTag}`);
       console.log(`Status:      [${r.status.toUpperCase()}]`);
       console.log(`Created:     ${new Date(r.createdAt).toISOString()}`);
       console.log(`Reporter:    ${r.reporterSessionHash.slice(0, 16)}...`);
@@ -101,23 +105,23 @@ switch (cmd) {
     await getStats();
     break;
   case "list":
-    await listReports(arg1);
+    await listReports(arg1, arg2);
     break;
   case "action":
     if (!arg1 || !arg2) {
-      console.log("Usage: node scripts/moderation-cli.js action <reportId> <open|reviewed|actioned|closed>");
-    } else {
-      await updateStatus(arg1, arg2);
+      console.error("Usage: node scripts/moderation-cli.js action <reportId> <status>");
+      process.exit(1);
     }
+    await updateStatus(arg1, arg2);
     break;
   default:
     console.log(`
 Meetly Operator Moderation CLI (Evolix Studio)
 
 Commands:
-  stats                       Display count of open and actioned safety reports
-  list [status]               List safety reports (e.g. list open, list reviewed)
-  action <reportId> <status>  Update report status (open, reviewed, actioned, closed)
+  stats                         Display count of open, high-priority, and actioned safety reports
+  list [status] [priority]      List safety reports (e.g. 'list open', 'list open high')
+  action <reportId> <status>    Update report status (open, reviewed, actioned, closed)
 `);
     break;
 }

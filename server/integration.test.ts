@@ -1,4 +1,6 @@
+import crypto from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
+import { generateIceServers } from "./config";
 import {
   activePartnerId,
   assertReportLimit,
@@ -356,4 +358,131 @@ describe("Meetly End-to-End Core Integration Suite", () => {
       endChat(bob);
     });
   });
+
+  describe("9. Ephemeral Coturn TURN Credentials & ICE Generation", () => {
+    it("generates time-limited HMAC-SHA1 credentials according to RFC 5766", () => {
+      const originalSecret = process.env.TURN_SHARED_SECRET;
+      const originalServers = process.env.TURN_SERVERS;
+      try {
+        process.env.TURN_SHARED_SECRET = "test_shared_secret_evolix";
+        process.env.TURN_SERVERS = "turn:turn.example.com:3478?transport=udp,turn:turn.example.com:3478?transport=tcp";
+        process.env.TURN_CREDENTIAL_TTL = "3600";
+
+        const ice = generateIceServers("session-alice-123");
+        expect(ice.length).toBe(2);
+        expect(ice[0].urls).toEqual(["stun:stun.l.google.com:19302"]);
+
+        const turn = ice[1];
+        expect(turn.urls).toEqual([
+          "turn:turn.example.com:3478?transport=udp",
+          "turn:turn.example.com:3478?transport=tcp",
+        ]);
+        expect(turn.username).toContain("session-alice-123");
+        expect(turn.credential).toBeDefined();
+
+        // Verify HMAC-SHA1 calculation
+        const [expiry, sid] = (turn.username ?? "").split(":");
+        expect(sid).toBe("session-alice-123");
+        expect(Number(expiry)).toBeGreaterThan(Math.floor(Date.now() / 1000));
+
+        const expectedCredential = crypto
+          .createHmac("sha1", "test_shared_secret_evolix")
+          .update(turn.username!)
+          .digest("base64");
+        expect(turn.credential).toBe(expectedCredential);
+      } finally {
+        process.env.TURN_SHARED_SECRET = originalSecret;
+        process.env.TURN_SERVERS = originalServers;
+      }
+    });
+
+    it("falls back to public STUN when TURN is not configured", () => {
+      const originalSecret = process.env.TURN_SHARED_SECRET;
+      const originalServers = process.env.TURN_SERVERS;
+      const originalUrl = process.env.TURN_SERVER_URL;
+      try {
+        delete process.env.TURN_SHARED_SECRET;
+        delete process.env.TURN_SERVERS;
+        delete process.env.TURN_SERVER_URL;
+
+        const ice = generateIceServers();
+        expect(ice.length).toBe(1);
+        expect(ice[0].urls).toEqual(["stun:stun.l.google.com:19302"]);
+      } finally {
+        process.env.TURN_SHARED_SECRET = originalSecret;
+        process.env.TURN_SERVERS = originalServers;
+        process.env.TURN_SERVER_URL = originalUrl;
+      }
+    });
+  });
+
+  describe("10. Perfect Negotiation Signaling Roles", () => {
+    it("designates deterministic polite and impolite roles to prevent glare collisions", () => {
+      const alice = createTestSession({ mediaMode: "video" });
+      const bob = createTestSession({ mediaMode: "video" });
+
+      startSearching(alice);
+      startSearching(bob);
+
+      const aliceEvents: any[] = [];
+      const bobEvents: any[] = [];
+      subscribe(alice.id, e => aliceEvents.push(e));
+      subscribe(bob.id, e => bobEvents.push(e));
+
+      // Both users mark ready
+      markVideoReady(alice);
+      markVideoReady(bob);
+
+      const aliceStart = aliceEvents.find(e => e.type === "video-start");
+      const bobStart = bobEvents.find(e => e.type === "video-start");
+
+      expect(aliceStart).toBeDefined();
+      expect(bobStart).toBeDefined();
+
+      // One peer must be polite, the other impolite (opposite roles)
+      expect(aliceStart.polite).toBe(!bobStart.polite);
+      expect(aliceStart.offerer).toBe(!bobStart.offerer);
+    });
+  });
+
+  describe("11. Safety Report Priority Classification & Filtering", () => {
+    it("classifies reports by urgency and allows priority-filtered triage", async () => {
+      const highId = crypto.randomUUID();
+      const lowId = crypto.randomUUID();
+
+      await insertSafetyReport({
+        id: highId,
+        category: "underage",
+        reporterSessionHash: "hash-r1",
+        reportedSessionHash: "hash-t1",
+        description: "Suspected minor in room",
+        selectedExcerpt: null,
+        status: "open",
+      });
+
+      await insertSafetyReport({
+        id: lowId,
+        category: "spam",
+        reporterSessionHash: "hash-r2",
+        reportedSessionHash: "hash-t2",
+        description: "Repeated copy-paste text",
+        selectedExcerpt: null,
+        status: "open",
+      });
+
+      const highReports = await listSafetyReports({ priority: "high" });
+      const foundHigh = highReports.find(r => r.id === highId);
+      expect(foundHigh).toBeDefined();
+      expect(foundHigh?.priority).toBe("high");
+
+      const lowReports = await listSafetyReports({ priority: "low" });
+      const foundLow = lowReports.find(r => r.id === lowId);
+      expect(foundLow).toBeDefined();
+      expect(foundLow?.priority).toBe("low");
+
+      const stats = await getSafetyReportStats();
+      expect(stats.highPriorityOpen).toBeGreaterThanOrEqual(1);
+    });
+  });
 });
+

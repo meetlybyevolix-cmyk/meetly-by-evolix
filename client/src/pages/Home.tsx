@@ -1052,7 +1052,21 @@ export default function Home() {
                   <span>One-to-one room</span>
                 </span>
               </div>
-              {mediaMode === "video" && <VideoCall socket={liveSocket} />}
+              {mediaMode === "video" && (
+                <VideoCall
+                  socket={liveSocket}
+                  onNext={handleNext}
+                  onEnd={handleEnd}
+                  onReport={() => {
+                    setReportReason("");
+                    setReportDescription("");
+                    setIncludeExcerpt(false);
+                    setReportOpen(true);
+                    setNotice("");
+                  }}
+                  onBlock={handleBlock}
+                />
+              )}
               <div
                 className="messages-list"
                 ref={messageListRef}

@@ -97,7 +97,7 @@ export type ClientEvent =
   | { type: "message"; message: ChatMessage }
   | { type: "notice"; message: string }
   | { type: "video-status"; readyCount: number; active: boolean }
-  | { type: "video-start"; offerer: boolean }
+  | { type: "video-start"; offerer: boolean; polite?: boolean }
   | { type: "video-signal"; signal: VideoSignal }
   | { type: "video-stopped"; message: string }
   | { type: "video-error"; message: string };
@@ -484,11 +484,14 @@ export function markVideoReady(session: Session) {
   room.videoReady.add(session.id);
   sendVideoStatus(room);
   if (!wasReady && room.videoReady.size === room.participants.length) {
-    for (const participantId of room.participants)
+    for (const participantId of room.participants) {
+      const isOfferer = participantId === session.id;
       emit(participantId, {
         type: "video-start",
-        offerer: participantId === session.id,
+        offerer: isOfferer,
+        polite: !isOfferer,
       });
+    }
   }
   return true;
 }

@@ -15,6 +15,18 @@ let _db: ReturnType<typeof drizzle> | null = null;
 const inMemoryReports: SafetyReport[] = [];
 const MAX_IN_MEMORY_REPORTS = 500;
 
+export type ReportPriority = "high" | "medium" | "low";
+
+export function getReportPriority(category: string): ReportPriority {
+  if (["underage", "threats", "hate"].includes(category)) return "high";
+  if (["sexual", "harassment", "impersonation"].includes(category)) return "medium";
+  return "low";
+}
+
+export type EnrichedSafetyReport = SafetyReport & {
+  priority: ReportPriority;
+};
+
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && config.databaseUrl) {
@@ -137,34 +149,59 @@ export async function insertSafetyReport(report: InsertSafetyReport): Promise<vo
 
 export async function listSafetyReports(options: {
   status?: string;
+  priority?: ReportPriority;
   limit?: number;
-} = {}): Promise<SafetyReport[]> {
+} = {}): Promise<EnrichedSafetyReport[]> {
   const limit = options.limit ?? 50;
   const db = await getDb();
+  let baseReports: SafetyReport[] = [];
 
   if (db) {
     try {
       if (options.status) {
-        return await db
+        baseReports = await db
           .select()
           .from(safetyReports)
           .where(eq(safetyReports.status, options.status as any))
           .orderBy(desc(safetyReports.createdAt))
-          .limit(limit);
+          .limit(limit * 2);
+      } else {
+        baseReports = await db
+          .select()
+          .from(safetyReports)
+          .orderBy(desc(safetyReports.createdAt))
+          .limit(limit * 2);
       }
-      return await db
-        .select()
-        .from(safetyReports)
-        .orderBy(desc(safetyReports.createdAt))
-        .limit(limit);
     } catch (error) {
       console.warn("[Database] Failed to list reports from DB, falling back to memory:", error);
+      baseReports = inMemoryReports;
     }
+  } else {
+    baseReports = inMemoryReports;
   }
 
-  return inMemoryReports
+  const enriched: EnrichedSafetyReport[] = baseReports
     .filter(r => !options.status || r.status === options.status)
-    .slice(0, limit);
+    .map(r => ({
+      ...r,
+      priority: getReportPriority(r.category),
+    }))
+    .filter(r => !options.priority || r.priority === options.priority);
+
+  // Sort priority (high > medium > low), then descending date
+  const priorityWeight: Record<ReportPriority, number> = {
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  enriched.sort((a, b) => {
+    const diff = priorityWeight[b.priority] - priorityWeight[a.priority];
+    if (diff !== 0) return diff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return enriched.slice(0, limit);
 }
 
 export async function updateSafetyReportStatus(
@@ -201,5 +238,6 @@ export async function getSafetyReportStats() {
     reviewed: reports.filter(r => r.status === "reviewed").length,
     actioned: reports.filter(r => r.status === "actioned").length,
     closed: reports.filter(r => r.status === "closed").length,
+    highPriorityOpen: reports.filter(r => r.status === "open" && r.priority === "high").length,
   };
 }
