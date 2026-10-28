@@ -1,29 +1,31 @@
 import { z } from "zod";
-import { notifyOwner } from "./notification";
-import { adminProcedure, publicProcedure, router } from "./trpc";
+import { publicProcedure, router } from "./trpc";
+import { config } from "../config";
+import { getOnlineStats } from "../chat/service";
 
 export const systemRouter = router({
   health: publicProcedure
     .input(
-      z.object({
-        timestamp: z.number().min(0, "timestamp cannot be negative"),
-      })
+      z
+        .object({
+          timestamp: z
+            .number()
+            .min(0, "timestamp cannot be negative")
+            .optional(),
+        })
+        .optional()
     )
     .query(() => ({
       ok: true,
+      timestamp: Date.now(),
+      service: "Meetly",
     })),
 
-  notifyOwner: adminProcedure
-    .input(
-      z.object({
-        title: z.string().min(1, "title is required"),
-        content: z.string().min(1, "content is required"),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const delivered = await notifyOwner(input);
-      return {
-        success: delivered,
-      } as const;
-    }),
+  iceServers: publicProcedure.query(() => {
+    return { iceServers: config.iceServers };
+  }),
+
+  stats: publicProcedure.query(() => {
+    return getOnlineStats();
+  }),
 });

@@ -1,8 +1,9 @@
 # Meetly — Comprehensive Codebase Audit Report
+
 **Product:** Meetly  
 **Developer & Maintainer:** Evolix Studio  
 **Audit Date:** October 2026  
-**Auditor:** Senior Full-Stack Software Engineer & Software Architect  
+**Auditor:** Senior Full-Stack Software Engineer & Software Architect
 
 ---
 
@@ -17,6 +18,7 @@ This audit evaluates the codebase to identify all Manus-specific artifacts, vend
 ## 2. Current Architecture
 
 ### 2.1 Technology Stack
+
 - **Frontend:**
   - React 19.2.1
   - TypeScript 5.9.3
@@ -37,6 +39,7 @@ This audit evaluates the codebase to identify all Manus-specific artifacts, vend
   - Volatile In-Memory Engine: `server/chat/service.ts` coordinates real-time matchmaking queue, ephemeral room message history (up to 120 messages), session rate limits, 24-hour block pairs, and disconnect timers.
 
 ### 2.2 Application Routing & User Journey
+
 - `/`: Landing page, consent & age gate (18+), preference selection (interests, language, mode), matchmaking search, active text/video chat, and reporting modal.
 - `/privacy`, `/terms`, `/guidelines`, `/safety`: Plain-language policy and draft transparency documentation.
 - `/404`: Client-side fallback with robots `noindex`.
@@ -49,7 +52,7 @@ This audit evaluates the codebase to identify all Manus-specific artifacts, vend
 
 1. **Anonymous User Sessions:** HMAC-SHA256 signed session tokens (`id.signature`), no account registration or persistent user profile required.
 2. **Eligibility & Consent Gate:** Mandatory 18+ confirmation and Terms/Privacy acceptance before session creation.
-3. **Preferences & Matchmaking:** 
+3. **Preferences & Matchmaking:**
    - Media mode (Text only vs. Opt-in Video)
    - 10 Interest chips (max 5 selected)
    - 8 Language options + "Any"
@@ -81,31 +84,31 @@ This audit evaluates the codebase to identify all Manus-specific artifacts, vend
 
 The following items are Manus-specific and must be cleaned up or decoupled:
 
-| Category | File / Artifact | Description / Dependency |
-|---|---|---|
-| **Starter Metadata** | `.manus-starter-init.json` | Manus sandbox provisioning metadata file |
-| **Starter Metadata** | `template.json` | References `manus-ai/manus-sandbox` repository |
-| **Browser Telemetry** | `client/public/__manus__/debug-collector.js` | 899-line agent telemetry script capturing logs, network calls, and UI events |
-| **Vite Plugin** | `vite.config.ts` (`vitePluginManusDebugCollector`) | Middleware sending browser logs to `.manus-logs/` |
-| **Vite Whitelist** | `vite.config.ts` (`allowedHosts`) | Hardcoded `.manuspre.computer`, `.manus.computer`, etc. |
-| **Vite Public Config** | `vite.config.ts` & `client/index.html` | `/api/platform/config.js` script tag injecting `window.__MANUS_CONFIG__` |
-| **Platform Config** | `client/src/platform.d.ts` | Declares `window.__MANUS_CONFIG__` globals |
-| **Platform Config** | `server/_core/publicConfig.ts` | Builds `window.__MANUS_CONFIG__` containing Manus project and OAuth URLs |
-| **Manus OAuth** | `server/_core/oauth.ts` & `server/_core/sdk.ts` | Endpoints communicating with `webdev.v1.WebDevAuthPublicService` |
-| **Manus Env Vars** | `server/_core/env.ts` | `MANUS_PROJECT_ID`, `MANUS_JWT_SECRET`, `MANUS_OAUTH_API_URL`, `MANUS_API_URL`, `MANUS_API_KEY` |
-| **Client Auth Hijack** | `client/src/main.tsx` | `redirectToLoginIfUnauthorized` triggers `startLogin()` pointing to Manus OAuth; references `manus-cookie` |
-| **Client Auth Helpers** | `client/src/const.ts` (`startLogin`) | Generates Manus OAuth redirect URL |
-| **Unused Template Code** | `client/src/components/ManusDialog.tsx` | Unused dialog for Manus login |
-| **Unused Template Code** | `client/src/components/AIChatBox.tsx` | Unused AI chatbox template component |
-| **Unused Template Code** | `client/src/components/Map.tsx` | Unused Google Maps template component using Manus Maps proxy |
-| **Unused Template Code** | `client/src/components/DashboardLayout.tsx` | Unused dashboard shell with Manus OAuth buttons |
-| **Unused Template Code** | `client/src/components/DashboardLayoutSkeleton.tsx` | Unused skeleton component |
-| **Unused Template Code** | `client/src/pages/ComponentShowcase.tsx` | Unused template component showcase |
-| **Unused Server Helpers**| `server/_core/dataApi.ts`, `imageGeneration.ts`, `llm.ts`, `notification.ts`, `storageProxy.ts`, `voiceTranscription.ts` | Unused helper files calling Manus Forge internal microservices |
-| **Unused Server Storage**| `server/storage.ts` | Manus S3 presigned URL upload via Forge API |
-| **Template Vitest Suite**| `server/platform.test.ts` | Vitest file testing Manus Forge API and OAuth |
-| **Backup File** | `vite.config.ts.bak` | Leftover backup file |
-| **Unused Packages** | `package.json` | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `@types/google.maps`, `@builder.io/vite-plugin-jsx-loc`, `add` |
+| Category                  | File / Artifact                                                                                                          | Description / Dependency                                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **Starter Metadata**      | `.manus-starter-init.json`                                                                                               | Manus sandbox provisioning metadata file                                                                              |
+| **Starter Metadata**      | `template.json`                                                                                                          | References `manus-ai/manus-sandbox` repository                                                                        |
+| **Browser Telemetry**     | `client/public/__manus__/debug-collector.js`                                                                             | 899-line agent telemetry script capturing logs, network calls, and UI events                                          |
+| **Vite Plugin**           | `vite.config.ts` (`vitePluginManusDebugCollector`)                                                                       | Middleware sending browser logs to `.manus-logs/`                                                                     |
+| **Vite Whitelist**        | `vite.config.ts` (`allowedHosts`)                                                                                        | Hardcoded `.manuspre.computer`, `.manus.computer`, etc.                                                               |
+| **Vite Public Config**    | `vite.config.ts` & `client/index.html`                                                                                   | `/api/platform/config.js` script tag injecting `window.__MANUS_CONFIG__`                                              |
+| **Platform Config**       | `client/src/platform.d.ts`                                                                                               | Declares `window.__MANUS_CONFIG__` globals                                                                            |
+| **Platform Config**       | `server/_core/publicConfig.ts`                                                                                           | Builds `window.__MANUS_CONFIG__` containing Manus project and OAuth URLs                                              |
+| **Manus OAuth**           | `server/_core/oauth.ts` & `server/_core/sdk.ts`                                                                          | Endpoints communicating with `webdev.v1.WebDevAuthPublicService`                                                      |
+| **Manus Env Vars**        | `server/_core/env.ts`                                                                                                    | `MANUS_PROJECT_ID`, `MANUS_JWT_SECRET`, `MANUS_OAUTH_API_URL`, `MANUS_API_URL`, `MANUS_API_KEY`                       |
+| **Client Auth Hijack**    | `client/src/main.tsx`                                                                                                    | `redirectToLoginIfUnauthorized` triggers `startLogin()` pointing to Manus OAuth; references `manus-cookie`            |
+| **Client Auth Helpers**   | `client/src/const.ts` (`startLogin`)                                                                                     | Generates Manus OAuth redirect URL                                                                                    |
+| **Unused Template Code**  | `client/src/components/ManusDialog.tsx`                                                                                  | Unused dialog for Manus login                                                                                         |
+| **Unused Template Code**  | `client/src/components/AIChatBox.tsx`                                                                                    | Unused AI chatbox template component                                                                                  |
+| **Unused Template Code**  | `client/src/components/Map.tsx`                                                                                          | Unused Google Maps template component using Manus Maps proxy                                                          |
+| **Unused Template Code**  | `client/src/components/DashboardLayout.tsx`                                                                              | Unused dashboard shell with Manus OAuth buttons                                                                       |
+| **Unused Template Code**  | `client/src/components/DashboardLayoutSkeleton.tsx`                                                                      | Unused skeleton component                                                                                             |
+| **Unused Template Code**  | `client/src/pages/ComponentShowcase.tsx`                                                                                 | Unused template component showcase                                                                                    |
+| **Unused Server Helpers** | `server/_core/dataApi.ts`, `imageGeneration.ts`, `llm.ts`, `notification.ts`, `storageProxy.ts`, `voiceTranscription.ts` | Unused helper files calling Manus Forge internal microservices                                                        |
+| **Unused Server Storage** | `server/storage.ts`                                                                                                      | Manus S3 presigned URL upload via Forge API                                                                           |
+| **Template Vitest Suite** | `server/platform.test.ts`                                                                                                | Vitest file testing Manus Forge API and OAuth                                                                         |
+| **Backup File**           | `vite.config.ts.bak`                                                                                                     | Leftover backup file                                                                                                  |
+| **Unused Packages**       | `package.json`                                                                                                           | `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner`, `@types/google.maps`, `@builder.io/vite-plugin-jsx-loc`, `add` |
 
 ---
 

@@ -1,20 +1,53 @@
 import type { Server } from "node:http";
 import { WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
-import { assertVideoRequestLimit, forwardVideoSignal, getSession, getState, markVideoReady, onClientConnect, onClientDisconnect, stopVideo, subscribe } from "./service";
+import { config } from "../config";
+import {
+  assertVideoRequestLimit,
+  forwardVideoSignal,
+  getSession,
+  getState,
+  markVideoReady,
+  onClientConnect,
+  onClientDisconnect,
+  stopVideo,
+  subscribe,
+} from "./service";
 
 const videoSignalSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("description"), descriptionType: z.enum(["offer", "answer"]), sdp: z.string().min(1).max(20_000) }).strict(),
-  z.object({ kind: z.literal("candidate"), candidate: z.object({
-    candidate: z.string().max(2_048),
-    sdpMid: z.string().max(256).nullable().optional(),
-    sdpMLineIndex: z.number().int().min(0).max(256).nullable().optional(),
-    usernameFragment: z.string().max(256).nullable().optional(),
-  }).strict() }).strict(),
+  z
+    .object({
+      kind: z.literal("description"),
+      descriptionType: z.enum(["offer", "answer"]),
+      sdp: z.string().min(1).max(20_000),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("candidate"),
+      candidate: z
+        .object({
+          candidate: z.string().max(2_048),
+          sdpMid: z.string().max(256).nullable().optional(),
+          sdpMLineIndex: z.number().int().min(0).max(256).nullable().optional(),
+          usernameFragment: z.string().max(256).nullable().optional(),
+        })
+        .strict(),
+    })
+    .strict(),
 ]);
 
-export function registerChatSocket(server: Server, passThroughOtherUpgrades = false) {
-  const sockets = new WebSocketServer({ noServer: true, maxPayload: 32 * 1024 });
+let chatWss: WebSocketServer | null = null;
+
+export function registerChatSocket(
+  server: Server,
+  passThroughOtherUpgrades = false
+) {
+  const sockets = new WebSocketServer({
+    noServer: true,
+    maxPayload: 32 * 1024,
+  });
+  chatWss = sockets;
 
   server.on("upgrade", (request, socket, head) => {
     let pathname = "";
@@ -28,7 +61,21 @@ export function registerChatSocket(server: Server, passThroughOtherUpgrades = fa
       if (!passThroughOtherUpgrades) socket.destroy();
       return;
     }
-    sockets.handleUpgrade(request, socket, head, webSocket => sockets.emit("connection", webSocket, request));
+
+    // Origin validation if CORS_ORIGIN is configured to specific domains
+    const origin = request.headers.origin;
+    if (config.corsOrigin !== "*" && origin) {
+      const allowed = config.corsOrigin.split(",").map(o => o.trim());
+      if (!allowed.includes(origin)) {
+        socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+    }
+
+    sockets.handleUpgrade(request, socket, head, webSocket => {
+      sockets.emit("connection", webSocket, request);
+    });
   });
 
   sockets.on("connection", (webSocket: WebSocket) => {
@@ -36,6 +83,21 @@ export function registerChatSocket(server: Server, passThroughOtherUpgrades = fa
     let authenticatedSessionId: string | undefined;
     let authenticatedToken: string | undefined;
     let authed = false;
+    let isAlive = true;
+
+    webSocket.on("pong", () => {
+      isAlive = true;
+    });
+
+    const pingInterval = setInterval(() => {
+      if (!isAlive) {
+        webSocket.terminate();
+        return;
+      }
+      isAlive = false;
+      webSocket.ping();
+    }, 30_000);
+
     const authTimeout = setTimeout(() => {
       if (!authed) webSocket.close(4401, "Authorization required");
     }, 5_000);
@@ -68,7 +130,8 @@ export function registerChatSocket(server: Server, passThroughOtherUpgrades = fa
         clearTimeout(authTimeout);
         onClientConnect(session.id);
         unsubscribe = subscribe(session.id, event => {
-          if (webSocket.readyState === WebSocket.OPEN) webSocket.send(JSON.stringify(event));
+          if (webSocket.readyState === WebSocket.OPEN)
+            webSocket.send(JSON.stringify(event));
         });
         webSocket.send(JSON.stringify({ type: "state", ...getState(session) }));
         return;
@@ -82,18 +145,49 @@ export function registerChatSocket(server: Server, passThroughOtherUpgrades = fa
       if (payload.type === "video-ready") {
         try {
           assertVideoRequestLimit(session);
-          if (!markVideoReady(session)) webSocket.send(JSON.stringify({ type: "video-error", message: "Video is available only inside an active video-mode room." }));
+          if (!markVideoReady(session)) {
+            webSocket.send(
+              JSON.stringify({
+                type: "video-error",
+                message:
+                  "Video is available only inside an active video-mode room.",
+              })
+            );
+          }
         } catch (error) {
-          webSocket.send(JSON.stringify({ type: "video-error", message: error instanceof Error ? error.message : "Video could not be started." }));
+          webSocket.send(
+            JSON.stringify({
+              type: "video-error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Video could not be started.",
+            })
+          );
         }
         return;
       }
       if (payload.type === "video-stop" || payload.type === "video-decline") {
         try {
           assertVideoRequestLimit(session);
-          if (!stopVideo(session)) webSocket.send(JSON.stringify({ type: "video-error", message: "There is no active video room to stop." }));
+          if (!stopVideo(session)) {
+            webSocket.send(
+              JSON.stringify({
+                type: "video-error",
+                message: "There is no active video room to stop.",
+              })
+            );
+          }
         } catch (error) {
-          webSocket.send(JSON.stringify({ type: "video-error", message: error instanceof Error ? error.message : "Video could not be stopped." }));
+          webSocket.send(
+            JSON.stringify({
+              type: "video-error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Video could not be stopped.",
+            })
+          );
         }
         return;
       }
@@ -105,24 +199,55 @@ export function registerChatSocket(server: Server, passThroughOtherUpgrades = fa
         }
         try {
           assertVideoRequestLimit(session);
-          if (!forwardVideoSignal(session, parsedSignal.data)) webSocket.send(JSON.stringify({ type: "video-error", message: "Video signaling is not authorized for this room or until both people opt in." }));
+          if (!forwardVideoSignal(session, parsedSignal.data)) {
+            webSocket.send(
+              JSON.stringify({
+                type: "video-error",
+                message:
+                  "Video signaling is not authorized for this room or until both people opt in.",
+              })
+            );
+          }
         } catch (error) {
-          webSocket.send(JSON.stringify({ type: "video-error", message: error instanceof Error ? error.message : "Video signaling was limited." }));
+          webSocket.send(
+            JSON.stringify({
+              type: "video-error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Video signaling was limited.",
+            })
+          );
         }
       }
     });
 
-    webSocket.on("close", () => {
+    const cleanup = () => {
+      clearInterval(pingInterval);
       clearTimeout(authTimeout);
       unsubscribe?.();
-      if (authed) {
-        if (authenticatedSessionId) onClientDisconnect(authenticatedSessionId);
+      if (authed && authenticatedSessionId) {
+        onClientDisconnect(authenticatedSessionId);
       }
-    });
-    webSocket.on("error", () => {
-      clearTimeout(authTimeout);
-      unsubscribe?.();
-      if (authed && authenticatedSessionId) onClientDisconnect(authenticatedSessionId);
-    });
+    };
+
+    webSocket.on("close", cleanup);
+    webSocket.on("error", cleanup);
   });
+
+  return sockets;
+}
+
+export function closeChatSocket() {
+  if (chatWss) {
+    for (const client of chatWss.clients) {
+      try {
+        client.close(1001, "Server shutting down");
+      } catch {
+        client.terminate();
+      }
+    }
+    chatWss.close();
+    chatWss = null;
+  }
 }

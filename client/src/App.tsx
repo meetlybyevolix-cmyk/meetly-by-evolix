@@ -8,18 +8,29 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 
 function Router() {
-  return <Switch>
-    <Route path="/" component={Home} />
-    <Route path="/privacy" component={Policy} />
-    <Route path="/terms" component={Policy} />
-    <Route path="/guidelines" component={Policy} />
-    <Route path="/safety" component={Policy} />
-    <Route path="/404" component={NotFound} />
-    <Route component={NotFound} />
-  </Switch>;
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/privacy" component={Policy} />
+      <Route path="/terms" component={Policy} />
+      <Route path="/guidelines" component={Policy} />
+      <Route path="/safety" component={Policy} />
+      <Route path="/404" component={NotFound} />
+      <Route component={NotFound} />
+    </Switch>
+  );
 }
 
 function App() {
-  return <ErrorBoundary><ThemeProvider defaultTheme="light"><TooltipProvider><Toaster /><Router /></TooltipProvider></ThemeProvider></ErrorBoundary>;
+  return (
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="light">
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
 }
 export default App;
