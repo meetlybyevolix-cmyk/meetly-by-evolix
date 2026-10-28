@@ -18,8 +18,9 @@
 
 import { WebSocket } from "ws";
 
-const BASE_URL = "http://127.0.0.1:3335";
-const WS_URL = "ws://127.0.0.1:3335/api/chat/live";
+const PORT = process.env.PORT || 3000;
+const BASE_URL = `http://127.0.0.1:${PORT}`;
+const WS_URL = `ws://127.0.0.1:${PORT}/api/chat/live`;
 const MODERATOR_KEY = process.env.MODERATOR_KEY || "test-moderator-secret-key";
 
 function sleep(ms) {

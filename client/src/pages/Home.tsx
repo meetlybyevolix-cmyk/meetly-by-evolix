@@ -388,13 +388,16 @@ export default function Home() {
         }
       }
       setMode("searching");
-      await search.mutateAsync({
+      const searchRes = await search.mutateAsync({
         preferences: {
           interests: randomOnly ? [] : selectedInterests,
           language: randomOnly ? "Any" : language,
           mediaMode,
         },
       });
+      if (searchRes.state === "chat") {
+        setMode("chat");
+      }
     } catch (error) {
       if (
         error instanceof Error &&

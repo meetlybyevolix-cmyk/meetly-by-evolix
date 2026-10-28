@@ -43,14 +43,19 @@ export type ChatMessage = {
 };
 export type MediaMode = "text" | "video";
 export type VideoSignal =
-  | { kind: "description"; descriptionType: "offer" | "answer"; sdp: string }
+  | {
+      kind: "description";
+      descriptionType: "offer" | "answer" | "pranswer" | "rollback";
+      sdp: string;
+    }
   | {
       kind: "candidate";
       candidate: {
-        candidate: string;
+        candidate: string | null;
         sdpMid?: string | null;
         sdpMLineIndex?: number | null;
         usernameFragment?: string | null;
+        [key: string]: unknown;
       };
     };
 type Preferences = {
@@ -376,7 +381,11 @@ function score(a: Session, b: Session) {
 }
 
 export function startSearching(session: Session, preferences?: Preferences) {
-  if (session.roomId) return { state: "chat" as const };
+  if (session.roomId) {
+    const previousRoom = roomFor(session);
+    if (previousRoom) closeRoom(previousRoom, "The conversation ended.", true);
+    session.roomId = undefined;
+  }
   if (preferences) {
     const allowedInterests = new Set<string>(INTERESTS);
     session.preferences = {

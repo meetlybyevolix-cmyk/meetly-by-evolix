@@ -14,29 +14,30 @@ import {
   sendChatMessage,
   stopVideo,
   subscribe,
+  type VideoSignal,
 } from "./service";
 
 const videoSignalSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("description"),
-      descriptionType: z.enum(["offer", "answer"]),
-      sdp: z.string().min(1).max(20_000),
+      descriptionType: z.enum(["offer", "answer", "pranswer", "rollback"]),
+      sdp: z.string().min(1).max(100_000),
     })
-    .strict(),
+    .passthrough(),
   z
     .object({
       kind: z.literal("candidate"),
       candidate: z
         .object({
-          candidate: z.string().max(2_048),
+          candidate: z.string().max(4_096).nullable().optional().default(""),
           sdpMid: z.string().max(256).nullable().optional(),
-          sdpMLineIndex: z.number().int().min(0).max(256).nullable().optional(),
+          sdpMLineIndex: z.number().int().min(0).max(1024).nullable().optional(),
           usernameFragment: z.string().max(256).nullable().optional(),
         })
-        .strict(),
+        .passthrough(),
     })
-    .strict(),
+    .passthrough(),
 ]);
 
 let chatWss: WebSocketServer | null = null;
@@ -47,7 +48,7 @@ export function registerChatSocket(
 ) {
   const sockets = new WebSocketServer({
     noServer: true,
-    maxPayload: 32 * 1024,
+    maxPayload: 512 * 1024,
   });
   chatWss = sockets;
 
@@ -205,12 +206,12 @@ export function registerChatSocket(
       if (payload.type === "video-signal") {
         const parsedSignal = videoSignalSchema.safeParse(payload.signal);
         if (!parsedSignal.success) {
-          webSocket.close(4400, "Invalid video signal");
+          console.warn("[WebRTC] Ignored malformed video signal:", parsedSignal.error.issues);
           return;
         }
         try {
           assertVideoRequestLimit(session);
-          if (!forwardVideoSignal(session, parsedSignal.data)) {
+          if (!forwardVideoSignal(session, parsedSignal.data as VideoSignal)) {
             webSocket.send(
               JSON.stringify({
                 type: "video-error",
@@ -230,6 +231,7 @@ export function registerChatSocket(
             })
           );
         }
+        return;
       }
     });
 

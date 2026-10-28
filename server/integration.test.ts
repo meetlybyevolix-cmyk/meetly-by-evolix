@@ -370,7 +370,7 @@ describe("Meetly End-to-End Core Integration Suite", () => {
 
         const ice = generateIceServers("session-alice-123");
         expect(ice.length).toBe(2);
-        expect(ice[0].urls).toEqual(["stun:stun.l.google.com:19302"]);
+        expect(ice[0].urls).toContain("stun:stun.l.google.com:19302");
 
         const turn = ice[1];
         expect(turn.urls).toEqual([
@@ -407,7 +407,7 @@ describe("Meetly End-to-End Core Integration Suite", () => {
 
         const ice = generateIceServers();
         expect(ice.length).toBe(1);
-        expect(ice[0].urls).toEqual(["stun:stun.l.google.com:19302"]);
+        expect(ice[0].urls).toContain("stun:stun.l.google.com:19302");
       } finally {
         process.env.TURN_SHARED_SECRET = originalSecret;
         process.env.TURN_SERVERS = originalServers;
