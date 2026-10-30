@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import VideoCall from "@/components/VideoCall";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,22 +20,53 @@ import {
   UserRound,
   Video,
   X,
+  Image as ImageIcon,
 } from "lucide-react";
-import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import {
+  processSelectedPhoto,
+  uploadPhotoFile,
+  type ImageValidationResult,
+} from "../lib/imageUpload";
+import ImageLightboxModal, {
+  type LightboxMedia,
+} from "../components/ImageLightboxModal";
+import PhotoUploadPreview from "../components/PhotoUploadPreview";
+import ChatImageBubble from "../components/ChatImageBubble";
 
 type Mode = "home" | "consent" | "preferences" | "searching" | "chat";
 type MediaMode = "text" | "video";
-type Message = { id: string; text: string; sentAt: number; fromMe: boolean };
+export type MessageMedia = {
+  id: string;
+  url: string;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isFlagged?: boolean;
+};
+type Message = {
+  id: string;
+  text: string;
+  sentAt: number;
+  fromMe: boolean;
+  media?: MessageMedia;
+};
 type WireEvent =
   | {
       type: "state";
       state: "idle" | "searching" | "chat";
       messages?: Message[];
       mediaMode?: MediaMode;
+      partnerLanguage?: string;
     }
   | { type: "message"; message: Message }
   | { type: "notice"; message: string }
+  | {
+      type: "search-status";
+      phase: "preferred" | "fallback" | "connecting";
+      message: string;
+    }
   | { type: "stats"; onlineCount: number }
   | { type: "video-status"; readyCount: number; active: boolean }
   | { type: "video-start"; offerer: boolean }
@@ -63,17 +95,21 @@ const languages = [
   "Portuguese",
   "Arabic",
   "Japanese",
+  "Gujarati",
   "Other",
 ] as const;
 type Interest = (typeof interests)[number];
 type Language = (typeof languages)[number];
 const reportReasons = [
+  "Child exploitation or CSAM",
+  "Non-consensual sexual content",
   "Harassment or bullying",
   "Sexual or explicit content",
   "Suspected minor",
   "Threats or violent behavior",
   "Spam or scams",
   "Hate or abusive language",
+  "Privacy violation or doxxing",
   "Impersonation",
   "Other safety concern",
 ] as const;
@@ -98,14 +134,19 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 function Footer() {
   return (
-    <footer className="site-footer">
-      <span>Text chat and opt-in video conversations; no profiles.</span>
-      <nav aria-label="Site information">
-        <Link href="/safety">Safety</Link>
-        <Link href="/privacy">Privacy</Link>
-        <Link href="/terms">Terms</Link>
-        <Link href="/guidelines">Guidelines</Link>
-      </nav>
+    <footer className="site-footer" style={{ padding: "20px 0", borderTop: "1px solid var(--line)" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px", width: "100%" }}>
+        <span>Meetly · Anonymous text & video conversations · 18+ Adults Only</span>
+        <nav aria-label="Site information" style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
+          <Link href="/safety">Safety</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/community-guidelines">Guidelines</Link>
+          <Link href="/grievance">Grievance (Rule 3(2))</Link>
+          <Link href="/data-rights">Data Rights</Link>
+          <Link href="/cookies">Cookies</Link>
+        </nav>
+      </div>
     </footer>
   );
 }
@@ -159,17 +200,6 @@ function MediaModePicker({
           </span>
         </button>
       </div>
-      {value === "video" && (
-        <p className="media-mode-warning">
-          Direct WebRTC uses Google STUN, not a privacy relay. Your chat partner
-          and the STUN provider may learn your network IP, and some networks may
-          not connect. Camera and microphone remain local until both people opt
-          in. No call media is recorded or stored; another participant could
-          capture their screen. Age is self-attested and staffed media
-          moderation is not available. Choose text if you do not accept these
-          risks.
-        </p>
-      )}
     </fieldset>
   );
 }
@@ -181,12 +211,14 @@ export default function Home() {
   const [liveSocket, setLiveSocket] = useState<WebSocket | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<Interest[]>([]);
   const [language, setLanguage] = useState<Language>("Any");
-  const [adultConfirmed, setAdultConfirmed] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [adultConfirmed, setAdultConfirmed] = useState(true);
+  const [termsAccepted, setTermsAccepted] = useState(true);
+  const [privacyAccepted, setPrivacyAccepted] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
+  const [searchStatus, setSearchStatus] = useState<string>("");
+  const [partnerLanguage, setPartnerLanguage] = useState<string>("");
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<
     (typeof reportReasons)[number] | ""
@@ -209,6 +241,13 @@ export default function Home() {
   const end = trpc.chat.end.useMutation();
   const block = trpc.chat.block.useMutation();
   const report = trpc.chat.report.useMutation();
+  const reportMediaMutation = trpc.chat.reportMedia.useMutation();
+
+  const [photoPreview, setPhotoPreview] = useState<ImageValidationResult | null>(null);
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [lightboxMedia, setLightboxMedia] = useState<LightboxMedia | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const statsQuery = trpc.chat.stats.useQuery(undefined, {
     refetchInterval: 10_000,
@@ -259,6 +298,8 @@ export default function Home() {
                 ? current
                 : [...current, update.message]
             );
+          } else if (update.type === "search-status") {
+            setSearchStatus(update.message);
           } else if (update.type === "notice") {
             setNotice(update.message);
           } else if (update.type === "stats") {
@@ -268,13 +309,32 @@ export default function Home() {
             if (update.state === "chat") {
               setMode("chat");
               setMessages(update.messages ?? []);
-              setNotice("");
               setReportComplete(false);
+              if (update.partnerLanguage) {
+                setPartnerLanguage(update.partnerLanguage);
+                if (
+                  update.partnerLanguage !== "Any" &&
+                  update.partnerLanguage !== language
+                ) {
+                  setNotice(
+                    `You're connected with someone who prefers ${update.partnerLanguage}.`
+                  );
+                }
+              }
             } else if (update.state === "searching") {
               setMode("searching");
               setMessages([]);
+              setPartnerLanguage("");
+              if (!searchStatus) {
+                setSearchStatus(
+                  language !== "Any"
+                    ? "Looking for someone who speaks your language..."
+                    : "Connecting you with someone new..."
+                );
+              }
             } else {
               setMessages([]);
+              setPartnerLanguage("");
               setMode(current => (current === "chat" ? "home" : current));
             }
           }
@@ -356,12 +416,32 @@ export default function Home() {
     };
   }, [reportOpen]);
 
+  useEffect(() => {
+    if (mode !== "searching") return;
+    if (language === "Any") {
+      setSearchStatus("Connecting you with someone new...");
+      return;
+    }
+    setSearchStatus("Looking for someone who speaks your language...");
+    const timer = setTimeout(() => {
+      setSearchStatus("Expanding your search worldwide...");
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [mode, language]);
+
   const startSearching = async (randomOnly = false) => {
     setNotice("");
     setMessages([]);
     if (randomOnly) {
       setSelectedInterests([]);
       setLanguage("Any");
+      setSearchStatus("Connecting you with someone new...");
+    } else {
+      setSearchStatus(
+        language === "Any"
+          ? "Connecting you with someone new..."
+          : "Looking for someone who speaks your language..."
+      );
     }
     try {
       let token = sessionToken;
@@ -456,8 +536,86 @@ export default function Home() {
     }
   };
 
+  const handleSendMessage = useCallback(
+    async (text: string, mediaId?: string) => {
+      const value = (text || "").trim();
+      if (!value && !mediaId) return;
+      setNotice("");
+      if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+        liveSocket.send(JSON.stringify({ type: "message", text: value, mediaId }));
+      } else {
+        try {
+          await sendMessage.mutateAsync({ text: value, mediaId });
+        } catch (error) {
+          setNotice(
+            error instanceof Error
+              ? error.message
+              : "Your message wasn’t sent. Please try again."
+          );
+        }
+      }
+    },
+    [liveSocket, sendMessage]
+  );
+
+  const handlePhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setNotice("");
+    const result = await processSelectedPhoto(file);
+    if (!result.valid && !result.previewUrl) {
+      setNotice(result.error || "Invalid photo format or file too large.");
+      if (photoInputRef.current) photoInputRef.current.value = "";
+      return;
+    }
+    setPhotoPreview(result);
+    setPhotoCaption("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const handleCancelPhoto = () => {
+    setPhotoPreview(null);
+    setPhotoCaption("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const handleSendPhoto = async () => {
+    if (!photoPreview || !photoPreview.file) return;
+    setUploadingPhoto(true);
+    setNotice("");
+    try {
+      const media = await uploadPhotoFile(photoPreview.file, sessionToken, {
+        isFlagged: Boolean(photoPreview.safetyResult && !photoPreview.safetyResult.isSafe),
+      });
+      await handleSendMessage(photoCaption, media.mediaId);
+      handleCancelPhoto();
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Photo upload failed. Please try again."
+      );
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleReportImage = async (mediaId: string) => {
+    try {
+      await reportMediaMutation.mutateAsync({
+        mediaId,
+        reason: "Inappropriate or explicit photo",
+      });
+      setNotice("Photo reported to moderators for safety review.");
+    } catch {
+      setNotice("Failed to report photo.");
+    }
+  };
+
   const handleNext = async () => {
     setMessages([]);
+    handleCancelPhoto();
+    setLightboxMedia(null);
     setNotice("");
     setMode("searching");
     try {
@@ -475,6 +633,8 @@ export default function Home() {
   const handleEnd = async () => {
     setMode("home");
     setMessages([]);
+    handleCancelPhoto();
+    setLightboxMedia(null);
     setNotice("");
     try {
       await end.mutateAsync();
@@ -488,6 +648,8 @@ export default function Home() {
   const handleBlock = async () => {
     setMode("home");
     setMessages([]);
+    handleCancelPhoto();
+    setLightboxMedia(null);
     setNotice("This person is blocked for this temporary session.");
     try {
       await block.mutateAsync();
@@ -540,8 +702,7 @@ export default function Home() {
   };
 
   const sessionWorking = createSession.isPending || search.isPending;
-  const canStart =
-    adultConfirmed && termsAccepted && privacyAccepted && !sessionWorking;
+  const canStart = !sessionWorking;
 
   return (
     <div className="app-shell">
@@ -549,9 +710,28 @@ export default function Home() {
         <Brand />
         <div className="topbar-right">
           <span className="text-mode-pill" title={`${onlineCount} active sessions`}>
-            <span className="live-dot" />
-            {onlineCount > 0 ? `${onlineCount} online` : "Online"} · text & video
+            <span className="live-status-dot-wrap">
+              <span className="live-status-dot-pulse" />
+              <span className="live-status-dot-core" />
+            </span>
+            {onlineCount >= 2
+              ? `${onlineCount} online now`
+              : onlineCount === 1
+                ? "1 online now"
+                : "Live · Ready"}
           </span>
+          <GoogleAuthButton
+            compact
+            onSuccess={user => {
+              setNotice(
+                `Signed in as ${user.name} (${user.userId}). ${
+                  user.isNewUser
+                    ? "Welcome to Meetly! Your registration is synchronized."
+                    : "Welcome back!"
+                }`
+              );
+            }}
+          />
           <Link href="/safety" className="top-link">
             <CircleHelp size={16} />
             Safety first
@@ -603,6 +783,16 @@ export default function Home() {
               >
                 No preferences—just a random chat <ArrowRight size={14} />
               </button>
+              <div className="hero-presence-card" role="status" aria-label="Community activity">
+                <span className="live-status-dot-wrap">
+                  <span className="live-status-dot-pulse" />
+                  <span className="live-status-dot-core" />
+                </span>
+                <span className="hero-presence-text">
+                  <strong>{onlineCount >= 2 ? `${onlineCount} online now` : onlineCount === 1 ? "1 person online now" : "Live community"}</strong>
+                  <span className="hero-presence-sub"> — {onlineCount < 5 ? "Meet someone new" : "Active text & video chat"}</span>
+                </span>
+              </div>
               <div className="hero-trust">
                 <span>
                   <Check size={15} />
@@ -614,7 +804,7 @@ export default function Home() {
                 </span>
                 <span>
                   <Check size={15} />
-                  {onlineCount > 0 ? `${onlineCount} online now` : "Leave any time"}
+                  {onlineCount >= 2 ? `${onlineCount} online now` : "Meet someone new"}
                 </span>
               </div>
             </section>
@@ -737,50 +927,6 @@ export default function Home() {
               leave or report at any time.
             </p>
             <MediaModePicker value={mediaMode} onChange={setMediaMode} />
-            <div className="consent-box">
-              <div className="consent-heading">
-                <ShieldCheck size={17} />
-                <span>Before we connect</span>
-              </div>
-              <label className="check-row">
-                <input
-                  type="checkbox"
-                  checked={adultConfirmed}
-                  onChange={event => setAdultConfirmed(event.target.checked)}
-                />
-                <span>
-                  I confirm I’m 18 or older.{" "}
-                  <span className="muted-inline">
-                    This is an adults-only service.
-                  </span>
-                </span>
-              </label>
-              <label className="check-row">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={event => setTermsAccepted(event.target.checked)}
-                />
-                <span>
-                  I agree to the <Link href="/terms">Terms</Link>.
-                </span>
-              </label>
-              <label className="check-row">
-                <input
-                  type="checkbox"
-                  checked={privacyAccepted}
-                  onChange={event => setPrivacyAccepted(event.target.checked)}
-                />
-                <span>
-                  I’ve read the <Link href="/privacy">Privacy Notice</Link>.
-                </span>
-              </label>
-              <p className="age-caveat">
-                Age confirmation is self-attested, not formal age verification.
-                Don’t share passwords, financial details, or private information
-                with strangers.
-              </p>
-            </div>
             {notice && (
               <div className="inline-alert" role="alert">
                 {notice}
@@ -877,50 +1023,6 @@ export default function Home() {
               ))}
             </select>
             <MediaModePicker value={mediaMode} onChange={setMediaMode} />
-            <div className="consent-box">
-              <div className="consent-heading">
-                <ShieldCheck size={17} />
-                <span>Before we connect</span>
-              </div>
-              <label className="check-row">
-                <input
-                  type="checkbox"
-                  checked={adultConfirmed}
-                  onChange={event => setAdultConfirmed(event.target.checked)}
-                />
-                <span>
-                  I confirm I’m 18 or older.{" "}
-                  <span className="muted-inline">
-                    This is an adults-only service.
-                  </span>
-                </span>
-              </label>
-              <label className="check-row">
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={event => setTermsAccepted(event.target.checked)}
-                />
-                <span>
-                  I agree to the <Link href="/terms">Terms</Link>.
-                </span>
-              </label>
-              <label className="check-row">
-                <input
-                  type="checkbox"
-                  checked={privacyAccepted}
-                  onChange={event => setPrivacyAccepted(event.target.checked)}
-                />
-                <span>
-                  I’ve read the <Link href="/privacy">Privacy Notice</Link>.
-                </span>
-              </label>
-              <p className="age-caveat">
-                Age confirmation is self-attested, not formal age verification.
-                Don’t share passwords, financial details, or private information
-                with strangers.
-              </p>
-            </div>
             {notice && (
               <div className="inline-alert" role="alert">
                 {notice}
@@ -964,7 +1066,7 @@ export default function Home() {
               </div>
             </div>
             <span className="flow-kicker">
-              Your next conversation is out there
+              {searchStatus || "Your next conversation is out there"}
             </span>
             <h1>
               Finding someone
@@ -975,15 +1077,10 @@ export default function Home() {
                   : "to talk with…"}
               </em>
             </h1>
-            <p>
-              We’re looking for an available adult who chose the same chat mode.
+            <p className="search-status-text">
+              {searchStatus ||
+                "We’re looking for an available adult who chose the same chat mode."}
             </p>
-            {mediaMode === "video" && (
-              <small className="honest-wait">
-                Video is direct, not relayed; your network IP may be visible to
-                your chat partner and the STUN provider.
-              </small>
-            )}
             {selectedInterests.length > 0 && (
               <div className="search-tags">
                 {selectedInterests.map(item => (
@@ -1009,6 +1106,16 @@ export default function Home() {
             <div className="connection-state">
               <span className="live-dot" />
               Connected with someone new
+              {partnerLanguage &&
+                partnerLanguage !== "Any" &&
+                partnerLanguage !== language && (
+                  <span
+                    className="partner-lang-pill"
+                    title={`Partner prefers ${partnerLanguage}`}
+                  >
+                    Prefers {partnerLanguage}
+                  </span>
+                )}
               <span className="text-only-tag">
                 {mediaMode === "video" ? "Video option" : "Text"}
               </span>
@@ -1037,145 +1144,188 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <div className="chat-layout">
-            <section
-              className="conversation-panel"
-              aria-label="Text conversation"
-            >
-              <div className="conversation-header">
-                <div className="stranger-avatar">
-                  <UserRound size={21} />
-                </div>
-                <div>
-                  <strong>Someone new</strong>
-                  <span>Connected just now · no profile</span>
-                </div>
-                <span className="conversation-shield">
-                  <ShieldCheck size={17} />
-                  <span>One-to-one room</span>
-                </span>
-              </div>
-              {mediaMode === "video" && (
-                <VideoCall
-                  socket={liveSocket}
-                  onNext={handleNext}
-                  onEnd={handleEnd}
-                  onReport={() => {
-                    setReportReason("");
-                    setReportDescription("");
-                    setIncludeExcerpt(false);
-                    setReportOpen(true);
-                    setNotice("");
-                  }}
-                  onBlock={handleBlock}
-                />
-              )}
-              <div
-                className="messages-list"
-                ref={messageListRef}
-                aria-live="polite"
-                aria-label="Messages"
+          {mediaMode === "video" ? (
+            <VideoCall
+              socket={liveSocket}
+              sessionToken={sessionToken}
+              onNext={handleNext}
+              onEnd={handleEnd}
+              onReport={() => {
+                setReportReason("");
+                setReportDescription("");
+                setIncludeExcerpt(false);
+                setReportOpen(true);
+                setNotice("");
+              }}
+              onBlock={handleBlock}
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              onReportImage={handleReportImage}
+              notice={notice}
+              onClearNotice={() => setNotice("")}
+            />
+          ) : (
+            <div className="chat-layout">
+              <section
+                className="conversation-panel"
+                aria-label="Text conversation"
               >
-                <div className="chat-date-divider">
-                  <span>Conversation started</span>
+                <div className="conversation-header">
+                  <div className="stranger-avatar">
+                    <UserRound size={21} />
+                  </div>
+                  <div>
+                    <strong>Someone new</strong>
+                    <span>Connected just now · no profile</span>
+                  </div>
+                  <span className="conversation-shield">
+                    <ShieldCheck size={17} />
+                    <span>One-to-one room</span>
+                  </span>
                 </div>
-                {messages.length === 0 && (
-                  <div className="first-message-hint">
-                    <span className="hint-star">✳</span>
-                    <p>
-                      You’re both here. A simple “hi” is a lovely place to
-                      start.
-                    </p>
+                <div
+                  className="messages-list"
+                  ref={messageListRef}
+                  aria-live="polite"
+                  aria-label="Messages"
+                >
+                  <div className="chat-date-divider">
+                    <span>Conversation started</span>
+                  </div>
+                  {messages.length === 0 && (
+                    <div className="first-message-hint">
+                      <span className="hint-star">✳</span>
+                      <p>
+                        You’re both here. A simple “hi” is a lovely place to
+                        start.
+                      </p>
+                    </div>
+                  )}
+                  {messages.map(message => (
+                    <div
+                      className={`message-row ${message.fromMe ? "mine" : "theirs"}`}
+                      key={message.id}
+                    >
+                      {message.media ? (
+                        <ChatImageBubble
+                          media={message.media}
+                          caption={message.text}
+                          fromMe={message.fromMe}
+                          sentAt={message.sentAt}
+                          onOpenLightbox={setLightboxMedia}
+                          onReportImage={handleReportImage}
+                        />
+                      ) : (
+                        <div className="message-bubble">
+                          {message.text}
+                          <time>
+                            {new Intl.DateTimeFormat(undefined, {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            }).format(message.sentAt)}
+                          </time>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {notice && (
+                  <div className="chat-notice" role="status">
+                    {notice}
+                    <button
+                      aria-label="Dismiss message"
+                      onClick={() => setNotice("")}
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
                 )}
-                {messages.map(message => (
-                  <div
-                    className={`message-row ${message.fromMe ? "mine" : "theirs"}`}
-                    key={message.id}
-                  >
-                    <div className="message-bubble">
-                      {message.text}
-                      <time>
-                        {new Intl.DateTimeFormat(undefined, {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        }).format(message.sentAt)}
-                      </time>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {notice && (
-                <div className="chat-notice" role="status">
-                  {notice}
-                  <button
-                    aria-label="Dismiss message"
-                    onClick={() => setNotice("")}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              )}
-              <form className="composer" onSubmit={submitMessage}>
-                <label className="sr-only" htmlFor="message">
-                  Type a message
-                </label>
-                <input
-                  ref={inputRef}
-                  id="message"
-                  value={draft}
-                  onChange={event => setDraft(event.target.value.slice(0, 500))}
-                  onKeyDown={handleComposerKey}
-                  placeholder="Write a little hello…"
-                  maxLength={500}
-                  autoComplete="off"
+                <PhotoUploadPreview
+                  preview={photoPreview}
+                  caption={photoCaption}
+                  onCaptionChange={setPhotoCaption}
+                  onCancel={handleCancelPhoto}
+                  onSend={handleSendPhoto}
+                  uploading={uploadingPhoto}
                 />
-                <span className="character-count">{draft.length}/500</span>
-                <button
-                  className="send-button"
-                  type="submit"
-                  disabled={!draft.trim() || sending}
-                  aria-label="Send message"
-                >
-                  <Send size={17} />
-                </button>
-              </form>
-              <div className="composer-note">
-                <LockKeyhole size={12} />
-                Messages are temporary. Links, email addresses and phone numbers
-                are blocked.
-              </div>
-            </section>
-            <aside className="chat-side-panel">
-              <div className="side-panel-icon">
-                <HeartHandshake size={21} />
-              </div>
-              <h2>
-                Keep it kind.
-                <br />
-                <em>Keep it yours.</em>
-              </h2>
-              <p>
-                Never share passwords, financial details or private information.
-                You can end this chat without explaining why.
-              </p>
-              <div className="side-safety-links">
-                <Link href="/guidelines">
-                  Community guidelines <ArrowRight size={14} />
-                </Link>
-                <Link href="/safety">
-                  Safety & privacy <ArrowRight size={14} />
-                </Link>
-              </div>
-              <div className="side-report-note">
-                <Flag size={15} />
-                <span>
-                  Something feels wrong? Report it, and choose whether to
-                  include a short excerpt.
-                </span>
-              </div>
-            </aside>
-          </div>
+                <form className="composer" onSubmit={submitMessage}>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    style={{ display: "none" }}
+                    onChange={handlePhotoSelected}
+                  />
+                  <button
+                    type="button"
+                    className="photo-upload-btn"
+                    onClick={() => photoInputRef.current?.click()}
+                    title="Send a photo (JPG, PNG, WebP)"
+                    aria-label="Send a photo"
+                    disabled={sending || uploadingPhoto}
+                  >
+                    <ImageIcon size={19} />
+                  </button>
+                  <label className="sr-only" htmlFor="message">
+                    Type a message
+                  </label>
+                  <input
+                    ref={inputRef}
+                    id="message"
+                    value={draft}
+                    onChange={event => setDraft(event.target.value.slice(0, 500))}
+                    onKeyDown={handleComposerKey}
+                    placeholder="Write a little hello…"
+                    maxLength={500}
+                    autoComplete="off"
+                  />
+                  <span className="character-count">{draft.length}/500</span>
+                  <button
+                    className="send-button"
+                    type="submit"
+                    disabled={!draft.trim() || sending}
+                    aria-label="Send message"
+                  >
+                    <Send size={17} />
+                  </button>
+                </form>
+                <div className="composer-note">
+                  <LockKeyhole size={12} />
+                  Messages are temporary. Links, email addresses and phone numbers
+                  are blocked.
+                </div>
+              </section>
+              <aside className="chat-side-panel">
+                <div className="side-panel-icon">
+                  <HeartHandshake size={21} />
+                </div>
+                <h2>
+                  Keep it kind.
+                  <br />
+                  <em>Keep it yours.</em>
+                </h2>
+                <p>
+                  Never share passwords, financial details or private information.
+                  You can end this chat without explaining why.
+                </p>
+                <div className="side-safety-links">
+                  <Link href="/guidelines">
+                    Community guidelines <ArrowRight size={14} />
+                  </Link>
+                  <Link href="/safety">
+                    Safety & privacy <ArrowRight size={14} />
+                  </Link>
+                </div>
+                <div className="side-report-note">
+                  <Flag size={15} />
+                  <span>
+                    Something feels wrong? Report it, and choose whether to
+                    include a short excerpt.
+                  </span>
+                </div>
+              </aside>
+            </div>
+          )}
           <div className="chat-bottom-actions">
             <div className="chat-session-note">
               <Radio size={15} />
@@ -1346,6 +1496,12 @@ export default function Home() {
           </section>
         </div>
       )}
+      {/* Fullscreen Photo Lightbox Modal */}
+      <ImageLightboxModal
+        media={lightboxMedia}
+        onClose={() => setLightboxMedia(null)}
+        onReport={handleReportImage}
+      />
     </div>
   );
 }

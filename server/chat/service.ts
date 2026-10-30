@@ -1,5 +1,6 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { config } from "../config";
+import { registerRoomParticipants, getAuthorizedMediaSync } from "./media";
 
 export const INTERESTS = [
   "Music",
@@ -21,25 +22,38 @@ export const LANGUAGES = [
   "Portuguese",
   "Arabic",
   "Japanese",
+  "Gujarati",
   "Other",
 ] as const;
 export const REPORT_REASONS = [
+  "Child exploitation or CSAM",
+  "Non-consensual sexual content",
   "Harassment or bullying",
   "Sexual or explicit content",
   "Suspected minor",
   "Threats or violent behavior",
   "Spam or scams",
   "Hate or abusive language",
+  "Privacy violation or doxxing",
   "Impersonation",
   "Other safety concern",
 ] as const;
 
 export type ChatState = "idle" | "searching" | "chat";
+export type MessageMedia = {
+  id: string;
+  url: string;
+  mimeType: string;
+  width?: number;
+  height?: number;
+  isFlagged?: boolean;
+};
 export type ChatMessage = {
   id: string;
   text: string;
   sentAt: number;
   fromMe: boolean;
+  media?: MessageMedia;
 };
 export type MediaMode = "text" | "video";
 export type VideoSignal =
@@ -58,12 +72,12 @@ export type VideoSignal =
         [key: string]: unknown;
       };
     };
-type Preferences = {
+export type Preferences = {
   interests: string[];
   language: string;
   mediaMode: MediaMode;
 };
-type Session = {
+export type Session = {
   id: string;
   token: string;
   createdAt: number;
@@ -77,12 +91,19 @@ type Session = {
   reportRequests: number[];
   videoRequests: number[];
   recentMessages: { text: string; at: number }[];
+  clientKey?: string;
+  isSynthetic?: boolean;
 };
 type RoomMessage = {
   id: string;
   text: string;
   sentAt: number;
   senderId: string;
+  mediaId?: string;
+  mediaMimeType?: string;
+  mediaWidth?: number;
+  mediaHeight?: number;
+  mediaIsFlagged?: boolean;
 };
 type Room = {
   id: string;
@@ -98,9 +119,23 @@ export type ClientEvent =
       state: ChatState;
       messages?: ChatMessage[];
       mediaMode: MediaMode;
+      partnerLanguage?: string;
     }
   | { type: "message"; message: ChatMessage }
   | { type: "notice"; message: string }
+  | {
+      type: "search-status";
+      phase: "preferred" | "fallback" | "connecting";
+      message: string;
+    }
+  | {
+      type: "stats";
+      onlineCount: number;
+      activeSessions: number;
+      activeRooms: number;
+      queuedUsers: number;
+      syntheticCount?: number;
+    }
   | { type: "video-status"; readyCount: number; active: boolean }
   | { type: "video-start"; offerer: boolean; polite?: boolean }
   | { type: "video-signal"; signal: VideoSignal }
@@ -120,7 +155,27 @@ const requestRates = new Map<string, number[]>();
 const SESSION_TTL = 3 * 60 * 60 * 1000;
 const ROOM_TTL = 2 * 60 * 60 * 1000;
 const BLOCK_TTL = 24 * 60 * 60 * 1000;
-const FALLBACK_AFTER = 8_000;
+
+let languageFallbackDelayMs = Number(
+  process.env.LANGUAGE_FALLBACK_DELAY_MS || 5_000
+);
+let immediateCrossLanguageEnabled = true;
+
+export function getLanguageFallbackDelay(): number {
+  return languageFallbackDelayMs;
+}
+
+export function setLanguageFallbackDelay(ms: number): void {
+  languageFallbackDelayMs = Math.max(0, ms);
+}
+
+export function isImmediateCrossLanguageEnabled(): boolean {
+  return immediateCrossLanguageEnabled;
+}
+
+export function setImmediateCrossLanguage(enabled: boolean): void {
+  immediateCrossLanguageEnabled = enabled;
+}
 
 function signature(id: string) {
   return createHmac("sha256", signingKey).update(id).digest("base64url");
@@ -134,24 +189,39 @@ function emit(sessionId: string, event: ClientEvent) {
 function roomFor(session: Session) {
   return session.roomId ? rooms.get(session.roomId) : undefined;
 }
-function clientMessages(room: Room, viewerId: string): ChatMessage[] {
+function clientMessages(room: Room, viewerId: string, viewerToken?: string): ChatMessage[] {
   return room.messages.map(message => ({
     id: message.id,
     text: message.text,
     sentAt: message.sentAt,
     fromMe: message.senderId === viewerId,
+    media: message.mediaId
+      ? {
+          id: message.mediaId,
+          url: `/api/chat/media/${message.mediaId}${viewerToken ? `?token=${encodeURIComponent(viewerToken)}` : ""}`,
+          mimeType: message.mediaMimeType || "image/jpeg",
+          width: message.mediaWidth,
+          height: message.mediaHeight,
+          isFlagged: message.mediaIsFlagged,
+        }
+      : undefined,
   }));
 }
 function sendState(session: Session) {
   const room = roomFor(session);
+  const partnerId = room?.participants.find(id => id !== session.id);
+  const partner = partnerId ? sessions.get(partnerId) : undefined;
+  const partnerLanguage = partner?.preferences.language;
+
   emit(
     session.id,
     room
       ? {
           type: "state",
           state: "chat",
-          messages: clientMessages(room, session.id),
+          messages: clientMessages(room, session.id, session.token),
           mediaMode: room.mediaMode,
+          partnerLanguage,
         }
       : {
           type: "state",
@@ -203,6 +273,7 @@ function limitSessionWindow(
 }
 
 export function assertSearchLimit(session: Session) {
+  if (session.isSynthetic) return;
   limitSessionWindow(session, "searchRequests", 20, 60_000);
 }
 
@@ -216,10 +287,16 @@ export function createAnonymousSession(
     termsAccepted: boolean;
     privacyAccepted: boolean;
     preferences: Preferences;
+    isSynthetic?: boolean;
   },
   clientKey = "unknown"
 ) {
-  limitRequest("session-create", clientKey, 20, 60_000);
+  if (input.isSynthetic && config.isProduction) {
+    throw new Error("Synthetic test traffic is strictly disabled in production.");
+  }
+  if (!input.isSynthetic) {
+    limitRequest("session-create", clientKey, 20, 60_000);
+  }
   if (!input.ageConfirmed || !input.termsAccepted || !input.privacyAccepted) {
     throw new Error(
       "Confirm adult eligibility and accept the Terms and Privacy Notice to continue."
@@ -251,9 +328,31 @@ export function createAnonymousSession(
     reportRequests: [],
     videoRequests: [],
     recentMessages: [],
+    clientKey,
+    isSynthetic: Boolean(input.isSynthetic),
   };
   sessions.set(id, session);
   return { token, expiresAt: session.createdAt + SESSION_TTL };
+}
+
+export function createSyntheticSession(tag = "loadtest") {
+  if (config.isProduction) {
+    throw new Error("Synthetic test traffic is strictly disabled in production.");
+  }
+  return createAnonymousSession(
+    {
+      ageConfirmed: true,
+      termsAccepted: true,
+      privacyAccepted: true,
+      preferences: {
+        interests: [],
+        language: "Any",
+        mediaMode: "text",
+      },
+      isSynthetic: true,
+    },
+    `synthetic-${tag}-${randomBytes(6).toString("hex")}`
+  );
 }
 
 export function getSession(token: string | undefined): Session | undefined {
@@ -300,6 +399,7 @@ export function onClientConnect(sessionId: string) {
       emit(partnerId, { type: "notice", message: "Your chat partner reconnected." });
     }
   }
+  broadcastStats();
 }
 
 export function onClientDisconnect(sessionId: string) {
@@ -320,12 +420,17 @@ export function onClientDisconnect(sessionId: string) {
     emit(partnerId, { type: "notice", message: "Your chat partner disconnected. Waiting up to 45s for reconnect..." });
   }
 
+  broadcastStats();
+
   disconnectTimers.set(
     sessionId,
     setTimeout(() => {
       disconnectTimers.delete(sessionId);
       const current = sessions.get(sessionId);
-      if (current) removeSession(current);
+      if (current) {
+        removeSession(current);
+        broadcastStats();
+      }
     }, 45_000)
   );
 }
@@ -356,6 +461,7 @@ function closeRoom(room: Room, message: string, excludedPair = false) {
     sendState(b);
   }
   rooms.delete(room.id);
+  broadcastStats();
 }
 
 function removeSession(session: Session) {
@@ -369,15 +475,35 @@ function removeSession(session: Session) {
   disconnectTimers.delete(session.id);
 }
 
-function score(a: Session, b: Session) {
+export function isLanguageCompatible(a: Session, b: Session): boolean {
+  return (
+    a.preferences.language === "Any" ||
+    b.preferences.language === "Any" ||
+    a.preferences.language === b.preferences.language
+  );
+}
+
+export function score(a: Session, b: Session, isFallback = false): number {
   const shared = a.preferences.interests.filter(interest =>
     b.preferences.interests.includes(interest)
   ).length;
-  const languageMatch =
-    a.preferences.language === "Any" ||
-    b.preferences.language === "Any" ||
+
+  const exactMatch =
+    a.preferences.language !== "Any" &&
     a.preferences.language === b.preferences.language;
-  return (languageMatch ? 100 : 0) + shared * 10;
+  const anyMatch =
+    a.preferences.language === "Any" || b.preferences.language === "Any";
+
+  let langScore = 0;
+  if (exactMatch) {
+    langScore = 150; // Priority 1: Exact preferred language match
+  } else if (anyMatch) {
+    langScore = 100; // Open to any language
+  } else if (isFallback) {
+    langScore = 20; // Fallback cross-language match
+  }
+
+  return langScore + shared * 10;
 }
 
 export function startSearching(session: Session, preferences?: Preferences) {
@@ -401,9 +527,12 @@ export function startSearching(session: Session, preferences?: Preferences) {
     };
   }
   session.state = "searching";
-  queue.set(session.id, queue.get(session.id) ?? Date.now());
   const now = Date.now();
-  const candidates = [...queue.entries()]
+  queue.set(session.id, queue.get(session.id) ?? now);
+  const myQueuedAt = queue.get(session.id) ?? now;
+
+  // 1. Gather all valid candidates from the queue
+  const validCandidates = [...queue.entries()]
     .filter(([id]) => id !== session.id)
     .map(([id, queuedAt]) => ({ candidate: sessions.get(id), queuedAt }))
     .filter((entry): entry is { candidate: Session; queuedAt: number } =>
@@ -422,26 +551,89 @@ export function startSearching(session: Session, preferences?: Preferences) {
     )
     .filter(
       ({ candidate }) => !blockedPairs.has(pairKey(session.id, candidate.id))
-    )
-    .filter(
-      ({ candidate }) =>
-        score(session, candidate) > 0 ||
-        (now - (queue.get(session.id) ?? now) >= FALLBACK_AFTER &&
-          now - (queue.get(candidate.id) ?? now) >= FALLBACK_AFTER)
-    )
-    .sort(
-      (left, right) =>
-        score(right.candidate, session) - score(left.candidate, session) ||
-        left.queuedAt - right.queuedAt
     );
 
-  const selected = candidates[0]?.candidate;
+  // 2. Partition candidates into preferred same-language vs cross-language
+  const sameLanguage = validCandidates.filter(({ candidate }) =>
+    isLanguageCompatible(session, candidate)
+  );
+
+  let selected: Session | undefined = undefined;
+
+  // Priority 1 — Preferred Language
+  if (sameLanguage.length > 0) {
+    sameLanguage.sort(
+      (left, right) =>
+        score(right.candidate, session, false) -
+          score(left.candidate, session, false) ||
+        left.queuedAt - right.queuedAt
+    );
+    selected = sameLanguage[0]?.candidate;
+  }
+
+  // Priority 2 & 3 — Automatic Global Fallback & Fastest Available Match
   if (!selected) {
+    const crossLanguage = validCandidates.filter(
+      ({ candidate }) => !isLanguageCompatible(session, candidate)
+    );
+
+    const eligibleCross = crossLanguage.filter(({ queuedAt }) => {
+      if (immediateCrossLanguageEnabled || languageFallbackDelayMs === 0) {
+        return true;
+      }
+      const myElapsed = now - myQueuedAt;
+      const candidateElapsed = now - queuedAt;
+      return (
+        myElapsed >= languageFallbackDelayMs ||
+        candidateElapsed >= languageFallbackDelayMs
+      );
+    });
+
+    if (eligibleCross.length > 0) {
+      eligibleCross.sort(
+        (left, right) =>
+          score(right.candidate, session, true) -
+            score(left.candidate, session, true) ||
+          left.queuedAt - right.queuedAt
+      );
+      selected = eligibleCross[0]?.candidate;
+    }
+  }
+
+  // No match found — remain in queue with informative search status
+  if (!selected) {
+    const myElapsed = now - myQueuedAt;
+    const isFallbackPhase =
+      session.preferences.language !== "Any" &&
+      myElapsed >= languageFallbackDelayMs;
+    const phase =
+      session.preferences.language === "Any"
+        ? "connecting"
+        : isFallbackPhase
+        ? "fallback"
+        : "preferred";
+    const message =
+      phase === "connecting"
+        ? "Connecting you with someone new..."
+        : phase === "fallback"
+        ? "Expanding your search worldwide..."
+        : "Looking for someone who speaks your language...";
+
+    emit(session.id, {
+      type: "search-status",
+      phase,
+      message,
+    });
+
     sendState(session);
+    broadcastStats();
     return { state: "searching" as const };
   }
+
+  // Match found — create room and notify both participants
   queue.delete(session.id);
   queue.delete(selected.id);
+
   const room: Room = {
     id: randomBytes(24).toString("base64url"),
     participants: [session.id, selected.id],
@@ -450,23 +642,51 @@ export function startSearching(session: Session, preferences?: Preferences) {
     mediaMode: session.preferences.mediaMode,
     videoReady: new Set(),
   };
+
   rooms.set(room.id, room);
+  registerRoomParticipants(room.id, room.participants);
+
   session.roomId = room.id;
   selected.roomId = room.id;
   session.state = "chat";
   selected.state = "chat";
+
+  // If cross-language match, inform users of their partner's preference
+  if (
+    selected.preferences.language !== "Any" &&
+    selected.preferences.language !== session.preferences.language
+  ) {
+    emit(session.id, {
+      type: "notice",
+      message: `You're connected with someone who prefers ${selected.preferences.language}.`,
+    });
+  }
+  if (
+    session.preferences.language !== "Any" &&
+    session.preferences.language !== selected.preferences.language
+  ) {
+    emit(selected.id, {
+      type: "notice",
+      message: `You're connected with someone who prefers ${session.preferences.language}.`,
+    });
+  }
+
   sendState(session);
   sendState(selected);
+  broadcastStats();
   return { state: "chat" as const };
 }
 
 export function getState(session: Session) {
   const room = roomFor(session);
+  const partnerId = room?.participants.find(id => id !== session.id);
+  const partner = partnerId ? sessions.get(partnerId) : undefined;
   return room
     ? {
         state: "chat" as const,
-        messages: clientMessages(room, session.id),
+        messages: clientMessages(room, session.id, session.token),
         mediaMode: room.mediaMode,
+        partnerLanguage: partner?.preferences.language,
       }
     : { state: session.state, mediaMode: session.preferences.mediaMode };
 }
@@ -535,10 +755,16 @@ export function forwardVideoSignal(session: Session, signal: VideoSignal) {
   return true;
 }
 
-export function sendChatMessage(session: Session, text: string) {
-  const value = text.trim();
-  if (!value || value.length > 500)
+export function sendChatMessage(
+  session: Session,
+  text: string,
+  mediaId?: string
+) {
+  const value = (text || "").trim();
+  if (!mediaId && (!value || value.length > 500))
     throw new Error("Messages must be between 1 and 500 characters.");
+  if (value.length > 500)
+    throw new Error("Messages must be 500 characters or fewer.");
   const room = roomFor(session);
   if (!room || session.state !== "chat")
     throw new Error("This conversation has ended. Start a new search.");
@@ -547,31 +773,48 @@ export function sendChatMessage(session: Session, text: string) {
   if (session.rateWindow.length >= 8)
     throw new Error("Slow down for a moment before sending another message.");
   session.rateWindow.push(now);
-  const recent = session.recentMessages.filter(item => now - item.at < 30_000);
-  const normalized = value.toLowerCase();
-  if (
-    recent.filter(item => item.text.toLowerCase() === normalized).length >= 2
-  ) {
-    throw new Error("Repeated messages are limited to help prevent spam.");
+
+  if (value) {
+    const recent = session.recentMessages.filter(item => now - item.at < 30_000);
+    const normalized = value.toLowerCase();
+    if (
+      recent.filter(item => item.text.toLowerCase() === normalized).length >= 2
+    ) {
+      throw new Error("Repeated messages are limited to help prevent spam.");
+    }
+    if (
+      /(?:[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/i.test(value) ||
+      /(?:\+?\d[\d\s().-]{7,}\d)/.test(value)
+    ) {
+      throw new Error(
+        "For your privacy, don’t share email addresses or phone numbers in chat."
+      );
+    }
+    if (/https?:\/\//i.test(value))
+      throw new Error(
+        "Links are disabled in this MVP to help protect you from scams and unsafe sites."
+      );
+    session.recentMessages = [...recent, { text: value, at: now }].slice(-10);
   }
-  if (
-    /(?:[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,})/i.test(value) ||
-    /(?:\+?\d[\d\s().-]{7,}\d)/.test(value)
-  ) {
-    throw new Error(
-      "For your privacy, don’t share email addresses or phone numbers in chat."
-    );
+
+  let mediaItem = undefined;
+  if (mediaId) {
+    mediaItem = getAuthorizedMediaSync(mediaId, session.id);
+    if (!mediaItem || mediaItem.roomId !== room.id) {
+      throw new Error("Unauthorized or invalid image attachment.");
+    }
   }
-  if (/https?:\/\//i.test(value))
-    throw new Error(
-      "Links are disabled in this MVP to help protect you from scams and unsafe sites."
-    );
-  session.recentMessages = [...recent, { text: value, at: now }].slice(-10);
+
   const message: RoomMessage = {
     id: randomBytes(12).toString("hex"),
     text: value,
     sentAt: now,
     senderId: session.id,
+    mediaId: mediaItem ? mediaItem.id : undefined,
+    mediaMimeType: mediaItem ? mediaItem.mimeType : undefined,
+    mediaWidth: mediaItem ? mediaItem.width : undefined,
+    mediaHeight: mediaItem ? mediaItem.height : undefined,
+    mediaIsFlagged: mediaItem ? mediaItem.isFlagged : undefined,
   };
   room.messages.push(message);
   if (room.messages.length > 120)
@@ -586,6 +829,16 @@ export function sendChatMessage(session: Session, text: string) {
           text: message.text,
           sentAt: message.sentAt,
           fromMe: participantId === session.id,
+          media: message.mediaId
+            ? {
+                id: message.mediaId,
+                url: `/api/chat/media/${message.mediaId}?token=${encodeURIComponent(recipient.token)}`,
+                mimeType: message.mediaMimeType || "image/jpeg",
+                width: message.mediaWidth,
+                height: message.mediaHeight,
+                isFlagged: message.mediaIsFlagged,
+              }
+            : undefined,
         },
       });
   }
@@ -628,12 +881,51 @@ export function activePartnerId(session: Session) {
   return room?.participants.find(id => id !== session.id);
 }
 
+let broadcastTimer: ReturnType<typeof setTimeout> | null = null;
+export function broadcastStats() {
+  if (broadcastTimer) return;
+  broadcastTimer = setTimeout(() => {
+    broadcastTimer = null;
+    const stats = getOnlineStats();
+    for (const [sessionId, group] of listeners.entries()) {
+      if (group.size > 0) {
+        emit(sessionId, { type: "stats", ...stats });
+      }
+    }
+  }, 250);
+}
+
 export function getOnlineStats() {
+  let realOnlineCount = 0;
+  let syntheticCount = 0;
+  const seenClientKeys = new Set<string>();
+
+  for (const session of sessions.values()) {
+    const hasListener = (listeners.get(session.id)?.size ?? 0) > 0;
+    const isEngaged = Boolean(session.roomId) || session.state === "searching";
+    const isRecentlyActive = Date.now() - session.createdAt < 60_000;
+    const isOnline = hasListener || isEngaged || isRecentlyActive;
+
+    if (!isOnline) continue;
+
+    if (session.isSynthetic) {
+      syntheticCount++;
+      continue;
+    }
+
+    const key = session.clientKey && session.clientKey !== "unknown" ? session.clientKey : session.id;
+    if (!seenClientKeys.has(key)) {
+      seenClientKeys.add(key);
+      realOnlineCount++;
+    }
+  }
+
   return {
-    activeSessions: sessions.size,
+    activeSessions: realOnlineCount,
     activeRooms: rooms.size,
     queuedUsers: queue.size,
-    onlineCount: sessions.size,
+    onlineCount: realOnlineCount,
+    syntheticCount,
   };
 }
 
@@ -648,6 +940,14 @@ export function disconnectAll() {
   requestRates.clear();
 }
 
+export function resetChatState() {
+  disconnectAll();
+  languageFallbackDelayMs = Number(
+    process.env.LANGUAGE_FALLBACK_DELAY_MS || 5_000
+  );
+  immediateCrossLanguageEnabled = true;
+}
+
 setInterval(() => {
   const now = Date.now();
   for (const session of sessions.values())
@@ -657,11 +957,27 @@ setInterval(() => {
   for (const [id, room] of rooms)
     if (now - room.createdAt > ROOM_TTL)
       closeRoom(room, "This conversation expired.");
-  if (queue.size > 1) {
-    for (const sessionId of queue.keys()) {
+
+  if (queue.size > 0) {
+    for (const [sessionId, queuedAt] of [...queue.entries()]) {
       const session = sessions.get(sessionId);
-      if (session && now - (queue.get(sessionId) ?? now) >= FALLBACK_AFTER)
+      if (!session || session.state !== "searching" || session.roomId) continue;
+
+      const elapsed = now - queuedAt;
+      if (
+        session.preferences.language !== "Any" &&
+        elapsed >= languageFallbackDelayMs
+      ) {
+        emit(session.id, {
+          type: "search-status",
+          phase: "fallback",
+          message: "Expanding your search worldwide...",
+        });
+      }
+
+      if (queue.size > 1) {
         startSearching(session);
+      }
     }
   }
 }, 1_000).unref();

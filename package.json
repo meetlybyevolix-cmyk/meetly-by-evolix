@@ -11,6 +11,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:smoke": "node scripts/e2e-smoke-test.js",
+    "test:load": "node scripts/load-test.js",
     "moderation": "node scripts/moderation-cli.js",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "db:migrate": "drizzle-kit migrate",
@@ -46,41 +47,38 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.90.2",
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/server": "^11.6.0",
-    "axios": "^1.12.0",
+    "@trpc/client": "^11.22.1",
+    "@trpc/react-query": "^11.22.1",
+    "@trpc/server": "^11.22.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "cookie": "^1.0.2",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
-    "drizzle-orm": "^0.44.5",
+    "drizzle-orm": "^0.45.4",
     "embla-carousel-react": "^8.6.0",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "framer-motion": "^12.23.22",
+    "google-auth-library": "^11.3.2",
     "input-otp": "^1.4.2",
-    "jose": "6.1.0",
     "lucide-react": "^0.453.0",
-    "mysql2": "^3.15.0",
-    "nanoid": "^5.1.5",
+    "mysql2": "^3.24.6",
+    "nanoid": "^5.1.16",
     "next-themes": "^0.4.6",
     "react": "^19.2.1",
     "react-day-picker": "^9.11.1",
     "react-dom": "^19.2.1",
     "react-hook-form": "^7.64.0",
     "react-resizable-panels": "^3.0.6",
-    "recharts": "^2.15.2",
     "sonner": "^2.0.7",
-    "streamdown": "^1.4.0",
     "superjson": "^1.13.3",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
     "ws": "^8.22.0",
-    "zod": "^4.1.12"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
@@ -104,5 +102,11 @@
     "vite": "^7.3.7",
     "vitest": "^2.1.4"
   },
-  "packageManager": "pnpm@10.18.0"
+  "packageManager": "pnpm@10.18.0",
+  "pnpm": {
+    "overrides": {
+      "proxy-addr": "^2.0.8",
+      "tar": "^7.5.19"
+    }
+  }
 }

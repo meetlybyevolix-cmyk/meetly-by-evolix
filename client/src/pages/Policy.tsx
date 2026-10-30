@@ -36,6 +36,10 @@ const pages = {
         "The adults-only age step is self-attested; the service does not independently verify age. Staffed media moderation, complete abuse detection and guaranteed report response are not available. Do not use the service if these limitations are unacceptable to you.",
       ],
       [
+        "Google Sign-In & Registration",
+        "You can optionally sign in with Google to maintain an account across sessions. Your verified profile name is synchronized to the owner's private Google Sheet for administrative records. Your Google name and email are never shown to strangers in chat or video. Google authentication does not replace 18+ age verification.",
+      ],
+      [
         "Your choices",
         "You can choose text instead of video, skip, end, block or report. Interests are temporary matching preferences and are not a public profile. Do not share passwords, financial details, exact location or contact details with strangers.",
       ],

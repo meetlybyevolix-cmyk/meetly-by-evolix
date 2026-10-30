@@ -48,7 +48,7 @@ export function registerChatSocket(
 ) {
   const sockets = new WebSocketServer({
     noServer: true,
-    maxPayload: 512 * 1024,
+    maxPayload: 64 * 1024,
   });
   chatWss = sockets;
 
@@ -67,9 +67,9 @@ export function registerChatSocket(
 
     // Origin validation if CORS_ORIGIN is configured to specific domains
     const origin = request.headers.origin;
-    if (config.corsOrigin !== "*" && origin) {
+    if (config.corsOrigin !== "*") {
       const allowed = config.corsOrigin.split(",").map(o => o.trim());
-      if (!allowed.includes(origin)) {
+      if (!origin || !allowed.includes(origin)) {
         socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
         socket.destroy();
         return;
@@ -87,6 +87,9 @@ export function registerChatSocket(
     let authenticatedToken: string | undefined;
     let authed = false;
     let isAlive = true;
+    let frameTimestamps: number[] = [];
+    const MAX_FRAMES_PER_WINDOW = 35;
+    const FRAME_WINDOW_MS = 5_000;
 
     webSocket.on("pong", () => {
       isAlive = true;
@@ -105,8 +108,17 @@ export function registerChatSocket(
       if (!authed) webSocket.close(4401, "Authorization required");
     }, 5_000);
 
-    webSocket.on("message", raw => {
-      let payload: { type?: string; token?: string; signal?: unknown };
+    webSocket.on("message", async raw => {
+      // Per-connection WebSocket frame flood protection
+      const now = Date.now();
+      frameTimestamps = frameTimestamps.filter(t => now - t < FRAME_WINDOW_MS);
+      if (frameTimestamps.length >= MAX_FRAMES_PER_WINDOW) {
+        webSocket.close(4429, "Rate limit exceeded");
+        return;
+      }
+      frameTimestamps.push(now);
+
+      let payload: { type?: string; token?: string; signal?: unknown; text?: string; mediaId?: string };
       try {
         payload = JSON.parse(raw.toString());
       } catch {
@@ -146,11 +158,23 @@ export function registerChatSocket(
         webSocket.close(4401, "Session expired");
         return;
       }
-      if (payload.type === "message" && typeof (payload as any).text === "string") {
+      if (
+        payload.type === "message" &&
+        (typeof payload.text === "string" || typeof payload.mediaId === "string")
+      ) {
         try {
-          sendChatMessage(session, (payload as any).text);
+          await sendChatMessage(
+            session,
+            payload.text || "",
+            typeof payload.mediaId === "string" ? payload.mediaId : undefined
+          );
         } catch (error) {
-          webSocket.send(JSON.stringify({ type: "notice", message: error instanceof Error ? error.message : "Message failed" }));
+          webSocket.send(
+            JSON.stringify({
+              type: "notice",
+              message: error instanceof Error ? error.message : "Message failed",
+            })
+          );
         }
         return;
       }

@@ -277,13 +277,102 @@ async function run() {
   const bobNotice = bobEvents.find(e => e.type === "notice" && e.message.includes("ended"));
   console.log("  Bob received conversation ended notice:", bobNotice ? "SUCCESS" : "FAILED");
 
-  // 15. Disconnect Cleanup
-  console.log("\n15. Closing WebSockets and cleaning up...");
+  // 15. Legal Configuration & Readiness Endpoints
+  console.log("\n15. Testing Legal Configuration & Launch Readiness Endpoints...");
+  const legalConfigRes = await fetch(`${BASE_URL}/api/legal-config`);
+  if (!legalConfigRes.ok) throw new Error(`Legal config failed: ${legalConfigRes.status}`);
+  const legalConfig = await legalConfigRes.json();
+  console.log("  Legal config PASS:", JSON.stringify({ siteName: legalConfig.siteName, minimumUserAge: legalConfig.minimumUserAge }));
+
+  const readinessRes = await fetch(`${BASE_URL}/api/moderation/legal-readiness`, { headers: modHeaders });
+  if (!readinessRes.ok) throw new Error(`Legal readiness failed: ${readinessRes.status}`);
+  const readinessData = await readinessRes.json();
+  console.log("  Legal readiness audit PASS:", JSON.stringify({ ready: readinessData.readyForLaunch, missingCount: readinessData.missingRequiredItems.length }));
+
+  // 16. Rule 3(2) IT Rules Grievance Redressal Endpoints
+  console.log("\n16. Testing Rule 3(2) IT Rules Grievance Redressal Submission & Status...");
+  const grievRes = await fetch(`${BASE_URL}/api/grievance/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      complainantName: "Smoke Test Reporter",
+      complainantEmail: "smoke_grievance@example.com",
+      category: "safety_concern",
+      subject: "Automated E2E Grievance Verification",
+      details: "Verifying statutory submission workflow under Rule 3(2) IT Rules, 2021.",
+    }),
+  });
+  if (!grievRes.ok) throw new Error(`Grievance submission failed: ${grievRes.status}`);
+  const grievData = await grievRes.json();
+  console.log("  Grievance registered PASS:", grievData.ticketCode);
+
+  const grievStatusRes = await fetch(`${BASE_URL}/api/grievance/status/${grievData.ticketCode}`);
+  if (!grievStatusRes.ok) throw new Error(`Grievance status failed: ${grievStatusRes.status}`);
+  const grievStatus = await grievStatusRes.json();
+  console.log("  Grievance status lookup PASS:", grievStatus.status);
+
+  // 17. DPDP Act Data Subject Rights Request Endpoints
+  console.log("\n17. Testing DPDP Act 2023 Data Subject Request Submission & Status...");
+  const dsrRes = await fetch(`${BASE_URL}/api/privacy/data-request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requestType: "erasure",
+      contactEmail: "smoke_privacy@example.com",
+      details: "Automated verification of data subject request intake and processing.",
+    }),
+  });
+  if (!dsrRes.ok) throw new Error(`DSR submission failed: ${dsrRes.status}`);
+  const dsrData = await dsrRes.json();
+  console.log("  DSR registered PASS:", dsrData.requestCode);
+
+  const dsrStatusRes = await fetch(`${BASE_URL}/api/privacy/data-request/${dsrData.requestCode}`);
+  if (!dsrStatusRes.ok) throw new Error(`DSR status failed: ${dsrStatusRes.status}`);
+  const dsrStatus = await dsrStatusRes.json();
+  console.log("  DSR status lookup PASS:", dsrStatus.status);
+
+  // 18. DPDP Act 2023 18+ Age Assurance Verification Flow
+  console.log("\n18. Testing 18+ Age Assurance Verification Endpoints (/api/age/*)...");
+  const ageInitRes = await fetch(`${BASE_URL}/api/age/initiate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Meetly-Session": aliceToken,
+    },
+  });
+  if (!ageInitRes.ok) throw new Error(`Age initiate failed: ${ageInitRes.status}`);
+  const ageInitData = await ageInitRes.json();
+  console.log("  Age assurance challenge generated PASS:", ageInitData.provider, ageInitData.status);
+
+  const ageVerifyRes = await fetch(`${BASE_URL}/api/age/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Meetly-Session": aliceToken,
+    },
+    body: JSON.stringify({
+      over18Confirmed: true,
+      provider: "mock",
+    }),
+  });
+  if (!ageVerifyRes.ok) throw new Error(`Age verify failed: ${ageVerifyRes.status}`);
+  const ageVerifyData = await ageVerifyRes.json();
+  console.log("  Age verified PASS:", ageVerifyData.status, ageVerifyData.over18Confirmed);
+
+  const ageStatusRes = await fetch(`${BASE_URL}/api/age/status`, {
+    headers: { "X-Meetly-Session": aliceToken },
+  });
+  if (!ageStatusRes.ok) throw new Error(`Age status failed: ${ageStatusRes.status}`);
+  const ageStatusData = await ageStatusRes.json();
+  console.log("  Age status query PASS:", ageStatusData.status);
+
+  // 19. Disconnect Cleanup
+  console.log("\n19. Closing WebSockets and cleaning up...");
   wsA.close();
   wsB.close();
   await sleep(200);
 
-  console.log("\n=== ALL 15 END-TO-END SMOKE TESTS PASSED PERFECTLY! ===");
+  console.log("\n=== ALL 19 END-TO-END SMOKE TESTS PASSED PERFECTLY! ===");
   process.exit(0);
 }
 

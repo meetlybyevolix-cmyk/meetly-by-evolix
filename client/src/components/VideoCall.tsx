@@ -1,16 +1,45 @@
 import {
+  AlertTriangle,
   Camera,
   CameraOff,
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
   Flag,
+  LockKeyhole,
+  MessageCircle,
+  MessageSquare,
   Mic,
   MicOff,
   PhoneOff,
+  Send,
+  Settings,
+  Shield,
   ShieldAlert,
   SkipForward,
+  Sparkles,
   Video,
   Volume2,
+  VolumeX,
+  X,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  classifyVideoElement,
+  type SafetyClassificationResult,
+} from "../lib/videoSafetyClassifier";
+import {
+  processSelectedPhoto,
+  uploadPhotoFile,
+  type ImageValidationResult,
+} from "../lib/imageUpload";
+import ImageLightboxModal, {
+  type LightboxMedia,
+} from "./ImageLightboxModal";
+import PhotoUploadPreview from "./PhotoUploadPreview";
+import ChatImageBubble from "./ChatImageBubble";
 
 export type VideoSignal =
   | { kind: "description"; descriptionType: "offer" | "answer" | "pranswer" | "rollback"; sdp: string }
@@ -27,17 +56,43 @@ export type CallState = "idle" | "requesting" | "waiting" | "connecting" | "acti
 
 export interface VideoCallProps {
   socket: WebSocket | null;
+  sessionToken?: string;
   onNext?: () => void;
   onEnd?: () => void;
   onReport?: () => void;
   onBlock?: () => void;
+  messages?: Array<{
+    id: string;
+    text: string;
+    sentAt: number;
+    fromMe: boolean;
+    media?: {
+      id: string;
+      url: string;
+      mimeType?: string;
+      width?: number;
+      height?: number;
+      isFlagged?: boolean;
+    };
+  }>;
+  onSendMessage?: (text: string, mediaId?: string) => void;
+  onReportImage?: (mediaId: string) => void;
+  notice?: string;
+  onClearNotice?: () => void;
 }
 
 export default function VideoCall({
   socket,
+  sessionToken,
   onNext,
   onEnd,
   onReport,
+  onBlock,
+  messages = [],
+  onSendMessage,
+  onReportImage,
+  notice,
+  onClearNotice,
 }: VideoCallProps) {
   const [callState, setCallState] = useState<CallState>("idle");
   const [readyCount, setReadyCount] = useState(0);
@@ -45,9 +100,154 @@ export default function VideoCall({
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [cameraEnabled, setCameraEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(true);
+  const [isAudioOnly, setIsAudioOnly] = useState(false);
   const [message, setMessage] = useState("");
   const [connectionType, setConnectionType] = useState<string>("Negotiating...");
   const [needsPlayback, setNeedsPlayback] = useState(false);
+
+  // Side Chat states
+  const [isChatOpen, setIsChatOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [chatDraft, setChatDraft] = useState("");
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const isUserNearBottomRef = useRef(true);
+  const prevMessagesCountRef = useRef(messages.length);
+
+  // Photo sharing states
+  const [photoPreview, setPhotoPreview] = useState<ImageValidationResult | null>(null);
+  const [photoCaption, setPhotoCaption] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [lightboxMedia, setLightboxMedia] = useState<LightboxMedia | null>(null);
+  const sidePhotoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMessage("");
+    const result = await processSelectedPhoto(file);
+    if (!result.valid && !result.previewUrl) {
+      setMessage(result.error || "Invalid photo format or file too large.");
+      if (sidePhotoInputRef.current) sidePhotoInputRef.current.value = "";
+      return;
+    }
+    setPhotoPreview(result);
+    setPhotoCaption("");
+    if (sidePhotoInputRef.current) sidePhotoInputRef.current.value = "";
+  };
+
+  const handleCancelPhoto = useCallback(() => {
+    setPhotoPreview(null);
+    setPhotoCaption("");
+    if (sidePhotoInputRef.current) sidePhotoInputRef.current.value = "";
+  }, []);
+
+  const handleSendPhoto = async () => {
+    if (!photoPreview || !photoPreview.file) return;
+    setUploadingPhoto(true);
+    try {
+      const token = sessionToken || sessionStorage.getItem("meetly-session") || "";
+      const media = await uploadPhotoFile(photoPreview.file, token, {
+        isFlagged: Boolean(photoPreview.safetyResult && !photoPreview.safetyResult.isSafe),
+      });
+      onSendMessage?.(photoCaption, media.mediaId);
+      handleCancelPhoto();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Photo upload failed.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Monitor unread incoming messages when chat panel is closed
+  useEffect(() => {
+    if (messages.length > prevMessagesCountRef.current) {
+      const newMessages = messages.slice(prevMessagesCountRef.current);
+      const incomingFromStranger = newMessages.filter(m => !m.fromMe);
+      if (!isChatOpen && incomingFromStranger.length > 0) {
+        setUnreadCount(prev => prev + incomingFromStranger.length);
+      }
+    }
+    prevMessagesCountRef.current = messages.length;
+  }, [messages, isChatOpen]);
+
+  // Toggle chat panel and clear unread counter
+  const toggleChat = useCallback(() => {
+    setIsChatOpen(prev => {
+      const next = !prev;
+      if (next) {
+        setUnreadCount(0);
+        setTimeout(() => chatInputRef.current?.focus(), 100);
+      }
+      return next;
+    });
+  }, []);
+
+  // Track manual scroll position to preserve scroll when user reviews older messages
+  const handleChatScroll = useCallback(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    const distanceToBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    isUserNearBottomRef.current = distanceToBottom < 80;
+  }, []);
+
+  // Auto-scroll to newest message if user is already near bottom
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    if (isUserNearBottomRef.current) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // Message submission
+  const handleSendChatMessage = useCallback((e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const text = chatDraft.trim();
+    if (!text || text.length > 500) return;
+    if (onSendMessage) {
+      onSendMessage(text);
+      setChatDraft("");
+    }
+  }, [chatDraft, onSendMessage]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendChatMessage();
+    }
+  }, [handleSendChatMessage]);
+
+  const formatTime = (timestamp: number) => {
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(timestamp);
+    } catch {
+      return "";
+    }
+  };
+
+  // Device selection states
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedAudioId, setSelectedAudioId] = useState<string>("");
+  const [selectedVideoId, setSelectedVideoId] = useState<string>("");
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Safety & No-Nudity Screening states
+  const [isScreening, setIsScreening] = useState(false);
+  const [isSafetyObscured, setIsSafetyObscured] = useState(false);
+  const [manualUnblur, setManualUnblur] = useState(false);
+  const [safetyScore, setSafetyScore] = useState<number>(0);
+  const [safetyViolation, setSafetyViolation] = useState<string | null>(null);
+  const [noNudityAcknowledged, setNoNudityAcknowledged] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -56,10 +256,37 @@ export default function VideoCall({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
   const permissionRequestRef = useRef(0);
+  const screeningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const iceServersRef = useRef<RTCIceServer[]>([
     { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
   ]);
+
+  // Enumerate hardware devices
+  const refreshDevices = useCallback(async () => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices.filter(d => d.kind === "audioinput");
+      const videoInputs = devices.filter(d => d.kind === "videoinput");
+      setAudioDevices(audioInputs);
+      setVideoDevices(videoInputs);
+      if (audioInputs[0] && !selectedAudioId) setSelectedAudioId(audioInputs[0].deviceId);
+      if (videoInputs[0] && !selectedVideoId) setSelectedVideoId(videoInputs[0].deviceId);
+    } catch (err) {
+      console.warn("[MediaDevices] Enumeration failed:", err);
+    }
+  }, [selectedAudioId, selectedVideoId]);
+
+  useEffect(() => {
+    void refreshDevices();
+    if (navigator.mediaDevices?.addEventListener) {
+      navigator.mediaDevices.addEventListener("devicechange", refreshDevices);
+      return () => {
+        navigator.mediaDevices.removeEventListener("devicechange", refreshDevices);
+      };
+    }
+  }, [refreshDevices]);
 
   // Fetch dynamic ICE configuration from server
   useEffect(() => {
@@ -86,6 +313,11 @@ export default function VideoCall({
 
   const stopLocalMedia = useCallback((updateState = true) => {
     permissionRequestRef.current += 1;
+    if (screeningTimerRef.current) {
+      clearInterval(screeningTimerRef.current);
+      screeningTimerRef.current = null;
+    }
+
     const connection = peerConnectionRef.current;
     peerConnectionRef.current = null;
     if (connection) {
@@ -110,8 +342,29 @@ export default function VideoCall({
       setCallState("idle");
       setCameraEnabled(true);
       setMicEnabled(true);
+      setIsAudioOnly(false);
       setNeedsPlayback(false);
       setConnectionType("Negotiating...");
+      setIsSafetyObscured(false);
+      setIsScreening(false);
+      setManualUnblur(false);
+      setSafetyViolation(null);
+    }
+  }, []);
+
+  // Remote stream playback helper - no automatic obscuring restrictions
+  const startRemoteScreening = useCallback(() => {
+    if (screeningTimerRef.current) {
+      clearInterval(screeningTimerRef.current);
+      screeningTimerRef.current = null;
+    }
+    setIsScreening(false);
+    setIsSafetyObscured(false);
+    setSafetyViolation(null);
+
+    const videoEl = remoteVideoRef.current;
+    if (videoEl && videoEl.paused) {
+      videoEl.play().catch(() => {});
     }
   }, []);
 
@@ -143,11 +396,9 @@ export default function VideoCall({
 
       try {
         if (signal.kind === "candidate") {
-          // If remote description is already applied, add candidate immediately
           if (connection.remoteDescription && connection.remoteDescription.type) {
             await connection.addIceCandidate(new RTCIceCandidate(signal.candidate));
           } else {
-            // Buffer candidate until remote description arrives
             pendingIceRef.current.push(signal.candidate);
           }
           return;
@@ -155,12 +406,10 @@ export default function VideoCall({
 
         if (signal.kind === "description") {
           if (signal.descriptionType === "offer") {
-            // Set remote offer
             await connection.setRemoteDescription(
               new RTCSessionDescription({ type: "offer", sdp: signal.sdp })
             );
 
-            // Flush any buffered candidates that arrived early
             const buffered = pendingIceRef.current.splice(0);
             for (const candidate of buffered) {
               try {
@@ -170,7 +419,6 @@ export default function VideoCall({
               }
             }
 
-            // Create and send answer
             const answer = await connection.createAnswer();
             await connection.setLocalDescription(answer);
 
@@ -183,12 +431,10 @@ export default function VideoCall({
               },
             });
           } else if (signal.descriptionType === "answer") {
-            // Set remote answer
             await connection.setRemoteDescription(
               new RTCSessionDescription({ type: "answer", sdp: signal.sdp })
             );
 
-            // Flush buffered candidates
             const buffered = pendingIceRef.current.splice(0);
             for (const candidate of buffered) {
               try {
@@ -206,13 +452,13 @@ export default function VideoCall({
     [sendControl]
   );
 
-  // Initialize peer connection
+  // Initialize peer connection with both audio and video senders
   const createPeerConnection = useCallback(
     async (offerer: boolean) => {
       if (peerConnectionRef.current) return;
       const stream = localStreamRef.current;
       if (!stream) {
-        setMessage("Allow camera and microphone access before joining video.");
+        setMessage("Allow microphone and camera access before joining.");
         sendControl({ type: "video-decline" });
         return;
       }
@@ -236,7 +482,10 @@ export default function VideoCall({
             remoteVideoRef.current.srcObject = incoming;
             remoteVideoRef.current
               .play()
-              .then(() => setNeedsPlayback(false))
+              .then(() => {
+                setNeedsPlayback(false);
+                startRemoteScreening();
+              })
               .catch(() => setNeedsPlayback(true));
           }
           void inspectConnectionType(connection);
@@ -261,7 +510,6 @@ export default function VideoCall({
           }
         };
 
-        // Connection state monitoring
         connection.onconnectionstatechange = () => {
           const state = connection.connectionState;
           if (state === "connected") {
@@ -273,9 +521,7 @@ export default function VideoCall({
             if (connection.restartIce) {
               connection.restartIce();
             } else {
-              setMessage(
-                "Direct video connection failed on this network. You can continue by text."
-              );
+              setMessage("Direct connection failed. You can continue by text.");
             }
           }
         };
@@ -290,7 +536,6 @@ export default function VideoCall({
 
         setCallState("connecting");
 
-        // Initial offer initiation if designated offerer
         if (offerer) {
           const offer = await connection.createOffer();
           await connection.setLocalDescription(offer);
@@ -307,10 +552,10 @@ export default function VideoCall({
         console.error("[WebRTC] Peer connection initialization failed:", err);
         sendControl({ type: "video-stop" });
         stopLocalMedia();
-        setMessage("Video connection failed. You can continue by text.");
+        setMessage("Connection initialization failed. You can continue by text.");
       }
     },
-    [inspectConnectionType, sendControl, stopLocalMedia]
+    [inspectConnectionType, sendControl, startRemoteScreening, stopLocalMedia]
   );
 
   // WebSocket message listener for video events
@@ -344,9 +589,7 @@ export default function VideoCall({
       } else if (update.type === "video-stopped") {
         stopLocalMedia();
         setReadyCount(0);
-        setMessage(
-          update.message || "Video stopped. The text conversation is still available."
-        );
+        setMessage(update.message || "Video stopped. The text chat is still active.");
       } else if (update.type === "video-error") {
         setMessage(update.message);
       }
@@ -355,7 +598,7 @@ export default function VideoCall({
     const onClose = () => {
       stopLocalMedia();
       setReadyCount(0);
-      setMessage("Chat connection ended. Camera and microphone are off.");
+      setMessage("Chat connection closed. Microphone and camera are deactivated.");
     };
 
     socket.addEventListener("message", onMessage);
@@ -373,7 +616,7 @@ export default function VideoCall({
     };
   }, [applySignal, createPeerConnection, socket, stopLocalMedia]);
 
-  // Ensure video nodes render active streams
+  // Bind local stream to preview element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
@@ -381,88 +624,161 @@ export default function VideoCall({
     }
   }, [localStream]);
 
+  // Bind remote stream to partner video element
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
       remoteVideoRef.current
         .play()
-        .then(() => setNeedsPlayback(false))
+        .then(() => {
+          setNeedsPlayback(false);
+          startRemoteScreening();
+        })
         .catch(() => setNeedsPlayback(true));
     }
-  }, [remoteStream]);
+  }, [remoteStream, startRemoteScreening]);
 
-  // User action: Enable Camera & Join Video
+  // Join Video Call with robust audio & audio-only fallback
   const joinVideo = async () => {
     if (callState !== "idle") return;
     setMessage("");
 
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      setMessage("Connection is not ready yet. Please wait a moment.");
+      setMessage("Connecting to signaling network. Please wait a moment.");
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
-      setMessage(
-        "Camera and microphone access is not supported on this browser or connection. Please use HTTPS or continue by text."
-      );
+      setMessage("Media devices not supported. Please use HTTPS or continue by text.");
       return;
     }
 
     const requestId = ++permissionRequestRef.current;
     setCallState("requesting");
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-      });
+    let stream: MediaStream | null = null;
+    let fallbackToAudioOnly = false;
 
-      if (permissionRequestRef.current !== requestId) {
-        stream.getTracks().forEach(track => track.stop());
+    try {
+      // First attempt: Both Audio and Video
+      const constraints: MediaStreamConstraints = {
+        audio: selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true,
+        video: selectedVideoId
+          ? { deviceId: { exact: selectedVideoId }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          : { width: { ideal: 1280 }, height: { ideal: 720 } },
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (firstError) {
+      console.warn("[Media] Full audio+video capture failed, attempting audio-only fallback:", firstError);
+      try {
+        // Fallback: Audio-Only capture if camera is occupied or denied
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true,
+          video: false,
+        });
+        fallbackToAudioOnly = true;
+      } catch (audioError) {
+        sendControl({ type: "video-decline" });
+        stopLocalMedia();
+        const isDenied =
+          audioError instanceof Error && /denied|permission|notallowed/i.test(audioError.message);
+        setMessage(
+          isDenied
+            ? "Microphone access was denied. Allow microphone access in your browser settings to join call."
+            : "Hardware capture failed. Please check microphone settings."
+        );
         return;
       }
+    }
 
-      localStreamRef.current = stream;
-      setLocalStream(stream);
-      setCameraEnabled(stream.getVideoTracks().some(track => track.enabled));
-      setMicEnabled(stream.getAudioTracks().some(track => track.enabled));
+    if (permissionRequestRef.current !== requestId || !stream) {
+      stream?.getTracks().forEach(t => t.stop());
+      return;
+    }
 
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-        localVideoRef.current.play().catch(() => {});
-      }
+    localStreamRef.current = stream;
+    setLocalStream(stream);
+    setIsAudioOnly(fallbackToAudioOnly);
+    setCameraEnabled(stream.getVideoTracks().some(track => track.enabled));
+    setMicEnabled(stream.getAudioTracks().some(track => track.enabled));
 
-      if (!sendControl({ type: "video-ready" })) {
-        throw new Error("Connection was interrupted before video consent could be sent.");
-      }
-      setCallState("waiting");
-    } catch (error) {
-      sendControl({ type: "video-decline" });
+    if (localVideoRef.current && !fallbackToAudioOnly) {
+      localVideoRef.current.srcObject = stream;
+      localVideoRef.current.play().catch(() => {});
+    }
+
+    void refreshDevices();
+
+    if (!sendControl({ type: "video-ready" })) {
+      stream.getTracks().forEach(t => t.stop());
       stopLocalMedia();
-      setMessage(
-        error instanceof Error && /denied|permission|notallowed/i.test(error.message)
-          ? "Camera or microphone permission was denied. Allow access in your browser's address bar settings to use Video Chat, or continue by text."
-          : error instanceof Error
-            ? error.message
-            : "Camera and microphone access failed. Continue by text or try again."
-      );
+      setMessage("Connection interrupted before call handshake. Please retry.");
+      return;
+    }
+    setCallState("waiting");
+  };
+
+  // Seamless Audio Device Switching without tearing down WebRTC
+  const switchAudioDevice = async (deviceId: string) => {
+    setSelectedAudioId(deviceId);
+    if (!localStreamRef.current) return;
+
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: { exact: deviceId } },
+      });
+      const newAudioTrack = newStream.getAudioTracks()[0];
+      if (!newAudioTrack) return;
+
+      const sender = peerConnectionRef.current
+        ?.getSenders()
+        .find(s => s.track && s.track.kind === "audio");
+      if (sender) {
+        await sender.replaceTrack(newAudioTrack);
+      }
+
+      const oldAudioTrack = localStreamRef.current.getAudioTracks()[0];
+      if (oldAudioTrack) oldAudioTrack.stop();
+
+      localStreamRef.current.removeTrack(oldAudioTrack);
+      localStreamRef.current.addTrack(newAudioTrack);
+      setMicEnabled(newAudioTrack.enabled);
+    } catch (err) {
+      console.warn("[Media Switch] Audio device switch failed:", err);
     }
   };
 
-  const endVideo = () => {
-    sendControl({ type: "video-stop" });
-    stopLocalMedia();
-    setReadyCount(0);
-    setMessage("Video stopped. The text conversation is still available.");
-  };
+  // Seamless Video Device Switching without tearing down WebRTC
+  const switchVideoDevice = async (deviceId: string) => {
+    setSelectedVideoId(deviceId);
+    if (!localStreamRef.current || isAudioOnly) return;
 
-  const toggleCamera = () => {
-    const track = localStreamRef.current?.getVideoTracks()[0];
-    if (!track) return;
-    track.enabled = !track.enabled;
-    setCameraEnabled(track.enabled);
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      if (!newVideoTrack) return;
+
+      const sender = peerConnectionRef.current
+        ?.getSenders()
+        .find(s => s.track && s.track.kind === "video");
+      if (sender) {
+        await sender.replaceTrack(newVideoTrack);
+      }
+
+      const oldVideoTrack = localStreamRef.current.getVideoTracks()[0];
+      if (oldVideoTrack) oldVideoTrack.stop();
+
+      localStreamRef.current.removeTrack(oldVideoTrack);
+      localStreamRef.current.addTrack(newVideoTrack);
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      setCameraEnabled(newVideoTrack.enabled);
+    } catch (err) {
+      console.warn("[Media Switch] Video device switch failed:", err);
+    }
   };
 
   const toggleMic = () => {
@@ -472,53 +788,128 @@ export default function VideoCall({
     setMicEnabled(track.enabled);
   };
 
+  const toggleCamera = () => {
+    if (isAudioOnly) return;
+    const track = localStreamRef.current?.getVideoTracks()[0];
+    if (!track) return;
+    track.enabled = !track.enabled;
+    setCameraEnabled(track.enabled);
+  };
+
   const handleNextClick = () => {
     stopLocalMedia(false);
+    handleCancelPhoto();
+    setLightboxMedia(null);
     if (onNext) onNext();
   };
 
   const handleEndClick = () => {
     stopLocalMedia(false);
+    handleCancelPhoto();
+    setLightboxMedia(null);
     if (onEnd) onEnd();
   };
 
   const partnerReady = readyCount > 0 && callState === "idle";
   const isVideoActive = callState === "active";
+  const shouldObscure = isSafetyObscured && !manualUnblur;
 
   return (
-    <section className="video-call-panel" aria-label="Stranger video chat">
-      {/* Video Call Header */}
-      <div className="video-call-heading">
-        <div className="video-title-icon">
-          <Video size={17} />
+    <div className={`video-call-layout ${isChatOpen ? "chat-open" : "chat-collapsed"}`}>
+      <section className="video-main-panel" aria-label="Live audio and video chat">
+        {/* Video Call Header */}
+        <div className="video-call-heading">
+          <div className="video-title-icon">
+            <Video size={17} />
+          </div>
+          <div>
+            <strong>Live Video Chat</strong>
+            <span>Direct P2P connection</span>
+          </div>
+          <div className="video-header-actions">
+            <button
+              type="button"
+              className={`video-chat-header-btn ${isChatOpen ? "active" : ""}`}
+              onClick={toggleChat}
+              title={isChatOpen ? "Collapse Chat Panel" : "Open Chat Panel"}
+              aria-label={isChatOpen ? "Collapse Chat Panel" : "Open Chat Panel"}
+            >
+              <MessageSquare size={15} />
+              <span>{isChatOpen ? "Hide Chat" : "Chat"}</span>
+              {unreadCount > 0 && (
+                <span className="unread-counter-badge" aria-label={`${unreadCount} unread messages`}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              className="video-settings-toggle"
+              onClick={() => setShowSettings(!showSettings)}
+              title="Audio / Video Device Settings"
+              aria-label="Settings"
+            >
+              <Settings size={15} />
+            </button>
+            <span className="video-prototype-badge">
+              {isVideoActive ? `● ${connectionType}` : "P2P WebRTC"}
+            </span>
+          </div>
         </div>
-        <div>
-          <strong>Live Video Chat</strong>
-          <span>Both participants must opt in before camera is shared.</span>
-        </div>
-        <span className="video-prototype-badge">
-          {isVideoActive ? `● ${connectionType}` : "P2P WebRTC"}
-        </span>
-      </div>
 
-      {/* Privacy Notice */}
-      <div className="video-privacy-warning" role="note">
-        <ShieldAlert size={16} />
-        <p>
-          <strong>Video Privacy:</strong> Calls are peer-to-peer using STUN/TURN relays. Meetly does not record your video. Camera preview remains local until both users opt in. Age is self-attested.
-        </p>
-      </div>
+      {/* Device Selection Drawer */}
+      {showSettings && (
+        <div className="video-settings-drawer" role="region" aria-label="Device settings">
+          <div className="settings-row">
+            <label htmlFor="mic-select">
+              <Mic size={14} /> Microphone:
+            </label>
+            <select
+              id="mic-select"
+              value={selectedAudioId}
+              onChange={e => void switchAudioDevice(e.target.value)}
+            >
+              {audioDevices.map(d => (
+                <option key={d.deviceId} value={d.deviceId}>
+                  {d.label || `Microphone (${d.deviceId.slice(0, 8)})`}
+                </option>
+              ))}
+            </select>
+          </div>
+          {!isAudioOnly && (
+            <div className="settings-row">
+              <label htmlFor="cam-select">
+                <Camera size={14} /> Camera:
+              </label>
+              <select
+                id="cam-select"
+                value={selectedVideoId}
+                onChange={e => void switchVideoDevice(e.target.value)}
+              >
+                {videoDevices.map(d => (
+                  <option key={d.deviceId} value={d.deviceId}>
+                    {d.label || `Camera (${d.deviceId.slice(0, 8)})`}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Video Viewport Stage */}
       <div className="video-viewport-stage">
         {/* Remote Video Container */}
-        <div className={`video-remote-container ${remoteStream ? "has-feed" : ""}`}>
+        <div
+          className={`video-remote-container ${remoteStream ? "has-feed" : ""}`}
+        >
           {remoteStream ? (
             <video
               ref={remoteVideoRef}
               autoPlay
               playsInline
-              aria-label="Stranger's live video"
+              aria-label="Partner live video feed"
+              className="normal-video"
             />
           ) : (
             <div className="video-placeholder-hero">
@@ -527,17 +918,17 @@ export default function VideoCall({
               </div>
               <h4>
                 {callState === "waiting"
-                  ? "Waiting for your partner to join video..."
+                  ? "Waiting for partner to join audio/video..."
                   : partnerReady
                     ? "Your chat partner is ready! Click below to join."
-                    : "Live Video Chat"}
+                    : "Live Audio & Video Chat"}
               </h4>
               <p>
                 {callState === "waiting"
-                  ? "Your camera preview is active in the corner. Waiting for partner to click join."
+                  ? "Your microphone and camera preview are active. Waiting for partner."
                   : partnerReady
                     ? "Your partner has enabled camera and microphone. Click to connect."
-                    : "Camera and microphone are off. Click below to allow browser access and start."}
+                    : "Microphone and camera are off. Click below to allow browser access and start."}
               </p>
               {callState === "idle" && (
                 <button
@@ -552,7 +943,7 @@ export default function VideoCall({
             </div>
           )}
 
-          {/* Status Badge */}
+          {/* Connection Status Badge */}
           <div className="video-status-overlay">
             <span
               className={`status-pill ${
@@ -565,7 +956,7 @@ export default function VideoCall({
             >
               <span className="status-dot" />
               {isVideoActive
-                ? `Connected · ${connectionType}`
+                ? `Connected · ${isAudioOnly ? "Audio Only" : "Video"} · ${connectionType}`
                 : callState === "connecting"
                   ? "Connecting WebRTC..."
                   : callState === "waiting"
@@ -578,17 +969,29 @@ export default function VideoCall({
         {/* Picture-in-Picture Local Camera Preview */}
         {localStream && (
           <div className="video-pip-container">
-            <video
-              ref={localVideoRef}
-              autoPlay
-              playsInline
-              muted
-              aria-label="Your local camera preview"
-            />
-            {!cameraEnabled && (
+            {!isAudioOnly ? (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                aria-label="Your local camera preview"
+              />
+            ) : (
+              <div className="pip-audio-only">
+                <Mic size={24} />
+                <span>Audio Only</span>
+              </div>
+            )}
+            {!cameraEnabled && !isAudioOnly && (
               <div className="pip-camera-off">
                 <CameraOff size={16} />
                 <span>Camera off</span>
+              </div>
+            )}
+            {!micEnabled && (
+              <div className="pip-mic-muted-badge">
+                <MicOff size={12} /> Muted
               </div>
             )}
             <span className="pip-label">You (Local)</span>
@@ -597,7 +1000,7 @@ export default function VideoCall({
 
         {/* Video Control Bar Overlay */}
         {localStream && (
-          <div className="video-controls-overlay" role="toolbar" aria-label="Video controls">
+          <div className="video-controls-overlay" role="toolbar" aria-label="Call controls">
             <button
               type="button"
               className={`video-ctrl-btn ${micEnabled ? "active" : "muted"}`}
@@ -608,14 +1011,33 @@ export default function VideoCall({
               {micEnabled ? <Mic size={18} /> : <MicOff size={18} />}
             </button>
 
+            {!isAudioOnly && (
+              <button
+                type="button"
+                className={`video-ctrl-btn ${cameraEnabled ? "active" : "muted"}`}
+                onClick={toggleCamera}
+                title={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
+                aria-label={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
+              >
+                {cameraEnabled ? <Camera size={18} /> : <CameraOff size={18} />}
+              </button>
+            )}
+
+            {/* Chat Toggle Button */}
             <button
               type="button"
-              className={`video-ctrl-btn ${cameraEnabled ? "active" : "muted"}`}
-              onClick={toggleCamera}
-              title={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
-              aria-label={cameraEnabled ? "Turn Off Camera" : "Turn On Camera"}
+              className={`video-ctrl-btn chat-btn ${isChatOpen ? "active" : ""}`}
+              onClick={toggleChat}
+              title={isChatOpen ? "Hide Text Chat" : "Open Text Chat"}
+              aria-label={isChatOpen ? "Hide Text Chat" : "Open Text Chat"}
             >
-              {cameraEnabled ? <Camera size={18} /> : <CameraOff size={18} />}
+              <MessageSquare size={18} />
+              {unreadCount > 0 && (
+                <span className="unread-counter-badge" aria-label={`${unreadCount} unread messages`}>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+              <span className="ctrl-btn-text">Chat</span>
             </button>
 
             {onNext && (
@@ -623,8 +1045,8 @@ export default function VideoCall({
                 type="button"
                 className="video-ctrl-btn next"
                 onClick={handleNextClick}
-                title="Next Partner"
-                aria-label="Next Partner"
+                title="Next Stranger"
+                aria-label="Next Stranger"
               >
                 <SkipForward size={18} />
                 <span>Next</span>
@@ -636,8 +1058,8 @@ export default function VideoCall({
                 type="button"
                 className="video-ctrl-btn report"
                 onClick={onReport}
-                title="Report User"
-                aria-label="Report User"
+                title="Report Abuse"
+                aria-label="Report Abuse"
               >
                 <Flag size={17} />
               </button>
@@ -646,9 +1068,9 @@ export default function VideoCall({
             <button
               type="button"
               className="video-ctrl-btn end"
-              onClick={handleEndClick || endVideo}
-              title="End Video Chat"
-              aria-label="End Video Chat"
+              onClick={handleEndClick}
+              title="End Call"
+              aria-label="End Call"
             >
               <PhoneOff size={18} />
             </button>
@@ -681,5 +1103,169 @@ export default function VideoCall({
         </div>
       )}
     </section>
+
+    {/* Side Chat Column (~30% on desktop, bottom drawer on mobile) */}
+    <aside 
+      className={`video-side-chat-column ${isChatOpen ? "open" : "collapsed"}`}
+      aria-label="Live text messaging during call"
+    >
+      <div className="side-chat-header">
+        <div className="side-chat-title">
+          <MessageSquare size={16} className="side-chat-icon" />
+          <div>
+            <strong>Live Chat</strong>
+            <span>Instant & temporary</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="side-chat-toggle-btn"
+          onClick={toggleChat}
+          title={isChatOpen ? "Collapse chat" : "Expand chat"}
+          aria-label={isChatOpen ? "Collapse chat" : "Expand chat"}
+        >
+          <ChevronRight size={16} className="desktop-collapse-icon" />
+          <X size={16} className="mobile-close-icon" />
+        </button>
+      </div>
+
+      {/* Scrollable messages container */}
+      <div
+        className="side-chat-messages"
+        ref={chatScrollRef}
+        onScroll={handleChatScroll}
+        aria-live="polite"
+        aria-label="Conversation messages"
+      >
+        <div className="side-chat-start-notice">
+          <Sparkles size={13} />
+          <span>Connected in video and live text</span>
+        </div>
+
+        {messages.length === 0 && (
+          <div className="side-chat-empty-state">
+            <p>You can send messages while your video and audio continue.</p>
+            <span className="side-chat-hint">Say hi!</span>
+          </div>
+        )}
+
+        {messages.map(msg => (
+          <div
+            key={msg.id}
+            className={`side-chat-row ${msg.fromMe ? "mine" : "theirs"}`}
+          >
+            {msg.media ? (
+              <ChatImageBubble
+                media={msg.media}
+                caption={msg.text}
+                fromMe={msg.fromMe}
+                sentAt={msg.sentAt}
+                onOpenLightbox={setLightboxMedia}
+                onReportImage={onReportImage}
+              />
+            ) : (
+              <div className="side-chat-bubble">
+                <span className="side-chat-sender-label">
+                  {msg.fromMe ? "You" : "Stranger"}
+                </span>
+                <p className="side-chat-text">{msg.text}</p>
+                {msg.sentAt && (
+                  <time className="side-chat-timestamp">
+                    {formatTime(msg.sentAt)}
+                  </time>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Optional notice inside chat */}
+      {notice && (
+        <div className="side-chat-notice" role="status">
+          <span>{notice}</span>
+          {onClearNotice && (
+            <button type="button" onClick={onClearNotice} aria-label="Dismiss notice">
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Photo upload pre-send preview */}
+      <PhotoUploadPreview
+        preview={photoPreview}
+        caption={photoCaption}
+        onCaptionChange={setPhotoCaption}
+        onCancel={handleCancelPhoto}
+        onSend={handleSendPhoto}
+        uploading={uploadingPhoto}
+      />
+
+      {/* Chat composer form */}
+      <form className="side-chat-composer" onSubmit={handleSendChatMessage}>
+        <input
+          ref={sidePhotoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: "none" }}
+          onChange={handlePhotoSelect}
+        />
+        <div className="side-composer-input-wrapper">
+          <button
+            type="button"
+            className="side-chat-photo-trigger-btn"
+            onClick={() => sidePhotoInputRef.current?.click()}
+            title="Send a photo (JPG, PNG, WebP)"
+            aria-label="Send a photo"
+            disabled={uploadingPhoto}
+          >
+            <ImageIcon size={16} />
+          </button>
+          <textarea
+            ref={chatInputRef}
+            value={chatDraft}
+            onChange={e => setChatDraft(e.target.value.slice(0, 500))}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message (Enter to send)..."
+            maxLength={500}
+            rows={1}
+            aria-label="Type a message"
+          />
+          <button
+            type="submit"
+            className="side-send-button"
+            disabled={!chatDraft.trim()}
+            title="Send message (Enter)"
+            aria-label="Send message"
+          >
+            <Send size={15} />
+          </button>
+        </div>
+        <div className="side-composer-meta">
+          <span className="side-composer-hint">
+            <LockKeyhole size={11} /> Shift+Enter for new line
+          </span>
+          <span className="side-composer-counter">{chatDraft.length}/500</span>
+        </div>
+      </form>
+    </aside>
+
+    {/* Mobile backdrop when side chat is open as drawer */}
+    {isChatOpen && (
+      <div
+        className="mobile-side-chat-backdrop"
+        onClick={toggleChat}
+        aria-hidden="true"
+      />
+    )}
+
+    {/* Fullscreen Photo Lightbox Modal */}
+    <ImageLightboxModal
+      media={lightboxMedia}
+      onClose={() => setLightboxMedia(null)}
+      onReport={onReportImage}
+    />
+  </div>
   );
 }
