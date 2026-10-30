@@ -1,0 +1,98 @@
+# ==============================================================================
+# Meetly — Render Blueprint Specification
+# Product: Meetly (Anonymous Random Video & Text Chat)
+# Maintained by: Evolix Studio
+# Documentation: https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Backend Web Service (Node.js + Express + WebSockets + WebRTC Signaling)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: meetly-backend
+    env: node
+    plan: starter
+    region: oregon
+    branch: main
+    buildCommand: corepack enable && corepack prepare pnpm@10.18.0 --activate && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: node dist/index.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+    envVars:
+      # Runtime environment
+      - key: NODE_ENV
+        value: production
+
+      # Port (Render injects PORT, but server defaults gracefully to 3000)
+      - key: PORT
+        value: 3000
+
+      # Cryptographic secrets (Render automatically generates secure random tokens)
+      - key: SESSION_SECRET
+        generateValue: true
+
+      - key: MODERATOR_KEY
+        generateValue: true
+
+      # Allowed CORS origin(s) - set to your Netlify frontend or custom domain
+      # Example: https://meetly.netlify.app,https://meetly.chat
+      - key: CORS_ORIGIN
+        sync: false
+
+      # MySQL Database connection string
+      # Format: mysql://username:password@hostname:3306/meetly
+      - key: DATABASE_URL
+        sync: false
+
+      # Strict database durability enforcement (set to true in dev for memory fallback)
+      - key: ALLOW_EPHEMERAL_COMPLIANCE_FALLBACK
+        value: "false"
+
+      # Age assurance gate enforcement (IT Rules / COPPA)
+      - key: REQUIRE_AGE_ASSURANCE
+        value: "true"
+
+      - key: AGE_ASSURANCE_PROVIDER
+        value: self_attestation
+
+      # WebRTC STUN servers
+      - key: STUN_SERVERS
+        value: stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302,stun:stun2.l.google.com:19302
+
+      # WebRTC TURN servers (Optional, recommended for strict symmetric NATs)
+      # - key: TURN_SERVERS
+      #   sync: false
+      # - key: TURN_SHARED_SECRET
+      #   sync: false
+      # - key: TURN_REALM
+      #   value: meetly.internal
+
+      # Google OAuth 2.0 (Google Identity Services Sign-In)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+
+      # Google Sheets Automated Registration Synchronization
+      - key: GOOGLE_SHEETS_SPREADSHEET_ID
+        sync: false
+
+      - key: GOOGLE_SERVICE_ACCOUNT_EMAIL
+        sync: false
+
+      - key: GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+        sync: false
+
+      # Allow mock Google Auth fallback only in staging/testing, strictly false in production
+      - key: ALLOW_MOCK_GOOGLE_AUTH
+        value: "false"
+
+      # File upload persistent storage directory
+      - key: UPLOAD_STORAGE_DIR
+        value: /var/data/uploads
+
+    # Persistent disk for storing uploaded chat images (Optional on Render Starter plan)
+    disk:
+      name: meetly-uploads
+      mountPath: /var/data/uploads
+      sizeGB: 10
