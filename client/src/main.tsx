@@ -36,13 +36,16 @@ const trpcClient = trpc.createClient({
       url: getApiUrl("/api/trpc"),
       transformer: superjson,
       headers() {
+        const headers: Record<string, string> = {};
         try {
           const chatSession = sessionStorage.getItem("meetly-session");
-          if (chatSession) return { "X-Meetly-Session": chatSession };
+          if (chatSession) headers["X-Meetly-Session"] = chatSession;
+          const authToken = localStorage.getItem("meetly-auth-token");
+          if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
         } catch {
           // Tab-scoped storage unavailable in this browser
         }
-        return {};
+        return headers;
       },
       fetch(input, init) {
         return globalThis.fetch(input, {

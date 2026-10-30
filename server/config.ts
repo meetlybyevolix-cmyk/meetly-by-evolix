@@ -191,11 +191,11 @@ export const config: AppConfig = {
     process.env.REQUIRE_AGE_ASSURANCE === "true" &&
     process.env.ALLOW_EPHEMERAL_COMPLIANCE_FALLBACK !== "true",
   ageAssuranceProvider: process.env.AGE_ASSURANCE_PROVIDER || "mock",
-  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  googleClientId:
+    process.env.GOOGLE_CLIENT_ID ||
+    "162654871088-dkiopg65foj48avnhhr34s3rs1v4ccq9.apps.googleusercontent.com",
   googleSheetsSpreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID || "",
   googleServiceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "",
   googleServiceAccountPrivateKey: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "",
-  allowMockGoogleAuth:
-    process.env.ALLOW_MOCK_GOOGLE_AUTH === "true" ||
-    process.env.NODE_ENV !== "production",
+  allowMockGoogleAuth: process.env.ALLOW_MOCK_GOOGLE_AUTH === "true",
 };
