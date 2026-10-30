@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { LegalLayout } from "./LegalLayout";
+import { getApiUrl } from "@/lib/api";
 import { AlertCircle, CheckCircle2, Copy, FileText, Loader2, Search, Send, ShieldCheck } from "lucide-react";
 
 export default function DataRights() {
@@ -25,7 +26,7 @@ export default function DataRights() {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/privacy/data-request", {
+      const res = await fetch(getApiUrl("/api/privacy/data-request"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -58,7 +59,7 @@ export default function DataRights() {
 
     setChecking(true);
     try {
-      const res = await fetch(`/api/privacy/data-request/${encodeURIComponent(checkCode.trim())}`);
+      const res = await fetch(getApiUrl(`/api/privacy/data-request/${encodeURIComponent(checkCode.trim())}`));
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Request code not found");

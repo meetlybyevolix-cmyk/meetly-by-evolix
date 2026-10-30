@@ -38,6 +38,7 @@ import {
 import ImageLightboxModal, {
   type LightboxMedia,
 } from "./ImageLightboxModal";
+import { getApiUrl } from "../lib/api";
 import PhotoUploadPreview from "./PhotoUploadPreview";
 import ChatImageBubble from "./ChatImageBubble";
 
@@ -290,7 +291,7 @@ export default function VideoCall({
 
   // Fetch dynamic ICE configuration from server
   useEffect(() => {
-    fetch("/api/ice-servers")
+    fetch(getApiUrl("/api/ice-servers"))
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data.iceServers) && data.iceServers.length > 0) {

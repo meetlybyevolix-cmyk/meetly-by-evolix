@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getApiUrl } from "@/lib/api";
 
 interface AdContainerProps {
   slotId?: string;
@@ -25,7 +26,7 @@ export function AdContainer({
 
   useEffect(() => {
     // Check legal configuration from server
-    fetch("/api/legal-config")
+    fetch(getApiUrl("/api/legal-config"))
       .then(r => (r.ok ? r.json() : null))
       .then(config => {
         if (config?.enableAds && config?.adsenseClientId) {

@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { getWsUrl } from "@/lib/api";
 import VideoCall from "@/components/VideoCall";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import {
@@ -280,9 +281,7 @@ export default function Home() {
     let attempts = 0;
     const connect = () => {
       if (stopped) return;
-      const url = new URL("/api/chat/live", window.location.href);
-      url.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const socket = new WebSocket(url.toString());
+      const socket = new WebSocket(getWsUrl("/api/chat/live"));
       socketRef.current = socket;
       setLiveSocket(socket);
       socket.onopen = () => {

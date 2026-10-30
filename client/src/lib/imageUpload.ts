@@ -1,4 +1,5 @@
 import { classifyFramePixels, type SafetyClassificationResult } from "./videoSafetyClassifier";
+import { getApiUrl } from "./api";
 
 export interface ImageValidationResult {
   valid: boolean;
@@ -142,7 +143,7 @@ export async function uploadPhotoFile(
     "x-meetly-session": sessionToken,
   };
 
-  const res = await fetch("/api/chat/upload-image", {
+  const res = await fetch(getApiUrl("/api/chat/upload-image"), {
     method: "POST",
     headers,
     body: file,
@@ -157,6 +158,10 @@ export async function uploadPhotoFile(
     throw new Error(errorMsg);
   }
 
-  return await res.json();
+  const payload = await res.json();
+  if (payload.url && !payload.url.startsWith("http")) {
+    payload.url = getApiUrl(payload.url);
+  }
+  return payload;
 }
 

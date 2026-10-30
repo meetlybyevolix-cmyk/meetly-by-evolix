@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { LegalLayout } from "./LegalLayout";
+import { getApiUrl } from "@/lib/api";
 import { AlertCircle, CheckCircle2, Clock, Copy, Loader2, Mail, MapPin, Search, Send, ShieldAlert, UserCheck } from "lucide-react";
 
 export default function GrievanceRedressal() {
@@ -27,7 +28,7 @@ export default function GrievanceRedressal() {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/grievance/submit", {
+      const res = await fetch(getApiUrl("/api/grievance/submit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -64,7 +65,7 @@ export default function GrievanceRedressal() {
 
     setChecking(true);
     try {
-      const res = await fetch(`/api/grievance/status/${encodeURIComponent(checkCode.trim())}`);
+      const res = await fetch(getApiUrl(`/api/grievance/status/${encodeURIComponent(checkCode.trim())}`));
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Grievance ticket not found");
