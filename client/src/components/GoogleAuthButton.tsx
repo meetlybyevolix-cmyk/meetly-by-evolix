@@ -92,7 +92,28 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
   const logoutMutation = trpc.auth.logout.useMutation();
   const deleteAccountMutation = trpc.auth.deleteAccount.useMutation();
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+  const { data: authConfig } = trpc.auth.config.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const googleClientId =
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || authConfig?.googleClientId || "";
+
+  const [gisReady, setGisReady] = useState(Boolean(window.google?.accounts?.id));
+
+  useEffect(() => {
+    if (window.google?.accounts?.id) {
+      setGisReady(true);
+      return;
+    }
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        setGisReady(true);
+        clearInterval(interval);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -156,7 +177,7 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
     } catch (e) {
       console.warn("[Google Identity] Render button initialization fallback:", e);
     }
-  }, [googleClientId, user, compact]);
+  }, [googleClientId, user, compact, gisReady]);
 
   const handleManualLoginClick = () => {
     if (window.google?.accounts?.id && googleClientId) {

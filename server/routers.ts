@@ -28,6 +28,7 @@ import {
   getInternalUserId,
 } from "./db";
 import { assertAgeAssuranceEligible } from "./ageAssurance";
+import { config } from "./config";
 import { verifyGoogleIdToken, assertGoogleAuthRateLimit } from "./googleAuth";
 import { syncUserRegistration, syncUserDeletion } from "./googleSheets";
 import {
@@ -108,6 +109,11 @@ function failAsTooManyRequests(error: unknown): never {
 export const appRouter = router({
   system: systemRouter,
   auth: router({
+    config: publicProcedure.query(async () => {
+      return {
+        googleClientId: config.googleClientId || "",
+      };
+    }),
     me: publicProcedure.query(async ({ ctx }) => {
       if (!ctx.user) return null;
       return {
