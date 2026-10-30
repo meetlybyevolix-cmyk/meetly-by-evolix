@@ -208,3 +208,4 @@ Outside `node_modules/`, the remaining files over 20 KB are all core application
 8. `server/_core/index.ts` (33.20 KB) — Backend Express initialization, security headers, WebSockets, and health probes (required source).
 9. `server/chat/service.ts` (28.40 KB) — Matchmaking queues, language fallback, room lifecycle, and WebRTC signaling (required source).
 10. `server/db.ts` (26.60 KB) — MySQL persistence, statutory logging, and compliance queries (required source).
+

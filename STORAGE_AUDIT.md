@@ -254,3 +254,4 @@ Removing the 40 unused UI components allows removing the following 31 unused pac
 - **In Source Delivery Package (`meetly-clean-source.zip`)**:
   - Excludes `node_modules/` (466 MB), `.git/` (1.22 MB), `dist/` (820 KB), `data/uploads/`, and `.env`.
   - Delivery package size will shrink from over 560 MB uncompressed to **under 1.5 MB uncompressed** and **under 600 KB compressed ZIP**!
+
