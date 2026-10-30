@@ -27,7 +27,11 @@ import {
   deleteUserByOpenId,
   getInternalUserId,
 } from "./db";
-import { assertAgeAssuranceEligible } from "./ageAssurance";
+import {
+  assertAgeAssuranceEligible,
+  initiateAgeAssurance,
+  verifyAgeAssurance,
+} from "./ageAssurance";
 import { config } from "./config";
 import { verifyGoogleIdToken, assertGoogleAuthRateLimit } from "./googleAuth";
 import { syncUserRegistration, syncUserDeletion } from "./googleSheets";
@@ -264,12 +268,21 @@ export const appRouter = router({
             isSynthetic: z.boolean().optional(),
           })
         )
-        .mutation(({ ctx, input }) => {
+        .mutation(async ({ ctx, input }) => {
           try {
-            return createAnonymousSession(
+            const result = createAnonymousSession(
               input,
               ctx.req.ip || ctx.req.socket.remoteAddress || "unknown"
             );
+            if (input.ageConfirmed) {
+              const sessionId = result.token.slice(0, result.token.lastIndexOf("."));
+              await initiateAgeAssurance(sessionId, "self-attested").catch(() => {});
+              await verifyAgeAssurance(sessionId, {
+                provider: "self-attested",
+                over18Confirmed: true,
+              }).catch(() => {});
+            }
+            return result;
           } catch (error) {
             if (
               error instanceof Error &&

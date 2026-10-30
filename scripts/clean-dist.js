@@ -6,3 +6,4 @@ if (fs.existsSync(distPublic)) {
   fs.rmSync(distPublic, { recursive: true, force: true });
   console.log(`[Clean] Purged build cache at ${distPublic}`);
 }
+

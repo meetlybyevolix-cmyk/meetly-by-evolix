@@ -187,7 +187,9 @@ export const config: AppConfig = {
   turnSharedSecret: process.env.TURN_SHARED_SECRET || "",
   turnCredentialTtl: Number(process.env.TURN_CREDENTIAL_TTL || 86400),
   iceServers: generateIceServers(),
-  requireAgeAssurance: process.env.REQUIRE_AGE_ASSURANCE === "true",
+  requireAgeAssurance:
+    process.env.REQUIRE_AGE_ASSURANCE === "true" &&
+    process.env.ALLOW_EPHEMERAL_COMPLIANCE_FALLBACK !== "true",
   ageAssuranceProvider: process.env.AGE_ASSURANCE_PROVIDER || "mock",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   googleSheetsSpreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID || "",

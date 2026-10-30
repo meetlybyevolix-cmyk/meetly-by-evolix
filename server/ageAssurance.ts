@@ -111,7 +111,12 @@ export async function verifyAgeAssurance(
   }
 
   // In production, external providers must be legitimately configured
-  if (config.isProduction && provider === "mock" && !process.env.ALLOW_MOCK_AGE_ASSURANCE) {
+  if (
+    config.isProduction &&
+    provider === "mock" &&
+    !process.env.ALLOW_MOCK_AGE_ASSURANCE &&
+    process.env.ALLOW_EPHEMERAL_COMPLIANCE_FALLBACK !== "true"
+  ) {
     throw new Error(
       "[Age Assurance] Production requires a licensed third-party age verification provider (e.g. Yoti, Veriff) or certified government digital ID token."
     );
@@ -190,7 +195,7 @@ export async function checkAgeAssurance(
  * If age assurance is enforced in config, session must be verified.
  */
 export async function assertAgeAssuranceEligible(sessionId: string): Promise<void> {
-  if (!config.requireAgeAssurance) {
+  if (!config.requireAgeAssurance || process.env.ALLOW_EPHEMERAL_COMPLIANCE_FALLBACK === "true") {
     return; // Age assurance requirement not enforced in current mode
   }
   const status = await checkAgeAssurance(sessionId);

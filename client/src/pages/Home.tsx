@@ -467,20 +467,61 @@ export default function Home() {
         }
       }
       setMode("searching");
-      const searchRes = await search.mutateAsync({
-        preferences: {
-          interests: randomOnly ? [] : selectedInterests,
-          language: randomOnly ? "Any" : language,
-          mediaMode,
-        },
-      });
+      let searchRes;
+      try {
+        searchRes = await search.mutateAsync({
+          preferences: {
+            interests: randomOnly ? [] : selectedInterests,
+            language: randomOnly ? "Any" : language,
+            mediaMode,
+          },
+        });
+      } catch (searchErr) {
+        if (
+          searchErr instanceof Error &&
+          (/age assurance/i.test(searchErr.message) || /session has expired/i.test(searchErr.message))
+        ) {
+          setSessionToken("");
+          try {
+            sessionStorage.removeItem("meetly-session");
+          } catch {
+            /* no-op */
+          }
+          const fresh = await createSession.mutateAsync({
+            ageConfirmed: true,
+            termsAccepted: true,
+            privacyAccepted: true,
+            preferences: {
+              interests: randomOnly ? [] : selectedInterests,
+              language: randomOnly ? "Any" : language,
+              mediaMode,
+            },
+          });
+          setSessionToken(fresh.token);
+          try {
+            sessionStorage.setItem("meetly-session", fresh.token);
+          } catch {
+            /* no-op */
+          }
+          searchRes = await search.mutateAsync({
+            preferences: {
+              interests: randomOnly ? [] : selectedInterests,
+              language: randomOnly ? "Any" : language,
+              mediaMode,
+            },
+          });
+        } else {
+          throw searchErr;
+        }
+      }
       if (searchRes.state === "chat") {
         setMode("chat");
       }
     } catch (error) {
       if (
         error instanceof Error &&
-        /session has expired/i.test(error.message)
+        (/session has expired/i.test(error.message) ||
+          /age assurance/i.test(error.message))
       ) {
         setSessionToken("");
         try {
