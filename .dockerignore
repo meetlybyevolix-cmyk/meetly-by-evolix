@@ -6,3 +6,21 @@ dist
 *.log
 .DS_Store
 Thumbs.db
+
+# Documentation and reports not needed in Docker build
+*.md
+!README.md
+docs/
+
+# Tests not needed in Docker runtime build
+server/*.test.ts
+scripts/load-test.js
+
+# Caches and archives
+coverage
+.nyc_output
+.vite
+*.tsbuildinfo
+*.zip
+*.tar.gz
+data/

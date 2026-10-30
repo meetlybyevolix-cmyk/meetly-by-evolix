@@ -1,18 +1,18 @@
 # Dependencies
-**/node_modules
+node_modules/
+**/node_modules/
 .pnpm-store/
 
 # Build outputs
 dist/
 build/
 *.dist
+.vite/
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # IDE and editor files
 .vscode/
@@ -31,7 +31,7 @@ ehthumbs.db
 Thumbs.db
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -39,77 +39,36 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Runtime data
+# Runtime data & uploads
 pids
 *.pid
 *.seed
 *.pid.lock
 *.bak
+data/uploads/
+data/*.png
+data/*.jpg
+data/*.jpeg
+data/*.webp
 
-# Coverage directory used by tools like istanbul
+# Test & coverage directory
 coverage/
 *.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
+.nyc_output/
 
 # TypeScript cache
 *.tsbuildinfo
 
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
+# Delivery archives
+*.zip
+*.tar.gz
 *.tgz
+meetly-clean-source.zip
 
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-
-# Gatsby files
+# Optional caches
 .cache/
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-data/
-data/uploads/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Webdev artifacts (checkpoint zips, migrations, etc.)
-.webdev/
+.parcel-cache/
+.eslintcache/
 
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
