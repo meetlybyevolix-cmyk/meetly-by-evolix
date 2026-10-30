@@ -96,3 +96,4 @@ services:
       name: meetly-uploads
       mountPath: /var/data/uploads
       sizeGB: 10
+
