@@ -3,6 +3,4 @@ compatibility_date = "2024-09-23"
 
 [assets]
 directory = "./dist/public"
-binding = "ASSETS"
-html_handling = "single-page-application"
 not_found_handling = "single-page-application"
