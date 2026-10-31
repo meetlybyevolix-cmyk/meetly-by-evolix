@@ -269,6 +269,12 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ ctx, input }) => {
+          if (config.isProduction && !ctx.user && !input.isSynthetic) {
+            throw new TRPCError({
+              code: "UNAUTHORIZED",
+              message: "Google sign-in is required before starting a chat session.",
+            });
+          }
           try {
             const result = createAnonymousSession(
               input,

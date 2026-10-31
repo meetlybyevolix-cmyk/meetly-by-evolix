@@ -3,7 +3,6 @@ import { trpc } from "@/lib/trpc";
 import {
   CheckCircle2,
   ChevronDown,
-  Lock,
   LogOut,
   ShieldCheck,
   Trash2,
@@ -40,8 +39,12 @@ declare global {
   }
 }
 
+export const HARDCODED_GOOGLE_CLIENT_ID =
+  "162654871088-dkiopg65foj48avnhhr34s3rs1v4ccq9.apps.googleusercontent.com";
+
 export interface GoogleAuthButtonProps {
   compact?: boolean;
+  buttonText?: "signin_with" | "signup_with" | "continue_with" | "signin";
   onSuccess?: (user: { name: string; userId: string; isNewUser: boolean }) => void;
 }
 
@@ -74,13 +77,14 @@ export function GoogleIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleAuthButtonProps) {
+export default function GoogleAuthButton({
+  compact = false,
+  buttonText = "continue_with",
+  onSuccess,
+}: GoogleAuthButtonProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [testModalOpen, setTestModalOpen] = useState(false);
-  const [customName, setCustomName] = useState("Ayush Sharma");
-  const [customEmail, setCustomEmail] = useState("ayush@evolix.studio");
 
   const buttonRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -97,23 +101,9 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
   });
 
   const googleClientId =
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || authConfig?.googleClientId || "";
-
-  const [gisReady, setGisReady] = useState(Boolean(window.google?.accounts?.id));
-
-  useEffect(() => {
-    if (window.google?.accounts?.id) {
-      setGisReady(true);
-      return;
-    }
-    const interval = setInterval(() => {
-      if (window.google?.accounts?.id) {
-        setGisReady(true);
-        clearInterval(interval);
-      }
-    }, 200);
-    return () => clearInterval(interval);
-  }, []);
+    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    authConfig?.googleClientId ||
+    HARDCODED_GOOGLE_CLIENT_ID;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -133,6 +123,9 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
     setErrorNotice(null);
     try {
       const result = await googleLoginMutation.mutateAsync({ idToken: credential });
+      if (result.sessionToken) {
+        localStorage.setItem("meetly-auth-token", result.sessionToken);
+      }
       await refetchUser();
       if (onSuccess && result.user) {
         onSuccess({
@@ -149,74 +142,64 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
 
   // Initialize official Google Identity Services button
   useEffect(() => {
-    if (!googleClientId || user || !window.google?.accounts?.id || !buttonRef.current) {
+    if (!googleClientId || user || !buttonRef.current) {
       return;
     }
 
-    try {
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: response => {
-          if (response?.credential) {
-            void handleCredentialResponse(response.credential);
-          }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
+    const initGis = () => {
+      if (!window.google?.accounts?.id || !buttonRef.current) return false;
+      try {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: response => {
+            if (response?.credential) {
+              void handleCredentialResponse(response.credential);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
 
-      buttonRef.current.innerHTML = "";
-      window.google.accounts.id.renderButton(buttonRef.current, {
-        type: "standard",
-        theme: "outline",
-        size: compact ? "medium" : "large",
-        text: "continue_with",
-        shape: "pill",
-        width: compact ? 180 : 230,
-      });
-    } catch (e) {
-      console.warn("[Google Identity] Render button initialization fallback:", e);
-    }
-  }, [googleClientId, user, compact, gisReady]);
+        buttonRef.current.innerHTML = "";
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: compact ? "medium" : "large",
+          text: buttonText,
+          shape: "pill",
+          width: compact ? 180 : 250,
+        });
+        return true;
+      } catch (e) {
+        console.warn("[Google Identity] Render button initialization error:", e);
+        return false;
+      }
+    };
+
+    if (initGis()) return;
+
+    // Retry checking if script is still loading
+    const interval = setInterval(() => {
+      if (initGis()) {
+        clearInterval(interval);
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, [googleClientId, user, compact, buttonText]);
 
   const handleManualLoginClick = () => {
-    if (window.google?.accounts?.id && googleClientId) {
-      try {
-        window.google.accounts.id.prompt();
-      } catch {
-        setTestModalOpen(true);
-      }
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
     } else {
-      // In development or when VITE_GOOGLE_CLIENT_ID is not configured, show friendly test modal
-      setTestModalOpen(true);
-    }
-  };
-
-  const handleSimulatedTestLogin = async () => {
-    setTestModalOpen(false);
-    setErrorNotice(null);
-    try {
-      const mockToken = `mock-google-token:usr_${Date.now().toString(36)}:${encodeURIComponent(
-        customName
-      )}:${encodeURIComponent(customEmail)}`;
-      const result = await googleLoginMutation.mutateAsync({ idToken: mockToken });
-      await refetchUser();
-      if (onSuccess && result.user) {
-        onSuccess({
-          name: result.user.name || "Google User",
-          userId: result.user.userId,
-          isNewUser: result.isNewUser,
-        });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Simulated login failed";
-      setErrorNotice(msg);
+      setErrorNotice("Google authentication is loading. Please wait a moment.");
     }
   };
 
   const handleLogout = async () => {
     setDropdownOpen(false);
     try {
+      localStorage.removeItem("meetly-auth-token");
       await logoutMutation.mutateAsync();
       await refetchUser();
     } catch (err) {
@@ -228,6 +211,7 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
     setShowDeleteConfirm(false);
     setDropdownOpen(false);
     try {
+      localStorage.removeItem("meetly-auth-token");
       await deleteAccountMutation.mutateAsync();
       await refetchUser();
     } catch (err) {
@@ -243,7 +227,7 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
     );
   }
 
-  // User is logged in: Display verified customer badge and dropdown
+  // User is logged in: Display verified user badge and dropdown
   if (user) {
     return (
       <div className="google-user-container" ref={dropdownRef} style={{ position: "relative" }}>
@@ -335,13 +319,10 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
     );
   }
 
-  // User is not logged in: Display Continue with Google button
+  // User is not logged in: Display official Google Identity button
   return (
     <div className="google-auth-wrapper">
-      {/* Official GIS container if configured */}
-      {googleClientId ? (
-        <div ref={buttonRef} className="google-gis-host" />
-      ) : (
+      <div ref={buttonRef} className="google-gis-host">
         <button
           type="button"
           className={`google-signin-btn ${compact ? "compact" : ""}`}
@@ -353,9 +334,9 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
           ) : (
             <GoogleIcon size={17} />
           )}
-          <span>Continue with Google</span>
+          <span>{buttonText === "signup_with" ? "Sign up with Google" : "Continue with Google"}</span>
         </button>
-      )}
+      </div>
 
       {errorNotice && (
         <div className="google-auth-error-popover" role="alert">
@@ -367,98 +348,6 @@ export default function GoogleAuthButton({ compact = false, onSuccess }: GoogleA
           >
             <X size={12} />
           </button>
-        </div>
-      )}
-
-      {/* Development / Staging Test Modal */}
-      {testModalOpen && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setTestModalOpen(false)}>
-          <div
-            className="modal-card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="test-auth-title"
-            onClick={e => e.stopPropagation()}
-            style={{ maxWidth: 440 }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <GoogleIcon size={20} />
-                <h3 id="test-auth-title" style={{ margin: 0 }}>Google Authentication</h3>
-              </div>
-              <button
-                type="button"
-                className="icon-button"
-                onClick={() => setTestModalOpen(false)}
-                aria-label="Close"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <p style={{ fontSize: 13, color: "var(--muted)", margin: "12px 0 16px" }}>
-              {googleClientId
-                ? "Sign in with your verified Google account. Your profile name will be captured and synchronized to the administrative Google Sheet."
-                : "Development Mode: Google Client ID is not set in environment. You can test the full verification, MySQL registration, and Google Sheets sync flow below:"}
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <label style={{ fontSize: 12, fontWeight: 600 }}>
-                Customer Name:
-                <input
-                  type="text"
-                  value={customName}
-                  onChange={e => setCustomName(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 6,
-                    border: "1px solid var(--line)",
-                    marginTop: 4,
-                  }}
-                />
-              </label>
-
-              <label style={{ fontSize: 12, fontWeight: 600 }}>
-                Google Account Email:
-                <input
-                  type="email"
-                  value={customEmail}
-                  onChange={e => setCustomEmail(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: 6,
-                    border: "1px solid var(--line)",
-                    marginTop: 4,
-                  }}
-                />
-              </label>
-            </div>
-
-            <div style={{ background: "var(--subtle)", padding: 12, borderRadius: 8, marginTop: 14, fontSize: 12 }}>
-              <ShieldCheck size={14} style={{ display: "inline-block", marginRight: 6, verticalAlign: -2 }} />
-              <strong>Privacy Protection:</strong> Your verified Google name and email are used exclusively for administrative registration and are <strong>never</strong> shared with strangers in chat.
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 }}>
-              <button
-                type="button"
-                className="button button-secondary"
-                onClick={() => setTestModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="button button-primary"
-                onClick={handleSimulatedTestLogin}
-                disabled={googleLoginMutation.isPending}
-              >
-                {googleLoginMutation.isPending ? "Signing in..." : "Continue to Register"}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

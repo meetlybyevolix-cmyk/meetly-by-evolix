@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Ban,
   Check,
+  CheckCircle2,
   ChevronRight,
   CircleHelp,
   Flag,
@@ -254,6 +255,7 @@ export default function Home() {
     refetchInterval: 10_000,
   });
   const [onlineCount, setOnlineCount] = useState<number>(0);
+  const { data: user, refetch: refetchUser } = trpc.auth.me.useQuery();
 
   useEffect(() => {
     if (typeof statsQuery.data?.onlineCount === "number") {
@@ -429,6 +431,13 @@ export default function Home() {
   }, [mode, language]);
 
   const startSearching = async (randomOnly = false) => {
+    if (!user) {
+      setNotice("Please sign up or sign in with Google to start chatting.");
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.prompt();
+      }
+      return;
+    }
     setNotice("");
     setMessages([]);
     if (randomOnly) {
@@ -742,7 +751,7 @@ export default function Home() {
   };
 
   const sessionWorking = createSession.isPending || search.isPending;
-  const canStart = !sessionWorking;
+  const canStart = Boolean(user) && !sessionWorking;
 
   return (
     <div className="app-shell">
@@ -805,24 +814,59 @@ export default function Home() {
                 contact details—just a chance to talk. Choose simple text or
                 opt-in video chat.
               </p>
-              <button
-                className="button button-primary button-large"
-                onClick={() => {
-                  setMode("preferences");
-                  setNotice("");
-                }}
-              >
-                Start chatting <ArrowRight size={18} />
-              </button>
-              <button
-                className="random-start-link"
-                onClick={() => {
-                  setMode("consent");
-                  setNotice("");
-                }}
-              >
-                No preferences—just a random chat <ArrowRight size={14} />
-              </button>
+              {!user ? (
+                <div className="hero-signup-card">
+                  <div className="hero-signup-header">
+                    <div className="hero-signup-icon-box">
+                      <ShieldCheck size={22} />
+                    </div>
+                    <div>
+                      <strong>Sign up with Google to start chatting</strong>
+                      <p>
+                        To ensure community safety, Meetly requires Google authentication before connecting with strangers.
+                        Your email and real identity remain 100% private in chat.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hero-signup-action">
+                    <GoogleAuthButton
+                      buttonText="signup_with"
+                      onSuccess={signedInUser => {
+                        setNotice(`Welcome, ${signedInUser.name}! You are now verified to chat.`);
+                        refetchUser();
+                        setMode("preferences");
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="hero-user-greeting">
+                    <CheckCircle2 size={16} />
+                    <span>
+                      Signed in as <strong>{user.name}</strong>
+                    </span>
+                  </div>
+                  <button
+                    className="button button-primary button-large"
+                    onClick={() => {
+                      setMode("preferences");
+                      setNotice("");
+                    }}
+                  >
+                    Start chatting <ArrowRight size={18} />
+                  </button>
+                  <button
+                    className="random-start-link"
+                    onClick={() => {
+                      setMode("consent");
+                      setNotice("");
+                    }}
+                  >
+                    No preferences—just a random chat <ArrowRight size={14} />
+                  </button>
+                </>
+              )}
               <div className="hero-presence-card" role="status" aria-label="Community activity">
                 <span className="live-status-dot-wrap">
                   <span className="live-status-dot-pulse" />
@@ -972,23 +1016,38 @@ export default function Home() {
                 {notice}
               </div>
             )}
-            <button
-              className="button button-primary button-large full-width"
-              disabled={!canStart}
-              onClick={() => startSearching(true)}
-            >
-              {sessionWorking ? (
-                <>
-                  <span className="spinner" />
-                  Starting securely…
-                </>
-              ) : (
-                <>
-                  Find a random {mediaMode === "video" ? "video match" : "chat"}{" "}
-                  <ArrowRight size={18} />
-                </>
-              )}
-            </button>
+            {!user ? (
+              <div className="auth-gate-box-inner">
+                <p className="auth-gate-text">
+                  <ShieldCheck size={16} /> Sign in with Google to enter matchmaking:
+                </p>
+                <GoogleAuthButton
+                  buttonText="signin_with"
+                  onSuccess={() => {
+                    refetchUser();
+                    setNotice("Signed in! You can now start matching.");
+                  }}
+                />
+              </div>
+            ) : (
+              <button
+                className="button button-primary button-large full-width"
+                disabled={!canStart}
+                onClick={() => startSearching(true)}
+              >
+                {sessionWorking ? (
+                  <>
+                    <span className="spinner" />
+                    Starting securely…
+                  </>
+                ) : (
+                  <>
+                    Find a random {mediaMode === "video" ? "video match" : "chat"}{" "}
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            )}
             <p className="under-button-note">
               <LockKeyhole size={13} />
               No email, phone number, interests or location needed.
@@ -1068,24 +1127,39 @@ export default function Home() {
                 {notice}
               </div>
             )}
-            <button
-              className="button button-primary button-large full-width"
-              disabled={!canStart}
-              onClick={() => startSearching(false)}
-            >
-              {sessionWorking ? (
-                <>
-                  <span className="spinner" />
-                  Starting securely…
-                </>
-              ) : (
-                <>
-                  Find someone to{" "}
-                  {mediaMode === "video" ? "video chat with" : "chat with"}{" "}
-                  <ArrowRight size={18} />
-                </>
-              )}
-            </button>
+            {!user ? (
+              <div className="auth-gate-box-inner">
+                <p className="auth-gate-text">
+                  <ShieldCheck size={16} /> Sign in with Google to enter matchmaking:
+                </p>
+                <GoogleAuthButton
+                  buttonText="signin_with"
+                  onSuccess={() => {
+                    refetchUser();
+                    setNotice("Signed in! You can now start matching.");
+                  }}
+                />
+              </div>
+            ) : (
+              <button
+                className="button button-primary button-large full-width"
+                disabled={!canStart}
+                onClick={() => startSearching(false)}
+              >
+                {sessionWorking ? (
+                  <>
+                    <span className="spinner" />
+                    Starting securely…
+                  </>
+                ) : (
+                  <>
+                    Find someone to{" "}
+                    {mediaMode === "video" ? "video chat with" : "chat with"}{" "}
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            )}
             <p className="under-button-note">
               <LockKeyhole size={13} />
               No email or phone number. You can leave whenever you like.

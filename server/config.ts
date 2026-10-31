@@ -197,5 +197,7 @@ export const config: AppConfig = {
   googleSheetsSpreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID || "",
   googleServiceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "",
   googleServiceAccountPrivateKey: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "",
-  allowMockGoogleAuth: process.env.ALLOW_MOCK_GOOGLE_AUTH === "true",
+  allowMockGoogleAuth:
+    process.env.ALLOW_MOCK_GOOGLE_AUTH === "true" ||
+    process.env.NODE_ENV !== "production",
 };
