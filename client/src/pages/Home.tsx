@@ -37,6 +37,7 @@ import ImageLightboxModal, {
 } from "../components/ImageLightboxModal";
 import PhotoUploadPreview from "../components/PhotoUploadPreview";
 import ChatImageBubble from "../components/ChatImageBubble";
+import { acquireWarmStream, stopWarmStream } from "@/lib/mediaStreamCache";
 
 type Mode = "home" | "consent" | "preferences" | "searching" | "chat";
 type MediaMode = "text" | "video";
@@ -210,6 +211,23 @@ function MediaModePicker({
 export default function Home() {
   const [mode, setMode] = useState<Mode>("home");
   const [mediaMode, setMediaMode] = useState<MediaMode>("text");
+
+  const handleMediaModeChange = (newMode: MediaMode) => {
+    if (newMode === "text") {
+      stopWarmStream();
+    }
+    setMediaMode(newMode);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      stopWarmStream();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
   const [sessionToken, setSessionToken] = useState("");
   const [liveSocket, setLiveSocket] = useState<WebSocket | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<Interest[]>([]);
@@ -497,6 +515,11 @@ export default function Home() {
         }
       }
       setMode("searching");
+      if (mediaMode === "video") {
+        void acquireWarmStream().catch(err => {
+          console.warn("[MediaStreamCache] Pre-warm failed, will retry on call mount:", err);
+        });
+      }
       let searchRes;
       try {
         searchRes = await search.mutateAsync({
@@ -697,6 +720,7 @@ export default function Home() {
   };
 
   const handleEnd = async () => {
+    stopWarmStream();
     setMode("home");
     setMessages([]);
     handleCancelPhoto();
@@ -712,6 +736,7 @@ export default function Home() {
   };
 
   const handleBlock = async () => {
+    stopWarmStream();
     setMode("home");
     setMessages([]);
     handleCancelPhoto();
@@ -1061,7 +1086,7 @@ export default function Home() {
               We’ll look for an available adult in the mode you choose. You can
               leave or report at any time.
             </p>
-            <MediaModePicker value={mediaMode} onChange={setMediaMode} />
+            <MediaModePicker value={mediaMode} onChange={handleMediaModeChange} />
             {notice && (
               <div className="inline-alert" role="alert">
                 {notice}
@@ -1184,7 +1209,7 @@ export default function Home() {
                 </option>
               ))}
             </select>
-            <MediaModePicker value={mediaMode} onChange={setMediaMode} />
+            <MediaModePicker value={mediaMode} onChange={handleMediaModeChange} />
             {notice && (
               <div className="inline-alert" role="alert">
                 {notice}

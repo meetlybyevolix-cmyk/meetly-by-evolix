@@ -34,6 +34,7 @@ export function generateIceServers(sessionIdentifier?: string): IceServerConfig[
         .map(u => u.trim())
         .filter(Boolean)
     : [
+        "stun:stun.cloudflare.com:3478",
         "stun:stun.l.google.com:19302",
         "stun:stun1.l.google.com:19302",
         "stun:stun2.l.google.com:19302",

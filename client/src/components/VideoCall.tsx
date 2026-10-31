@@ -41,6 +41,11 @@ import ImageLightboxModal, {
 import { getApiUrl } from "../lib/api";
 import PhotoUploadPreview from "./PhotoUploadPreview";
 import ChatImageBubble from "./ChatImageBubble";
+import {
+  acquireWarmStream,
+  getCachedStream,
+  stopWarmStream,
+} from "../lib/mediaStreamCache";
 
 export type VideoSignal =
   | { kind: "description"; descriptionType: "offer" | "answer" | "pranswer" | "rollback"; sdp: string }
@@ -260,7 +265,8 @@ export default function VideoCall({
   const screeningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const iceServersRef = useRef<RTCIceServer[]>([
-    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+    { urls: ["stun:stun.cloudflare.com:3478"] },
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] },
   ]);
 
   // Enumerate hardware devices
@@ -312,7 +318,7 @@ export default function VideoCall({
     [socket]
   );
 
-  const stopLocalMedia = useCallback((updateState = true) => {
+  const stopLocalMedia = useCallback((updateState = true, keepWarm = false) => {
     permissionRequestRef.current += 1;
     if (screeningTimerRef.current) {
       clearInterval(screeningTimerRef.current);
@@ -328,22 +334,31 @@ export default function VideoCall({
       connection.oniceconnectionstatechange = null;
       connection.close();
     }
-    localStreamRef.current?.getTracks().forEach(track => track.stop());
+
     remoteStreamRef.current?.getTracks().forEach(track => track.stop());
-    localStreamRef.current = null;
     remoteStreamRef.current = null;
     pendingIceRef.current = [];
 
-    if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
 
+    if (!keepWarm) {
+      localStreamRef.current?.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+      stopWarmStream();
+      if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    }
+
     if (updateState) {
-      setLocalStream(null);
+      if (!keepWarm) {
+        setLocalStream(null);
+        setCallState("idle");
+        setCameraEnabled(true);
+        setMicEnabled(true);
+        setIsAudioOnly(false);
+      } else {
+        setCallState("waiting");
+      }
       setRemoteStream(null);
-      setCallState("idle");
-      setCameraEnabled(true);
-      setMicEnabled(true);
-      setIsAudioOnly(false);
       setNeedsPlayback(false);
       setConnectionType("Negotiating...");
       setIsSafetyObscured(false);
@@ -467,11 +482,58 @@ export default function VideoCall({
       try {
         const connection = new RTCPeerConnection({
           iceServers: iceServersRef.current,
+          iceCandidatePoolSize: 4,
+          bundlePolicy: "max-bundle",
+          rtcpMuxPolicy: "require",
         });
         peerConnectionRef.current = connection;
 
-        // Add local tracks to peer connection
-        stream.getTracks().forEach(track => connection.addTrack(track, stream));
+        // Add local tracks to peer connection with optimized mobile bitrate
+        stream.getTracks().forEach(track => {
+          const sender = connection.addTrack(track, stream);
+          if (track.kind === "video") {
+            try {
+              const params = sender.getParameters();
+              if (!params.encodings || params.encodings.length === 0) {
+                params.encodings = [{}];
+              }
+              params.encodings[0].maxBitrate = 900_000;
+              params.encodings[0].maxFramerate = 30;
+              params.encodings[0].networkPriority = "high";
+              sender.setParameters(params).catch(() => {});
+            } catch {
+              /* ignore unsupported sender params */
+            }
+          }
+        });
+
+        // Hardware-accelerated VP8/H264 codec prioritization for mobile devices
+        try {
+          const videoTransceiver = connection
+            .getTransceivers()
+            .find(t => t.sender.track?.kind === "video");
+          if (
+            videoTransceiver &&
+            "setCodecPreferences" in videoTransceiver &&
+            typeof RTCRtpReceiver !== "undefined" &&
+            RTCRtpReceiver.getCapabilities
+          ) {
+            const caps = RTCRtpReceiver.getCapabilities("video");
+            if (caps?.codecs) {
+              const preferred = caps.codecs.filter(c => {
+                const mime = c.mimeType.toLowerCase();
+                return mime === "video/vp8" || mime === "video/h264";
+              });
+              const others = caps.codecs.filter(c => {
+                const mime = c.mimeType.toLowerCase();
+                return mime !== "video/vp8" && mime !== "video/h264";
+              });
+              videoTransceiver.setCodecPreferences([...preferred, ...others]);
+            }
+          }
+        } catch {
+          /* fallback to default codecs */
+        }
 
         // Inbound tracks from partner
         connection.ontrack = event => {
@@ -597,7 +659,7 @@ export default function VideoCall({
     };
 
     const onClose = () => {
-      stopLocalMedia();
+      stopLocalMedia(true, false);
       setReadyCount(0);
       setMessage("Chat connection closed. Microphone and camera are deactivated.");
     };
@@ -612,10 +674,37 @@ export default function VideoCall({
         if (socket.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({ type: "video-stop" }));
         }
-        stopLocalMedia(false);
+        stopLocalMedia(false, true); // Keep warm stream ready for immediate rematching!
       }
     };
   }, [applySignal, createPeerConnection, socket, stopLocalMedia]);
+
+  // Robust callback refs for immediate local & remote video playback (avoids black preview on mobile)
+  const setLocalVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    localVideoRef.current = el;
+    if (el && localStreamRef.current) {
+      el.muted = true;
+      el.setAttribute("muted", "");
+      el.setAttribute("playsinline", "");
+      el.setAttribute("autoplay", "");
+      if (el.srcObject !== localStreamRef.current) {
+        el.srcObject = localStreamRef.current;
+      }
+      el.play().catch(() => {});
+    }
+  }, []);
+
+  const setRemoteVideoRef = useCallback((el: HTMLVideoElement | null) => {
+    remoteVideoRef.current = el;
+    if (el && remoteStreamRef.current) {
+      el.setAttribute("playsinline", "");
+      el.setAttribute("autoplay", "");
+      if (el.srcObject !== remoteStreamRef.current) {
+        el.srcObject = remoteStreamRef.current;
+      }
+      el.play().catch(() => {});
+    }
+  }, []);
 
   // Bind local stream to preview element
   useEffect(() => {
@@ -640,9 +729,9 @@ export default function VideoCall({
     }
   }, [remoteStream, startRemoteScreening]);
 
-  // Join Video Call with robust audio & audio-only fallback
-  const joinVideo = async () => {
-    if (callState !== "idle") return;
+  // Join Video Call with warm stream cache & fast mobile startup
+  const joinVideo = useCallback(async () => {
+    if (callState === "requesting" || callState === "active") return;
     setMessage("");
 
     if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -661,43 +750,34 @@ export default function VideoCall({
     let fallbackToAudioOnly = false;
 
     try {
-      // First attempt: Both Audio and Video (optimized for mobile and desktop)
-      const constraints: MediaStreamConstraints = {
-        audio: selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true,
-        video: selectedVideoId
-          ? { deviceId: { exact: selectedVideoId } }
-          : {
-              facingMode: "user",
-              width: { ideal: 640, max: 1280 },
-              height: { ideal: 480, max: 720 },
-            },
-      };
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      stream = await acquireWarmStream({
+        audioDeviceId: selectedAudioId || undefined,
+        videoDeviceId: selectedVideoId || undefined,
+      });
+      fallbackToAudioOnly = stream.getVideoTracks().length === 0;
     } catch (firstError) {
       console.warn("[Media] Full audio+video capture failed, attempting audio-only fallback:", firstError);
       try {
-        // Fallback: Audio-Only capture if camera is occupied or denied
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true,
-          video: false,
+        stream = await acquireWarmStream({
+          audioDeviceId: selectedAudioId || undefined,
+          audioOnly: true,
         });
         fallbackToAudioOnly = true;
       } catch (audioError) {
         sendControl({ type: "video-decline" });
-        stopLocalMedia();
+        stopLocalMedia(true, false);
         const isDenied =
           audioError instanceof Error && /denied|permission|notallowed/i.test(audioError.message);
         setMessage(
           isDenied
-            ? "Microphone access was denied. Allow microphone access in your browser settings to join call."
-            : "Hardware capture failed. Please check microphone settings."
+            ? "Microphone or camera access was denied. Allow access in your browser settings to join call."
+            : "Hardware capture failed. Please check microphone and camera settings."
         );
         return;
       }
     }
 
     if (permissionRequestRef.current !== requestId || !stream) {
-      stream?.getTracks().forEach(t => t.stop());
       return;
     }
 
@@ -716,13 +796,31 @@ export default function VideoCall({
     void refreshDevices();
 
     if (!sendControl({ type: "video-ready" })) {
-      stream.getTracks().forEach(t => t.stop());
-      stopLocalMedia();
+      stopLocalMedia(true, true);
       setMessage("Connection interrupted before call handshake. Please retry.");
       return;
     }
     setCallState("waiting");
-  };
+  }, [callState, refreshDevices, selectedAudioId, selectedVideoId, sendControl, socket, stopLocalMedia]);
+
+  // Auto-connect video immediately upon entering the video room
+  useEffect(() => {
+    if (callState === "idle" && socket) {
+      if (socket.readyState === WebSocket.OPEN) {
+        void joinVideo();
+      } else {
+        const onOpen = () => {
+          void joinVideo();
+        };
+        socket.addEventListener("open", onOpen, { once: true });
+        return () => {
+          socket.removeEventListener("open", onOpen);
+        };
+      }
+    }
+  }, [callState, joinVideo, socket]);
+
+
 
   // Seamless Audio Device Switching without tearing down WebRTC
   const switchAudioDevice = async (deviceId: string) => {
@@ -804,14 +902,14 @@ export default function VideoCall({
   };
 
   const handleNextClick = () => {
-    stopLocalMedia(false);
+    stopLocalMedia(false, true); // Keep local stream warm for fast rematching
     handleCancelPhoto();
     setLightboxMedia(null);
     if (onNext) onNext();
   };
 
   const handleEndClick = () => {
-    stopLocalMedia(false);
+    stopLocalMedia(true, false); // Tear down camera hardware completely
     handleCancelPhoto();
     setLightboxMedia(null);
     if (onEnd) onEnd();
@@ -912,7 +1010,7 @@ export default function VideoCall({
         >
           {remoteStream ? (
             <video
-              ref={remoteVideoRef}
+              ref={setRemoteVideoRef}
               autoPlay
               playsInline
               aria-label="Partner live video feed"
@@ -978,7 +1076,7 @@ export default function VideoCall({
           <div className="video-pip-container">
             {!isAudioOnly ? (
               <video
-                ref={localVideoRef}
+                ref={setLocalVideoRef}
                 autoPlay
                 playsInline
                 muted

@@ -136,3 +136,4 @@ export function getFunkyAvatar(identifier?: string | null): FunkyAvatar {
   const index = Math.abs(hash) % FUNKY_AVATARS.length;
   return FUNKY_AVATARS[index];
 }
+
