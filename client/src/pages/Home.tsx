@@ -216,6 +216,7 @@ export default function Home() {
   const [adultConfirmed, setAdultConfirmed] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [privacyAccepted, setPrivacyAccepted] = useState(true);
+  const [signupConsent, setSignupConsent] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
@@ -821,22 +822,54 @@ export default function Home() {
                       <ShieldCheck size={22} />
                     </div>
                     <div>
-                      <strong>Sign up with Google to start chatting</strong>
+                      <div className="hero-signup-title-row">
+                        <strong>Sign up with Google to start chatting</strong>
+                        <span className="age-requirement-badge">18+ Adults Only</span>
+                      </div>
                       <p>
                         To ensure community safety, Meetly requires Google authentication before connecting with strangers.
                         Your email and real identity remain 100% private in chat.
                       </p>
                     </div>
                   </div>
+
+                  <div className="hero-signup-consent">
+                    <label className="signup-consent-label">
+                      <input
+                        type="checkbox"
+                        checked={signupConsent}
+                        onChange={e => setSignupConsent(e.target.checked)}
+                        className="signup-consent-checkbox"
+                      />
+                      <span>
+                        I confirm I am <strong>18 years of age or older</strong> and agree to the{" "}
+                        <Link href="/terms" target="_blank" className="consent-link">
+                          Terms of Service
+                        </Link>{" "}
+                        and{" "}
+                        <Link href="/privacy" target="_blank" className="consent-link">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </span>
+                    </label>
+                  </div>
+
                   <div className="hero-signup-action">
-                    <GoogleAuthButton
-                      buttonText="signup_with"
-                      onSuccess={signedInUser => {
-                        setNotice(`Welcome, ${signedInUser.name}! You are now verified to chat.`);
-                        refetchUser();
-                        setMode("preferences");
-                      }}
-                    />
+                    {signupConsent ? (
+                      <GoogleAuthButton
+                        buttonText="signup_with"
+                        onSuccess={signedInUser => {
+                          setNotice(`Welcome, ${signedInUser.name}! You are now verified to chat.`);
+                          refetchUser();
+                          setMode("preferences");
+                        }}
+                      />
+                    ) : (
+                      <div className="signup-consent-warning">
+                        Please check the box above confirming you are 18+ and accept the Terms of Service to enable sign up.
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -884,7 +917,7 @@ export default function Home() {
                 </span>
                 <span>
                   <Check size={15} />
-                  No sign-up
+                  Anonymous in chat
                 </span>
                 <span>
                   <Check size={15} />
@@ -1018,8 +1051,20 @@ export default function Home() {
             )}
             {!user ? (
               <div className="auth-gate-box-inner">
-                <p className="auth-gate-text">
-                  <ShieldCheck size={16} /> Sign in with Google to enter matchmaking:
+                <div className="auth-gate-title-row">
+                  <ShieldCheck size={18} />
+                  <span>Google sign-in required (18+ Adults Only):</span>
+                </div>
+                <p className="auth-gate-subtext">
+                  By continuing, you confirm you are 18+ and accept our{" "}
+                  <Link href="/terms" target="_blank" className="consent-link">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="consent-link">
+                    Privacy Policy
+                  </Link>
+                  .
                 </p>
                 <GoogleAuthButton
                   buttonText="signin_with"
@@ -1129,8 +1174,20 @@ export default function Home() {
             )}
             {!user ? (
               <div className="auth-gate-box-inner">
-                <p className="auth-gate-text">
-                  <ShieldCheck size={16} /> Sign in with Google to enter matchmaking:
+                <div className="auth-gate-title-row">
+                  <ShieldCheck size={18} />
+                  <span>Google sign-in required (18+ Adults Only):</span>
+                </div>
+                <p className="auth-gate-subtext">
+                  By continuing, you confirm you are 18+ and accept our{" "}
+                  <Link href="/terms" target="_blank" className="consent-link">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="consent-link">
+                    Privacy Policy
+                  </Link>
+                  .
                 </p>
                 <GoogleAuthButton
                   buttonText="signin_with"
