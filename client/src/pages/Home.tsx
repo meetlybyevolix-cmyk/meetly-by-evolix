@@ -3,6 +3,7 @@ import { getWsUrl } from "@/lib/api";
 import { getFirstName, getFunkyAvatar } from "@/lib/funkyAvatar";
 import VideoCall from "@/components/VideoCall";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
+import SEOHead from "@/components/SEOHead";
 import {
   ArrowLeft,
   ArrowRight,
@@ -138,18 +139,35 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 function Footer() {
   return (
-    <footer className="site-footer" style={{ padding: "20px 0", borderTop: "1px solid var(--line)" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px", width: "100%" }}>
-        <span>Meetly · Anonymous text & video conversations · 18+ Adults Only</span>
-        <nav aria-label="Site information" style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
-          <Link href="/safety">Safety</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <Link href="/community-guidelines">Guidelines</Link>
-          <Link href="/grievance">Grievance (Rule 3(2))</Link>
-          <Link href="/data-rights">Data Rights</Link>
-          <Link href="/cookies">Cookies</Link>
-        </nav>
+    <footer className="site-footer" style={{ padding: "24px 0", borderTop: "1px solid var(--line)" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px", width: "100%" }}>
+        {/* Discovery Links */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px", fontSize: "13px" }}>
+          <strong style={{ color: "var(--text)" }}>Explore:</strong>
+          <Link href="/make-friends-online" style={{ color: "var(--muted)", textDecoration: "none" }}>Make Friends Online</Link>
+          <span style={{ color: "var(--line)" }}>·</span>
+          <Link href="/talk-to-someone-online" style={{ color: "var(--muted)", textDecoration: "none" }}>Talk to Someone</Link>
+          <span style={{ color: "var(--line)" }}>·</span>
+          <Link href="/chat-with-strangers" style={{ color: "var(--muted)", textDecoration: "none" }}>Chat with Strangers</Link>
+          <span style={{ color: "var(--line)" }}>·</span>
+          <Link href="/random-video-chat" style={{ color: "var(--muted)", textDecoration: "none" }}>Random Video Chat</Link>
+          <span style={{ color: "var(--line)" }}>·</span>
+          <Link href="/anonymous-text-chat" style={{ color: "var(--muted)", textDecoration: "none" }}>Anonymous Text Chat</Link>
+        </div>
+
+        {/* Legal & Compliance Links */}
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px", width: "100%", borderTop: "1px solid var(--line)", paddingTop: "12px", fontSize: "12px" }}>
+          <span style={{ color: "var(--muted)" }}>Meetly · Anonymous text &amp; video conversations · 18+ Adults Only</span>
+          <nav aria-label="Site information" style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
+            <Link href="/safety">Safety</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/community-guidelines">Guidelines</Link>
+            <Link href="/grievance">Grievance (Rule 3(2))</Link>
+            <Link href="/data-rights">Data Rights</Link>
+            <Link href="/cookies">Cookies</Link>
+          </nav>
+        </div>
       </div>
     </footer>
   );
@@ -797,6 +815,11 @@ export default function Home() {
 
   return (
     <div className="app-shell">
+      <SEOHead
+        title="Meetly – Make New Friends Online | Text & Video Chat"
+        description="Meet new people through random text and video conversations on Meetly. Connect with adults worldwide, explore shared interests, and start chatting."
+        canonicalPath="/"
+      />
       <header className="topbar">
         <Brand />
         <div className="topbar-right">
@@ -843,14 +866,12 @@ export default function Home() {
             <section className="hero-copy">
               <LogoLine />
               <h1>
-                One small hello
+                Meet New People.
                 <br />
-                <em>can go anywhere.</em>
+                <em>Start Real Conversations.</em>
               </h1>
               <p className="hero-description">
-                Meet someone new, one conversation at a time. No profiles or
-                contact details—just a chance to talk. Choose simple text or
-                opt-in video chat.
+                Want to make a new friend or simply have someone to talk to? Meetly helps adults connect with new people through random text and video conversations.
               </p>
               {!user ? (
                 <div className="hero-signup-card">

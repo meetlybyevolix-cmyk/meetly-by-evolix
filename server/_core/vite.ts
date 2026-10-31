@@ -66,6 +66,25 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Explicit robots.txt and sitemap.xml endpoints with proper Content-Type and caching
+  app.get("/robots.txt", (_req, res) => {
+    const robotsPath = path.resolve(distPath, "robots.txt");
+    if (fs.existsSync(robotsPath)) {
+      res.type("text/plain").set("Cache-Control", "public, max-age=86400").sendFile(robotsPath);
+    } else {
+      res.type("text/plain").send("User-agent: *\nAllow: /\nSitemap: https://meet-ly.in/sitemap.xml\n");
+    }
+  });
+
+  app.get("/sitemap.xml", (_req, res) => {
+    const sitemapPath = path.resolve(distPath, "sitemap.xml");
+    if (fs.existsSync(sitemapPath)) {
+      res.type("application/xml").set("Cache-Control", "public, max-age=86400").sendFile(sitemapPath);
+    } else {
+      res.status(404).end();
+    }
+  });
+
   app.use(express.static(distPath));
 
   // the app's not-found page keeps a real 404 status for crawlers

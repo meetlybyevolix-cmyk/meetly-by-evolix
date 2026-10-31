@@ -1,0 +1,17 @@
+{
+  "name": "Meetly — Random Text & Video Chat",
+  "short_name": "Meetly",
+  "description": "Meet new people through random text and video conversations. Connect with adults worldwide, explore shared interests, and start chatting.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f1",
+  "theme_color": "#183b32",
+  "icons": [
+    {
+      "src": "/meetly-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

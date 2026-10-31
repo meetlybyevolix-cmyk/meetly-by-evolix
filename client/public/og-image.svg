@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdfcf8" />
+      <stop offset="100%" stop-color="#f2efe4" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#183b32" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <!-- Subtle Decorative Circles -->
+  <circle cx="1100" cy="100" r="280" fill="#eaf2ec" opacity="0.6" />
+  <circle cx="100" cy="550" r="220" fill="#fdf0eb" opacity="0.5" />
+
+  <!-- Card Container -->
+  <g transform="translate(100, 90)">
+    <!-- Brand Logo & Badge -->
+    <g transform="translate(0, 0)">
+      <rect width="84" height="84" rx="24" fill="#eef3eb" stroke="#176e68" stroke-width="2" />
+      <path d="M22 32c0-6 5-11 11-11h10c6 0 11 5 11 11v2c0 6-5 11-11 11h-8l-8 7v-9a11 11 0 0 1-5-11Z" fill="#a6d0bd" stroke="#176e68" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M34 46c0-6 5-11 11-11h10c6 0 11 5 11 11v2c0 6-5 11-11 11h-8l-8 7v-9a11 11 0 0 1-5-11Z" fill="#f1cabb" stroke="#b86e58" stroke-width="3" stroke-linejoin="round"/>
+      <text x="106" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="800" fill="#183b32" letter-spacing="-1">meetly<tspan fill="#b86e58">.</tspan></text>
+    </g>
+
+    <!-- Main Heading -->
+    <text x="0" y="210" font-family="-apple-system, BlinkMacSystemFont, 'Georgia', serif" font-size="64" font-weight="700" fill="#183b32" letter-spacing="-1.5">
+      Meet New People.
+    </text>
+    <text x="0" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Georgia', serif" font-size="64" font-style="italic" font-weight="400" fill="#2d6a59" letter-spacing="-1">
+      Start Real Conversations.
+    </text>
+
+    <!-- Subtitle / Value Prop -->
+    <text x="0" y="340" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="24" font-weight="400" fill="#4d6159" width="700">
+      Random text and video chat with adults worldwide · 100% private · No profile needed
+    </text>
+
+    <!-- Badges / Features -->
+    <g transform="translate(0, 390)">
+      <!-- Badge 1 -->
+      <rect x="0" y="0" width="170" height="42" rx="21" fill="#eaf2ec" />
+      <text x="85" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="600" fill="#183b32" text-anchor="middle">✓ Adults 18+ Only</text>
+
+      <!-- Badge 2 -->
+      <rect x="185" y="0" width="170" height="42" rx="21" fill="#eaf2ec" />
+      <text x="270" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="600" fill="#183b32" text-anchor="middle">✓ Anonymous Chat</text>
+
+      <!-- Badge 3 -->
+      <rect x="370" y="0" width="180" height="42" rx="21" fill="#eaf2ec" />
+      <text x="460" y="26" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="600" fill="#183b32" text-anchor="middle">✓ Text &amp; Video Mode</text>
+    </g>
+  </g>
+
+  <!-- URL Tag -->
+  <text x="1100" y="580" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" fill="#183b32" text-anchor="end" opacity="0.7">https://meet-ly.in</text>
+</svg>

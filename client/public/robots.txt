@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /make-friends-online
+Allow: /talk-to-someone-online
+Allow: /chat-with-strangers
+Allow: /random-video-chat
+Allow: /anonymous-text-chat
+Allow: /terms
+Allow: /privacy
+Allow: /community-guidelines
+Allow: /safety
+Allow: /data-rights
+Allow: /grievance
+Allow: /cookies
+
+# Disallow backend APIs, WebSocket endpoints, and private functional routes
+Disallow: /api/
+Disallow: /trpc/
+Disallow: /auth/
+Disallow: /404
+
+# Canonical XML Sitemap
+Sitemap: https://meet-ly.in/sitemap.xml

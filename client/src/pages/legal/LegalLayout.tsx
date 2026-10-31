@@ -2,6 +2,7 @@ import React from "react";
 import { ArrowLeft, BookOpen, ExternalLink, HelpCircle, Lock, MessageSquare, Scale, Shield, ShieldAlert, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
+import SEOHead from "@/components/SEOHead";
 
 interface LegalLayoutProps {
   title: string;
@@ -33,6 +34,11 @@ export function LegalLayout({
 
   return (
     <div className="app-shell legal-shell">
+      <SEOHead
+        title={`${title} — Meetly`}
+        description={subtitle || `${title} for Meetly, the adults-only random text and video chat platform.`}
+        canonicalPath={location}
+      />
       {/* Top Header */}
       <header className="topbar">
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
