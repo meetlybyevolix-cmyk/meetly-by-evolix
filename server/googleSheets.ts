@@ -4,6 +4,7 @@ import { config } from "./config";
 export interface SyncUserPayload {
   userId: string;
   customerName: string;
+  email?: string;
   registrationDate: Date | string;
   lastLogin: Date | string;
   status: "Active" | "Suspended" | "Deleted" | string;
@@ -77,9 +78,10 @@ export function sanitizeSpreadsheetCell(value: string | null | undefined): strin
  */
 export function isGoogleSheetsConfigured(): boolean {
   return Boolean(
-    config.googleSheetsSpreadsheetId &&
-      config.googleServiceAccountEmail &&
-      config.googleServiceAccountPrivateKey
+    config.googleSheetsWebhookUrl ||
+      (config.googleSheetsSpreadsheetId &&
+        config.googleServiceAccountEmail &&
+        config.googleServiceAccountPrivateKey)
   );
 }
 
@@ -141,6 +143,45 @@ export async function syncUserRegistration(user: SyncUserPayload): Promise<SyncR
       synced: false,
       action: "queued",
       reason: "credentials_not_configured",
+    };
+  }
+
+  // 1. Sync via Google Apps Script Webhook URL if configured
+  if (config.googleSheetsWebhookUrl) {
+    try {
+      const resp = await fetch(config.googleSheetsWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "upsert",
+          userId: cleanUserId,
+          name: cleanName,
+          email: sanitizeSpreadsheetCell(user.email || ""),
+          registrationDate: cleanRegDate,
+          lastLogin: cleanLastLogin,
+          status: cleanStatus,
+          loginMethod: "Google",
+        }),
+        redirect: "follow",
+      });
+
+      if (resp.ok) {
+        return {
+          synced: true,
+          action: "appended",
+        };
+      }
+    } catch (webhookErr) {
+      console.warn("[Google Sheets Webhook Sync] Failed non-fatally:", webhookErr);
+    }
+  }
+
+  // If Service Account is not configured, finish with webhook attempt status
+  if (!config.googleSheetsSpreadsheetId || !config.googleServiceAccountEmail) {
+    return {
+      synced: false,
+      action: "queued",
+      reason: "service_account_not_configured",
     };
   }
 
@@ -284,6 +325,32 @@ export async function syncUserDeletion(userId: string): Promise<SyncResult> {
       lastAttemptAt: Date.now(),
     });
     return { synced: false, action: "queued", reason: "credentials_not_configured" };
+  }
+
+  // 1. Sync deletion via Google Apps Script Webhook URL if configured
+  if (config.googleSheetsWebhookUrl) {
+    try {
+      const resp = await fetch(config.googleSheetsWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          userId: cleanUserId,
+          status: "Deleted",
+        }),
+        redirect: "follow",
+      });
+
+      if (resp.ok) {
+        return { synced: true, action: "deleted" };
+      }
+    } catch (webhookErr) {
+      console.warn("[Google Sheets Webhook Deletion Sync] Failed non-fatally:", webhookErr);
+    }
+  }
+
+  if (!config.googleSheetsSpreadsheetId || !config.googleServiceAccountEmail) {
+    return { synced: false, action: "queued", reason: "service_account_not_configured" };
   }
 
   try {

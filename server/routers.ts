@@ -199,6 +199,7 @@ export const appRouter = router({
           const syncRes = await syncUserRegistration({
             userId: internalUserId,
             customerName: verified.name,
+            email: verified.email || updatedUser.email || "",
             registrationDate: updatedUser.createdAt || now,
             lastLogin: now,
             status: "Active",

@@ -24,6 +24,7 @@ export interface AppConfig {
   googleSheetsSpreadsheetId: string;
   googleServiceAccountEmail: string;
   googleServiceAccountPrivateKey: string;
+  googleSheetsWebhookUrl: string;
   allowMockGoogleAuth: boolean;
 }
 
@@ -197,6 +198,10 @@ export const config: AppConfig = {
   googleSheetsSpreadsheetId: process.env.GOOGLE_SHEETS_SPREADSHEET_ID || "",
   googleServiceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "",
   googleServiceAccountPrivateKey: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "",
+  googleSheetsWebhookUrl:
+    process.env.GOOGLE_SHEETS_WEBHOOK_URL ||
+    process.env.GOOGLE_SHEETS_APPS_SCRIPT_URL ||
+    "",
   allowMockGoogleAuth:
     process.env.ALLOW_MOCK_GOOGLE_AUTH === "true" ||
     process.env.NODE_ENV !== "production",
