@@ -201,7 +201,9 @@ export const config: AppConfig = {
   googleSheetsWebhookUrl:
     process.env.GOOGLE_SHEETS_WEBHOOK_URL ||
     process.env.GOOGLE_SHEETS_APPS_SCRIPT_URL ||
-    "",
+    (process.env.NODE_ENV === "production"
+      ? "https://script.google.com/macros/s/AKfycbwhyOz3RqpgSFZpiasjVZMMlAzuUAf8M8wJJqcrGCPOn5glQMv5-g1MFZKXQAC8KD4/exec"
+      : ""),
   allowMockGoogleAuth:
     process.env.ALLOW_MOCK_GOOGLE_AUTH === "true" ||
     process.env.NODE_ENV !== "production",
