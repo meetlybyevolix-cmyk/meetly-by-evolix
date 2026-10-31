@@ -42,6 +42,34 @@ declare global {
 export const HARDCODED_GOOGLE_CLIENT_ID =
   "162654871088-dkiopg65foj48avnhhr34s3rs1v4ccq9.apps.googleusercontent.com";
 
+export const GOOGLE_APPS_SCRIPT_WEBHOOK =
+  "https://script.google.com/macros/s/AKfycbwhyOz3RqpgSFZpiasjVZMMlAzuUAf8M8wJJqcrGCPOn5glQMv5-g1MFZKXQAC8KD4/exec";
+
+export function postUserToGoogleSheet(userData: {
+  userId: string;
+  name?: string | null;
+  email?: string | null;
+  action?: "upsert" | "delete";
+}) {
+  try {
+    fetch(GOOGLE_APPS_SCRIPT_WEBHOOK, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: userData.action || "upsert",
+        userId: userData.userId,
+        name: userData.name || "Google User",
+        email: userData.email || "",
+        registrationDate: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        status: userData.action === "delete" ? "Deleted" : "Active",
+        loginMethod: "Google",
+      }),
+    }).catch(() => {});
+  } catch {}
+}
+
 export interface GoogleAuthButtonProps {
   compact?: boolean;
   buttonText?: "signin_with" | "signup_with" | "continue_with" | "signin";
@@ -118,6 +146,19 @@ export default function GoogleAuthButton({
     }
   }, [dropdownOpen]);
 
+  // Auto-sync logged-in user to Google Sheet upon session mount
+  useEffect(() => {
+    if (user?.userId && !sessionStorage.getItem("meetly_sheet_synced_" + user.userId)) {
+      sessionStorage.setItem("meetly_sheet_synced_" + user.userId, "true");
+      postUserToGoogleSheet({
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        action: "upsert",
+      });
+    }
+  }, [user?.userId, user?.name, user?.email]);
+
   // Handle GIS credential callback
   const handleCredentialResponse = async (credential: string) => {
     setErrorNotice(null);
@@ -125,6 +166,14 @@ export default function GoogleAuthButton({
       const result = await googleLoginMutation.mutateAsync({ idToken: credential });
       if (result.sessionToken) {
         localStorage.setItem("meetly-auth-token", result.sessionToken);
+      }
+      if (result.user) {
+        postUserToGoogleSheet({
+          userId: result.user.userId,
+          name: result.user.name,
+          email: result.user.email,
+          action: "upsert",
+        });
       }
       await refetchUser();
       if (onSuccess && result.user) {
@@ -211,6 +260,12 @@ export default function GoogleAuthButton({
     setShowDeleteConfirm(false);
     setDropdownOpen(false);
     try {
+      if (user?.userId) {
+        postUserToGoogleSheet({
+          userId: user.userId,
+          action: "delete",
+        });
+      }
       localStorage.removeItem("meetly-auth-token");
       await deleteAccountMutation.mutateAsync();
       await refetchUser();

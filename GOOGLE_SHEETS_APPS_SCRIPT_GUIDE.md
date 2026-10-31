@@ -86,3 +86,4 @@ Whenever anyone clicks **"Sign up with Google"** on [`meetly-by-evolix.meetlybye
 2. The backend sends their User ID, Name, Email, and Timestamps to your Google Sheet.
 3. If the user already exists, it updates their **Last Login** and increments **Total Visits**.
 4. If it's a new user, a new row is appended immediately.
+

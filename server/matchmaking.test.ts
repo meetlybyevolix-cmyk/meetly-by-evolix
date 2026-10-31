@@ -147,7 +147,7 @@ describe("Feature 6: Smart Global Matchmaking with Language Fallback", () => {
     expect(userA.roomId).toBeUndefined();
   });
 
-  it("7. Next Stranger works with global fallback and skips previous partner", () => {
+  it("7. Next Stranger allows rematching when both participants seek new conversations", () => {
     const userA = createTestUser("text", "Hindi");
     const userB = createTestUser("text", "English");
 
@@ -162,19 +162,12 @@ describe("Feature 6: Smart Global Matchmaking with Language Fallback", () => {
     expect(userA.state).toBe("searching");
     expect(userB.state).toBe("idle");
 
-    // userB re-enters queue: userA and userB cannot immediately rematch
+    // userB re-enters queue: userA and userB can match again without 24h lockout
     startSearching(userB);
-    expect(userA.state).toBe("searching");
-    expect(userB.state).toBe("searching");
-
-    // userC arrives: userA pairs with userC
-    const userC = createTestUser("text", "Arabic");
-    startSearching(userC);
-
     expect(userA.state).toBe("chat");
-    expect(userC.state).toBe("chat");
+    expect(userB.state).toBe("chat");
+    expect(userA.roomId).toBe(userB.roomId);
     expect(userA.roomId).not.toBe(firstRoomId);
-    expect(userA.roomId).toBe(userC.roomId);
   });
 
   it("8. Language-fallback timing works correctly and informs users of partner preference", () => {

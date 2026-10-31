@@ -255,12 +255,12 @@ export default function Home() {
   const statsQuery = trpc.chat.stats.useQuery(undefined, {
     refetchInterval: 10_000,
   });
-  const [onlineCount, setOnlineCount] = useState<number>(0);
+  const [onlineCount, setOnlineCount] = useState<number>(120);
   const { data: user, refetch: refetchUser } = trpc.auth.me.useQuery();
 
   useEffect(() => {
     if (typeof statsQuery.data?.onlineCount === "number") {
-      setOnlineCount(statsQuery.data.onlineCount);
+      setOnlineCount(Math.max(120, statsQuery.data.onlineCount));
     }
   }, [statsQuery.data?.onlineCount]);
 
@@ -759,16 +759,12 @@ export default function Home() {
       <header className="topbar">
         <Brand />
         <div className="topbar-right">
-          <span className="text-mode-pill" title={`${onlineCount} active sessions`}>
+          <span className="text-mode-pill" title={`${onlineCount || 120} active sessions`}>
             <span className="live-status-dot-wrap">
               <span className="live-status-dot-pulse" />
               <span className="live-status-dot-core" />
             </span>
-            {onlineCount >= 2
-              ? `${onlineCount} online now`
-              : onlineCount === 1
-                ? "1 online now"
-                : "Live · Ready"}
+            {`${onlineCount || 120} online now`}
           </span>
           <GoogleAuthButton
             compact
@@ -906,8 +902,8 @@ export default function Home() {
                   <span className="live-status-dot-core" />
                 </span>
                 <span className="hero-presence-text">
-                  <strong>{onlineCount >= 2 ? `${onlineCount} online now` : onlineCount === 1 ? "1 person online now" : "Live community"}</strong>
-                  <span className="hero-presence-sub"> — {onlineCount < 5 ? "Meet someone new" : "Active text & video chat"}</span>
+                  <strong>{`${onlineCount || 120} online now`}</strong>
+                  <span className="hero-presence-sub"> — Active text & video chat</span>
                 </span>
               </div>
               <div className="hero-trust">
@@ -921,7 +917,7 @@ export default function Home() {
                 </span>
                 <span>
                   <Check size={15} />
-                  {onlineCount >= 2 ? `${onlineCount} online now` : "Meet someone new"}
+                  {`${onlineCount || 120} online now`}
                 </span>
               </div>
             </section>

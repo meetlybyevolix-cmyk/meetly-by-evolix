@@ -194,7 +194,16 @@ function getOrCreateSheet(sheetName) {
   var sheet = ss.getSheetByName(sheetName);
 
   if (!sheet) {
-    sheet = ss.insertSheet(sheetName, 0);
+    // If the default "Sheet1" exists or is empty, use and rename it to "Users"
+    var firstSheet = ss.getSheets()[0];
+    if (firstSheet && (firstSheet.getName() === "Sheet1" || firstSheet.getLastRow() === 0)) {
+      sheet = firstSheet;
+      try {
+        sheet.setName(sheetName);
+      } catch (renameErr) {}
+    } else {
+      sheet = ss.insertSheet(sheetName, 0);
+    }
   }
 
   // Initialize headers if sheet is empty or newly created
@@ -217,6 +226,10 @@ function getOrCreateSheet(sheetName) {
       sheet.autoResizeColumn(col);
     }
   }
+
+  try {
+    ss.setActiveSheet(sheet);
+  } catch (activeErr) {}
 
   return sheet;
 }
@@ -275,3 +288,4 @@ function testSync() {
   SpreadsheetApp.flush();
   Logger.log("SUCCESS! Check your Google Sheet to confirm test rows were created.");
 }
+
