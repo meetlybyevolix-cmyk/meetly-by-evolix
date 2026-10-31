@@ -151,3 +151,4 @@ Every landing page includes custom `FAQPage` markup with 2–4 targeted Q&As dir
 - **Font Sizes:** Base body text is set to `15px` with a `1.7` line-height for effortless reading on small screens.
 - **Touch Target Sizes:** All buttons, navigation links, and FAQ summaries provide minimum touch areas of `44px x 44px`.
 - **Keyboard Navigation:** All interactive elements (`<summary>`, `<Link>`, `<button>`) support standard keyboard focus states and tab order.
+

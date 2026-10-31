@@ -21,3 +21,4 @@ Disallow: /404
 
 # Canonical XML Sitemap
 Sitemap: https://meet-ly.in/sitemap.xml
+

@@ -372,3 +372,4 @@ for (const page of PAGES) {
 }
 
 console.log("[Prerender] Complete! All static HTML pages successfully generated.");
+

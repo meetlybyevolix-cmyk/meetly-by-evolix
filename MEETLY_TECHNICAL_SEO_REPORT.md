@@ -197,3 +197,4 @@ Technical SEO must never compromise user confidentiality:
 1. **No Indexing of Active Chats:** When a chat room is created, the URL remains `/` with state managed in React memory. Chat sessions never generate indexable URLs (e.g. `/chat/room-123` does not exist).
 2. **Ephemeral WebSockets:** Messages travel across memory-only WebSockets without database persistence, complying with the DPDP Act 2023.
 3. **No Indexing of Private Media:** Ephemeral uploaded photos are delivered via authenticated temporary tokens. No photo directory is exposed to Googlebot, and `Disallow: /api/` in `robots.txt` protects internal endpoints.
+

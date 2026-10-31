@@ -125,3 +125,4 @@ Track these exact, verifiable metrics directly inside Google Search Console:
 | **Average Organic CTR** | N/A | > 2.5% | > 3.2% | > 4.0% | GSC Performance |
 | **Keywords in Top 20** | 0 | 5 – 10 | 20 – 35 | 50+ | GSC Queries |
 | **Mobile Core Web Vitals** | Passing | 100% Good | 100% Good | 100% Good | GSC Experience Report |
+
