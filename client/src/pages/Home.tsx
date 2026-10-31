@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { getWsUrl } from "@/lib/api";
+import { getFirstName, getFunkyAvatar } from "@/lib/funkyAvatar";
 import VideoCall from "@/components/VideoCall";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
 import {
@@ -337,7 +338,17 @@ export default function Home() {
             } else {
               setMessages([]);
               setPartnerLanguage("");
-              setMode(current => (current === "chat" ? "home" : current));
+              // Stay in queue / search for someone new instead of kicking to home!
+              setMode(current => {
+                if (current === "chat") {
+                  setNotice("Your partner skipped. Finding someone new...");
+                  setTimeout(() => {
+                    void next.mutateAsync().catch(() => {});
+                  }, 120);
+                  return "searching";
+                }
+                return current;
+              });
             }
           }
         } catch {
@@ -351,14 +362,23 @@ export default function Home() {
         }
         if (stopped) return;
         if (event.code === 4401) {
-          setNotice("Your temporary session expired. Start again to continue.");
-          setSessionToken("");
           try {
             sessionStorage.removeItem("meetly-session");
           } catch {
             /* no-op */
           }
-          setMode("home");
+          setSessionToken("");
+          // Auto-reconnect into queue instead of kicking to home
+          setMode(current => {
+            if (current === "searching" || current === "chat") {
+              setNotice("Reconnecting to matchmaking...");
+              setTimeout(() => {
+                void startSearching().catch(() => {});
+              }, 400);
+              return "searching";
+            }
+            return "home";
+          });
           return;
         }
         attempts += 1;
@@ -670,13 +690,9 @@ export default function Home() {
     setMode("searching");
     try {
       await next.mutateAsync();
-    } catch (error) {
-      setMode("home");
-      setNotice(
-        error instanceof Error
-          ? error.message
-          : "We couldn’t find another conversation."
-      );
+    } catch {
+      // Stay in searching queue — do NOT kick out to home!
+      setSearchStatus("Looking for an available person to connect...");
     }
   };
 
@@ -871,10 +887,16 @@ export default function Home() {
               ) : (
                 <>
                   <div className="hero-user-greeting">
-                    <CheckCircle2 size={16} />
-                    <span>
-                      Signed in as <strong>{user.name}</strong>
+                    <span
+                      className="funky-avatar-circle mini"
+                      style={{ background: getFunkyAvatar(user.userId || user.name).bgGradient }}
+                    >
+                      {getFunkyAvatar(user.userId || user.name).emoji}
                     </span>
+                    <span>
+                      Signed in as <strong>{getFirstName(user.name)}</strong>
+                    </span>
+                    <CheckCircle2 size={15} style={{ color: "var(--teal)" }} />
                   </div>
                   <button
                     className="button button-primary button-large"
@@ -1493,23 +1515,22 @@ export default function Home() {
               </aside>
             </div>
           )}
-          <div className="chat-bottom-actions">
-            <div className="chat-session-note">
-              <Radio size={15} />
-              One-to-one {mediaMode === "video"
-                ? "video option"
-                : "text chat"}{" "}
-              <span>·</span> nothing to log out of
+          {mediaMode !== "video" && (
+            <div className="chat-bottom-actions">
+              <div className="chat-session-note">
+                <Radio size={15} />
+                One-to-one text chat <span>·</span> nothing to log out of
+              </div>
+              <div>
+                <button className="button button-secondary" onClick={handleEnd}>
+                  End chat
+                </button>
+                <button className="button button-primary" onClick={handleNext}>
+                  Next person <ArrowRight size={17} />
+                </button>
+              </div>
             </div>
-            <div>
-              <button className="button button-secondary" onClick={handleEnd}>
-                End chat
-              </button>
-              <button className="button button-primary" onClick={handleNext}>
-                Next person <ArrowRight size={17} />
-              </button>
-            </div>
-          </div>
+          )}
         </main>
       )}
 

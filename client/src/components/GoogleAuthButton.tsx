@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { getFirstName, getFunkyAvatar } from "@/lib/funkyAvatar";
 import {
   CheckCircle2,
   ChevronDown,
   LogOut,
   ShieldCheck,
+  Sparkles,
   Trash2,
   User as UserIcon,
   X,
@@ -282,38 +284,64 @@ export default function GoogleAuthButton({
     );
   }
 
-  // User is logged in: Display verified user badge and dropdown
+  // User is logged in: Display verified user badge with funky avatar and profile dropdown
   if (user) {
+    const username = getFirstName(user.name);
+    const avatar = getFunkyAvatar(user.userId || user.name);
+
     return (
       <div className="google-user-container" ref={dropdownRef} style={{ position: "relative" }}>
         <button
           type="button"
-          className="google-user-pill"
+          className="google-user-pill funky-user-pill"
           onClick={() => setDropdownOpen(!dropdownOpen)}
           aria-expanded={dropdownOpen}
           aria-haspopup="true"
+          title={`Profile: ${username}`}
         >
-          <div className="google-user-avatar">
-            <UserIcon size={14} />
+          <div
+            className="funky-avatar-circle"
+            style={{
+              background: avatar.bgGradient,
+            }}
+          >
+            <span className="funky-avatar-emoji">{avatar.emoji}</span>
           </div>
-          <span className="google-user-name">{user.name || "Google User"}</span>
+          <span className="google-user-name">{username}</span>
           <CheckCircle2 size={13} className="google-verified-icon" />
           <ChevronDown size={13} className={`google-caret ${dropdownOpen ? "open" : ""}`} />
         </button>
 
         {dropdownOpen && (
-          <div className="google-user-dropdown" role="menu">
-            <div className="dropdown-header">
-              <strong>{user.name}</strong>
-              <small className="dropdown-user-id">{user.userId}</small>
-              {user.email && <span className="dropdown-user-email">{user.email}</span>}
+          <div className="google-user-dropdown funky-user-dropdown" role="menu">
+            <div className="dropdown-header funky-dropdown-header">
+              <div
+                className="funky-profile-avatar-large"
+                style={{
+                  background: avatar.bgGradient,
+                  boxShadow: `0 4px 14px ${avatar.shadow}`,
+                }}
+              >
+                <span className="funky-avatar-emoji-large">{avatar.emoji}</span>
+                <span className="funky-avatar-online-dot" />
+              </div>
+              <div className="funky-profile-info">
+                <div className="funky-profile-title-row">
+                  <strong className="funky-profile-username">{username}</strong>
+                  <span className="funky-profile-badge">18+ Verified</span>
+                </div>
+                {user.name && user.name !== username && (
+                  <span className="funky-profile-fullname">{user.name}</span>
+                )}
+                <small className="dropdown-user-id">{user.userId}</small>
+                {user.email && <span className="dropdown-user-email">{user.email}</span>}
+              </div>
             </div>
 
             <div className="dropdown-privacy-note">
               <ShieldCheck size={14} className="privacy-icon" />
               <span>
-                <strong>Anonymous in Chat:</strong> Your Google name and email are never shown to
-                strangers.
+                <strong>100% Anonymous in Chat:</strong> Your name and email are kept strictly private on the server.
               </span>
             </div>
 

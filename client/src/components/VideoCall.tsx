@@ -620,6 +620,7 @@ export default function VideoCall({
   // Bind local stream to preview element
   useEffect(() => {
     if (localVideoRef.current && localStream) {
+      localVideoRef.current.muted = true;
       localVideoRef.current.srcObject = localStream;
       localVideoRef.current.play().catch(() => {});
     }
@@ -660,12 +661,16 @@ export default function VideoCall({
     let fallbackToAudioOnly = false;
 
     try {
-      // First attempt: Both Audio and Video
+      // First attempt: Both Audio and Video (optimized for mobile and desktop)
       const constraints: MediaStreamConstraints = {
         audio: selectedAudioId ? { deviceId: { exact: selectedAudioId } } : true,
         video: selectedVideoId
-          ? { deviceId: { exact: selectedVideoId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-          : { width: { ideal: 1280 }, height: { ideal: 720 } },
+          ? { deviceId: { exact: selectedVideoId } }
+          : {
+              facingMode: "user",
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+            },
       };
       stream = await navigator.mediaDevices.getUserMedia(constraints);
     } catch (firstError) {
@@ -703,6 +708,7 @@ export default function VideoCall({
     setMicEnabled(stream.getAudioTracks().some(track => track.enabled));
 
     if (localVideoRef.current && !fallbackToAudioOnly) {
+      localVideoRef.current.muted = true;
       localVideoRef.current.srcObject = stream;
       localVideoRef.current.play().catch(() => {});
     }
