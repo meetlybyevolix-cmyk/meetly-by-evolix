@@ -1,3 +1,6 @@
+# https://meet-ly.in/robots.txt
+# Meetly Search Engine Crawling & Indexing Directives
+
 User-agent: *
 Allow: /
 Allow: /make-friends-online
@@ -13,12 +16,14 @@ Allow: /data-rights
 Allow: /grievance
 Allow: /cookies
 
-# Disallow backend APIs, WebSocket endpoints, and private functional routes
+# Disallow private backend APIs, session endpoints, WebSockets, and error states
 Disallow: /api/
 Disallow: /trpc/
 Disallow: /auth/
 Disallow: /404
 
+# Host
+Host: https://meet-ly.in
+
 # Canonical XML Sitemap
 Sitemap: https://meet-ly.in/sitemap.xml
-
