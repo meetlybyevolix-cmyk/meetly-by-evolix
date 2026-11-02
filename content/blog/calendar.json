@@ -1,0 +1,1622 @@
+[
+  {
+    "id": 1,
+    "scheduledDate": "2026-11-02",
+    "title": "How to Make Friends Online as an Adult: A Practical, Low-Pressure Guide",
+    "slug": "how-to-make-friends-online-as-an-adult",
+    "category": "Friendship Advice",
+    "primaryKeyword": "how to make friends online as an adult",
+    "secondaryKeywords": [
+      "make friends online",
+      "making friends after college",
+      "meet new people online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Solving the post-college adult friendship cliff through low-pressure 1-on-1 discovery",
+    "status": "published"
+  },
+  {
+    "id": 2,
+    "scheduledDate": "2026-11-02",
+    "title": "Feeling Lonely and Want to Talk? Healthy Ways to Connect Right Now",
+    "slug": "what-to-do-when-you-feel-lonely-and-want-to-talk",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "feeling lonely want to talk",
+    "secondaryKeywords": [
+      "someone to talk to online",
+      "I feel alone and need someone to talk to",
+      "talk to someone when lonely"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Normalizing situational loneliness, sensory grounding, and low-pressure connection with safety directory",
+    "status": "published"
+  },
+  {
+    "id": 3,
+    "scheduledDate": "2026-11-02",
+    "title": "How to Start a Conversation With Someone New: 15 Icebreakers That Actually Work",
+    "slug": "how-to-start-a-conversation-with-someone-new",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to start a conversation with someone new",
+    "secondaryKeywords": [
+      "conversation starters for strangers",
+      "how to talk to strangers online",
+      "icebreakers for random chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Replacing 'Hey' and 'ASL' with low-friction cognitive hooks and the ping-pong rule",
+    "status": "published"
+  },
+  {
+    "id": 4,
+    "scheduledDate": "2026-11-02",
+    "title": "How to Chat Safely With Strangers Online: 8 Essential Rules for Adults",
+    "slug": "how-to-chat-safely-with-strangers-online",
+    "category": "Online Safety",
+    "primaryKeyword": "how to chat safely with strangers online",
+    "secondaryKeywords": [
+      "online stranger chat safety",
+      "anonymous chat security",
+      "safe random video chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Zero-PII principle, financial boundaries, video hygiene, and reporting abuse",
+    "status": "published"
+  },
+  {
+    "id": 5,
+    "scheduledDate": "2026-11-02",
+    "title": "Text Chat vs Video Chat: Which Is Better for Meeting New People?",
+    "slug": "text-chat-vs-video-chat",
+    "category": "Chat Platforms",
+    "primaryKeyword": "text chat vs video chat",
+    "secondaryKeywords": [
+      "random text or video chat",
+      "anonymous text vs video calling",
+      "Omegle alternatives text vs video"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Pros, cons, and environmental decision matrix for low-pressure typing vs real-time camera rapport",
+    "status": "published"
+  },
+  {
+    "id": 6,
+    "scheduledDate": "2026-11-03",
+    "title": "How to Meet New People Without Social Media: 7 Modern Alternatives",
+    "slug": "how-to-meet-new-people-without-social-media",
+    "category": "Friendship Advice",
+    "primaryKeyword": "meet new people without social media",
+    "secondaryKeywords": [
+      "how to make friends without Instagram",
+      "meet people offline and online",
+      "quit social media make friends"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Overcoming algorithm fatigue and connecting through direct human conversations",
+    "status": "published"
+  },
+  {
+    "id": 7,
+    "scheduledDate": "2026-11-04",
+    "title": "How to Make Friends When You're Shy or Socially Anxious",
+    "slug": "how-to-make-friends-when-you-are-shy",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "how to make friends when shy",
+    "secondaryKeywords": [
+      "social anxiety making friends",
+      "introvert guide to making friends",
+      "shy online chat advice"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Introverts & Remote Workers",
+    "priority": "High",
+    "contentAngle": "Empathetic, non-clinical steps for introverts to build confidence using text-first chat",
+    "status": "scheduled"
+  },
+  {
+    "id": 8,
+    "scheduledDate": "2026-11-05",
+    "title": "How to Keep an Online Conversation Going (Without It Feeling Forced)",
+    "slug": "how-to-keep-an-online-conversation-going",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to keep a conversation going",
+    "secondaryKeywords": [
+      "keep conversation flowing online",
+      "avoid dry texting",
+      "conversation tips for strangers"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Techniques to prevent dry responses: storytelling hooks, emotional reciprocity, and topic pivoting",
+    "status": "scheduled"
+  },
+  {
+    "id": 9,
+    "scheduledDate": "2026-11-06",
+    "title": "How to Find People With Similar Interests Online (Cinema, Gaming, Tech, Music)",
+    "slug": "how-to-find-people-with-similar-interests",
+    "category": "Friendship Advice",
+    "primaryKeyword": "find people with similar interests",
+    "secondaryKeywords": [
+      "meet people with same hobbies",
+      "shared interest chat",
+      "find hobby friends online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Why interest tags produce 5x longer conversations than purely random matching",
+    "status": "scheduled"
+  },
+  {
+    "id": 10,
+    "scheduledDate": "2026-11-07",
+    "title": "Random Video Chat: What to Expect and How to Have Great Calls",
+    "slug": "random-video-chat-what-to-expect",
+    "category": "Chat Platforms",
+    "primaryKeyword": "random video chat",
+    "secondaryKeywords": [
+      "video chat with strangers",
+      "what to expect in video chat",
+      "safe random video calls"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "A complete beginner's walkthrough to peer-to-peer WebRTC video etiquette and confidence",
+    "status": "scheduled"
+  },
+  {
+    "id": 11,
+    "scheduledDate": "2026-11-08",
+    "title": "How to Make International Friends Online: Bridging Cultures and Timezones",
+    "slug": "how-to-make-international-friends-online",
+    "category": "Cultural Connections",
+    "primaryKeyword": "make international friends online",
+    "secondaryKeywords": [
+      "meet people from other countries",
+      "global online friendship",
+      "talk to foreigners online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Cross-cultural communication etiquette, language curiosity, and timezone etiquette",
+    "status": "scheduled"
+  },
+  {
+    "id": 12,
+    "scheduledDate": "2026-11-09",
+    "title": "Online Dost Kaise Banaye: Safe Aur Real Tareeqe Naye Dost Banane Ke",
+    "slug": "online-dost-kaise-banaye-safe-guide",
+    "category": "Cultural Connections",
+    "primaryKeyword": "online dost kaise banaye",
+    "secondaryKeywords": [
+      "naye dost kaise banaye",
+      "chat with strangers India",
+      "online friendship in Hindi"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Hindi-English guide addressing Indian internet users seeking genuine friendships and privacy",
+    "status": "scheduled"
+  },
+  {
+    "id": 13,
+    "scheduledDate": "2026-11-10",
+    "title": "Things to Talk About With Someone You Just Met Online: 20 Engaging Topics",
+    "slug": "things-to-talk-about-with-someone-you-just-met",
+    "category": "Conversation Skills",
+    "primaryKeyword": "things to talk about with someone you just met",
+    "secondaryKeywords": [
+      "topics to talk about with strangers",
+      "online chat discussion topics",
+      "interesting conversation ideas"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Curated topic categories from food debates and travel dreams to creative passions",
+    "status": "scheduled"
+  },
+  {
+    "id": 14,
+    "scheduledDate": "2026-11-11",
+    "title": "How to Avoid Scams While Chatting With Strangers Online",
+    "slug": "how-to-avoid-scams-while-chatting-with-strangers",
+    "category": "Online Safety",
+    "primaryKeyword": "avoid scams while chatting online",
+    "secondaryKeywords": [
+      "online stranger scam red flags",
+      "pig butchering scams chat",
+      "romance scam prevention"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Detailed breakdown of phishing, crypto solicitation, fake emergencies, and identity protection",
+    "status": "scheduled"
+  },
+  {
+    "id": 15,
+    "scheduledDate": "2026-11-12",
+    "title": "How to Feel More Comfortable Meeting New People Online: Beating Awkwardness",
+    "slug": "how-to-feel-comfortable-meeting-people-online",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "how to feel comfortable meeting people online",
+    "secondaryKeywords": [
+      "overcome awkwardness online chat",
+      "camera shyness video call",
+      "comfortable chatting with strangers"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Introverts & Remote Workers",
+    "priority": "High",
+    "contentAngle": "Cognitive reframing, low expectations, and embracing short conversations as safe practice",
+    "status": "scheduled"
+  },
+  {
+    "id": 16,
+    "scheduledDate": "2026-11-13",
+    "title": "Chat With Strangers India: The Modern Guide to Respectful Online Conversations",
+    "slug": "chat-with-strangers-india-guide",
+    "category": "Cultural Connections",
+    "primaryKeyword": "chat with strangers India",
+    "secondaryKeywords": [
+      "talk to strangers India",
+      "online friendship India",
+      "random chat India free"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Navigating digital boundaries, mutual consent, and respect in Indian digital spaces",
+    "status": "scheduled"
+  },
+  {
+    "id": 17,
+    "scheduledDate": "2026-11-14",
+    "title": "What to Do When You Feel Bored and Have No One to Talk To",
+    "slug": "what-to-do-when-you-feel-bored-want-to-talk",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "talk to someone when bored",
+    "secondaryKeywords": [
+      "bored at night want to talk",
+      "nothing to do bored chat",
+      "find someone to chat with"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Turning idle downtime into stimulating creative exchanges and casual discussions",
+    "status": "scheduled"
+  },
+  {
+    "id": 18,
+    "scheduledDate": "2026-11-15",
+    "title": "How to Introduce Yourself Online: 5 Clean Formulas for Instant Rapport",
+    "slug": "how-to-introduce-yourself-online",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to introduce yourself online",
+    "secondaryKeywords": [
+      "online chat self introduction",
+      "introducing yourself to strangers",
+      "first message online friends"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Formulaic introductions that highlight vibe and curiosity without sounding like a resume",
+    "status": "scheduled"
+  },
+  {
+    "id": 19,
+    "scheduledDate": "2026-11-16",
+    "title": "The Evolution of Omegle Alternatives: Why Moderated 18+ Communities Win",
+    "slug": "omegle-alternatives-moderated-communities",
+    "category": "Chat Platforms",
+    "primaryKeyword": "Omegle alternative",
+    "secondaryKeywords": [
+      "websites like Omegle",
+      "safe Omegle alternatives",
+      "random chat without bots"
+    ],
+    "searchIntent": "Commercial Investigation",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Why unmoderated chat died, and how age assurance and P2P WebRTC created a safe successor",
+    "status": "scheduled"
+  },
+  {
+    "id": 20,
+    "scheduledDate": "2026-11-17",
+    "title": "How to Practice English and Language Skills Through Free Online Video Chat",
+    "slug": "practice-language-skills-online-video-chat",
+    "category": "Cultural Connections",
+    "primaryKeyword": "practice English with strangers online",
+    "secondaryKeywords": [
+      "free language exchange chat",
+      "talk to native English speakers online",
+      "conversation practice video chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Using random 1-on-1 video calls as a zero-cost immersion tool for speaking fluency",
+    "status": "scheduled"
+  },
+  {
+    "id": 21,
+    "scheduledDate": "2026-11-18",
+    "title": "Digital Etiquette: 10 Unwritten Rules for Chatting With Strangers Online",
+    "slug": "online-chatting-etiquette-rules",
+    "category": "Online Safety",
+    "primaryKeyword": "online chatting etiquette",
+    "secondaryKeywords": [
+      "rules for talking to strangers online",
+      "chat room manners",
+      "respectful random chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Respecting exit signals, pacing replies, avoiding pushiness, and honoring boundaries",
+    "status": "scheduled"
+  },
+  {
+    "id": 22,
+    "scheduledDate": "2026-11-19",
+    "title": "Kisi Se Baat Karni Hai: Jab Akelapan Lage Toh Kahan Baat Karein?",
+    "slug": "kisi-se-baat-karni-hai-akelapan-guide",
+    "category": "Cultural Connections",
+    "primaryKeyword": "kisi se baat karni hai",
+    "secondaryKeywords": [
+      "dil halka karne ke liye baat",
+      "online baat karne ke liye app",
+      "Hindi chat platform"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Empathetic Hindi-language guidance for Indian youth experiencing isolation",
+    "status": "scheduled"
+  },
+  {
+    "id": 23,
+    "scheduledDate": "2026-11-20",
+    "title": "How to Transition Online Friends Into Long-Term Friendships",
+    "slug": "transition-online-friends-to-real-life",
+    "category": "Friendship Advice",
+    "primaryKeyword": "transition online friends to real life",
+    "secondaryKeywords": [
+      "make internet friends long term",
+      "moving from chat to real friendship",
+      "online friend to close friend"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Milestones for moving from ephemeral chat to persistent messaging apps and in-person meetups",
+    "status": "scheduled"
+  },
+  {
+    "id": 24,
+    "scheduledDate": "2026-11-21",
+    "title": "How to Handle Uncomfortable or Awkward Online Conversations Gracefully",
+    "slug": "how-to-handle-awkward-online-conversations",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to overcome awkward conversations",
+    "secondaryKeywords": [
+      "awkward silence online chat",
+      "how to exit a boring chat",
+      "handling rude strangers online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Polite exit scripts, managing mismatched energy, and using the skip button guilt-free",
+    "status": "scheduled"
+  },
+  {
+    "id": 25,
+    "scheduledDate": "2026-11-22",
+    "title": "Why Ephemeral Anonymous Text Chat Protects Your Digital Identity",
+    "slug": "why-anonymous-text-chat-protects-privacy",
+    "category": "Online Safety",
+    "primaryKeyword": "anonymous chat online",
+    "secondaryKeywords": [
+      "ephemeral messaging benefits",
+      "no logs chat room",
+      "digital footprint privacy chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Technical explanation of why not storing permanent message logs prevents data leaks and doxxing",
+    "status": "scheduled"
+  },
+  {
+    "id": 26,
+    "scheduledDate": "2026-11-23",
+    "title": "Making Friends as a Remote Worker: Combating Work-From-Home Isolation",
+    "slug": "making-friends-as-a-remote-worker",
+    "category": "Friendship Advice",
+    "primaryKeyword": "making friends as a remote worker",
+    "secondaryKeywords": [
+      "work from home loneliness",
+      "remote worker social life",
+      "meet people working from home"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Introverts & Remote Workers",
+    "priority": "High",
+    "contentAngle": "Practical social routines for software engineers, freelancers, and distributed teams",
+    "status": "scheduled"
+  },
+  {
+    "id": 27,
+    "scheduledDate": "2026-11-24",
+    "title": "WebRTC Video Security: How Peer-to-Peer Encryption Works in Modern Chats",
+    "slug": "webrtc-video-security-explained",
+    "category": "Chat Platforms",
+    "primaryKeyword": "peer to peer video chat security",
+    "secondaryKeywords": [
+      "is WebRTC video private",
+      "P2P video encryption explained",
+      "safe video call technology"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Accessible technical explanation of DTLS-SRTP encryption and direct browser-to-browser streaming",
+    "status": "scheduled"
+  },
+  {
+    "id": 28,
+    "scheduledDate": "2026-11-25",
+    "title": "Deep Conversation Starters: Moving Beyond Small Talk With New People",
+    "slug": "deep-conversation-starters-for-new-friends",
+    "category": "Conversation Skills",
+    "primaryKeyword": "interesting questions to ask new friends",
+    "secondaryKeywords": [
+      "deep questions to ask strangers",
+      "move past small talk online",
+      "meaningful conversation starters"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Psychological tiered questioning: moving from light hypothetical to philosophy and values",
+    "status": "scheduled"
+  },
+  {
+    "id": 29,
+    "scheduledDate": "2026-11-26",
+    "title": "Strangers Se Chat Kaise Kare: Safety Rules Aur Hindi Tips",
+    "slug": "strangers-se-chat-kaise-kare-tips",
+    "category": "Cultural Connections",
+    "primaryKeyword": "strangers se chat kaise kare",
+    "secondaryKeywords": [
+      "ajnabee se baat karne ke tips",
+      "online stranger chat safety Hindi",
+      "naye logo se chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "Medium",
+    "contentAngle": "Addressing cultural nuances of online stranger interaction in Indian metropolitan and tier-2 cities",
+    "status": "scheduled"
+  },
+  {
+    "id": 30,
+    "scheduledDate": "2026-11-27",
+    "title": "Late-Night Thoughts: Why People Crave Real Conversations After Midnight",
+    "slug": "late-night-conversations-online-chat",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "someone to talk to late at night",
+    "secondaryKeywords": [
+      "insomnia chat with strangers",
+      "late night thoughts talk",
+      "midnight online conversation"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "The psychological shift in vulnerability and honesty during quiet nighttime hours",
+    "status": "scheduled"
+  },
+  {
+    "id": 31,
+    "scheduledDate": "2026-11-28",
+    "title": "Making Friends After Moving to a New City: Online Tools to Settle In",
+    "slug": "making-friends-after-moving-to-a-new-city",
+    "category": "Friendship Advice",
+    "primaryKeyword": "make friends moving to new city",
+    "secondaryKeywords": [
+      "relocation making friends",
+      "how to meet people in a new place",
+      "lonely after moving"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Blending digital interest matching with local neighborhood exploration",
+    "status": "scheduled"
+  },
+  {
+    "id": 32,
+    "scheduledDate": "2026-11-29",
+    "title": "Camera Shyness: How to Overcome Video Call Anxiety Step by Step",
+    "slug": "overcoming-camera-shyness-video-call",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "overcome camera shyness video chat",
+    "secondaryKeywords": [
+      "video call anxiety",
+      "hate being on camera",
+      "feel comfortable on webcam"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Introverts & Remote Workers",
+    "priority": "Medium",
+    "contentAngle": "Gradual exposure, framing techniques, and shifting focus from self-evaluation to curiosity",
+    "status": "scheduled"
+  },
+  {
+    "id": 33,
+    "scheduledDate": "2026-11-30",
+    "title": "The Art of Active Listening in Online Chat: How to Make People Feel Heard",
+    "slug": "active-listening-in-online-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to be a good conversationalist online",
+    "secondaryKeywords": [
+      "active listening skills chat",
+      "make people feel heard",
+      "texting communication skills"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Paraphrasing, emotional validation, and avoiding conversational narcissism in text",
+    "status": "scheduled"
+  },
+  {
+    "id": 34,
+    "scheduledDate": "2026-12-01",
+    "title": "Why You Don't Need Real Names on the Internet to Have Genuine Connections",
+    "slug": "anonymity-and-authentic-human-connection",
+    "category": "Online Safety",
+    "primaryKeyword": "anonymous chat benefits",
+    "secondaryKeywords": [
+      "authentic connection without profile",
+      "online disinhibition positive",
+      "real talks with strangers"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "How removing resume-like public profiles allows people to be honest about thoughts and feelings",
+    "status": "scheduled"
+  },
+  {
+    "id": 35,
+    "scheduledDate": "2026-12-02",
+    "title": "Best Free Websites to Talk to Strangers Online in 2026 (Safety Comparison)",
+    "slug": "best-websites-to-talk-to-strangers-online",
+    "category": "Chat Platforms",
+    "primaryKeyword": "stranger chat website",
+    "secondaryKeywords": [
+      "best random chat sites",
+      "free stranger chat platforms",
+      "safe chat websites 2026"
+    ],
+    "searchIntent": "Commercial Investigation",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Objective comparison of modern stranger chat platforms focusing on privacy, moderation, and features",
+    "status": "scheduled"
+  },
+  {
+    "id": 36,
+    "scheduledDate": "2026-12-03",
+    "title": "How to Talk to Someone Going Through a Hard Time (Without Being Toxic Positive)",
+    "slug": "how-to-talk-to-someone-having-a-hard-time",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "what to say to someone having a bad day",
+    "secondaryKeywords": [
+      "supportive conversation tips",
+      "avoid toxic positivity",
+      "comfort a friend online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Empathetic listening scripts, holding space, and knowing when to suggest professional support",
+    "status": "scheduled"
+  },
+  {
+    "id": 37,
+    "scheduledDate": "2026-12-04",
+    "title": "Finding Coding and Tech Friends Online: Where Developers Hang Out Casual",
+    "slug": "finding-coding-tech-friends-online",
+    "category": "Friendship Advice",
+    "primaryKeyword": "find programmer friends online",
+    "secondaryKeywords": [
+      "meet tech enthusiasts chat",
+      "coding buddy online",
+      "developer casual social chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "How developers bond over side projects, open-source ideas, and industry humor",
+    "status": "scheduled"
+  },
+  {
+    "id": 38,
+    "scheduledDate": "2026-12-05",
+    "title": "Why You Ghost People (And How to End Conversations Respectfully Instead)",
+    "slug": "why-people-ghost-and-how-to-exit-kindly",
+    "category": "Conversation Skills",
+    "primaryKeyword": "ghosting psychology online",
+    "secondaryKeywords": [
+      "how to stop ghosting",
+      "polite exit text message",
+      "ending conversations online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Understanding the avoidance reflex behind ghosting and simple 1-sentence respectful exit texts",
+    "status": "scheduled"
+  },
+  {
+    "id": 39,
+    "scheduledDate": "2026-12-06",
+    "title": "The Psychology of First Impressions in 1-on-1 Video Calls",
+    "slug": "psychology-of-first-impressions-video-calls",
+    "category": "Chat Platforms",
+    "primaryKeyword": "first impressions video call",
+    "secondaryKeywords": [
+      "body language webcam chat",
+      "eye contact in video calls",
+      "video chat psychology"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "How camera angle, eye level, smile timing, and voice warmth establish trust in the first 7 seconds",
+    "status": "scheduled"
+  },
+  {
+    "id": 40,
+    "scheduledDate": "2026-12-07",
+    "title": "India Mein Online Dosti Ke Fayde Aur Savdhaniyan (DPDP Act & Privacy)",
+    "slug": "india-online-friendship-privacy-safety",
+    "category": "Cultural Connections",
+    "primaryKeyword": "online friendship India safety",
+    "secondaryKeywords": [
+      "cyber safety tips India",
+      "online dosti privacy",
+      "DPDP Act online chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Understanding digital privacy rights, reporting cyber harassment, and safe social discovery in India",
+    "status": "scheduled"
+  },
+  {
+    "id": 41,
+    "scheduledDate": "2026-12-08",
+    "title": "How to Make Friends When You Work Night Shifts or Odd Hours",
+    "slug": "making-friends-working-night-shifts",
+    "category": "Friendship Advice",
+    "primaryKeyword": "night shift loneliness friends",
+    "secondaryKeywords": [
+      "third shift social life",
+      "odd hours online chat",
+      "friends for night shift workers"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Leveraging global timezone platforms to chat with people across the world during late hours",
+    "status": "scheduled"
+  },
+  {
+    "id": 42,
+    "scheduledDate": "2026-12-09",
+    "title": "Humor in Texting: How to Be Funny and Playful Without Being Misunderstood",
+    "slug": "how-to-be-funny-in-text-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to be funny in text chat",
+    "secondaryKeywords": [
+      "wit in online messaging",
+      "playful texting examples",
+      "humor in random chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Irony vs literal text, punctuation cadence, observational comedy, and self-deprecation limits",
+    "status": "scheduled"
+  },
+  {
+    "id": 43,
+    "scheduledDate": "2026-12-10",
+    "title": "The Dangers of Sharing Photos With Strangers: What Metadata Reveals",
+    "slug": "dangers-of-sharing-photos-with-strangers",
+    "category": "Online Safety",
+    "primaryKeyword": "photo metadata privacy danger",
+    "secondaryKeywords": [
+      "EXIF data photos strangers",
+      "image sharing risks chat",
+      "reverse image search safety"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "EXIF geolocation tags, reverse image searches, and why Meetly strips metadata from uploads",
+    "status": "scheduled"
+  },
+  {
+    "id": 44,
+    "scheduledDate": "2026-12-11",
+    "title": "The Sunday Scaries: Why Sunday Evenings Feel Lonely and How Chat Helps",
+    "slug": "sunday-scaries-loneliness-chat-reset",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "sunday evening loneliness",
+    "secondaryKeywords": [
+      "sunday scaries talk to someone",
+      "anticipatory anxiety weekend",
+      "calm casual conversation"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Reframing pre-workweek anxiety through distracting, lighthearted human banter",
+    "status": "scheduled"
+  },
+  {
+    "id": 45,
+    "scheduledDate": "2026-12-12",
+    "title": "How Film Buffs and Cinephiles Connect Online Over Niche Cinema",
+    "slug": "movie-lovers-connect-online-cinema-chat",
+    "category": "Friendship Advice",
+    "primaryKeyword": "talk about movies with strangers online",
+    "secondaryKeywords": [
+      "cinephile chat",
+      "movie discussion online friends",
+      "letterboxd style chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Debating directors, underground indie gems, and using film tags on Meetly for rich conversations",
+    "status": "scheduled"
+  },
+  {
+    "id": 46,
+    "scheduledDate": "2026-12-13",
+    "title": "The Introvert's Guide to Video Chat: Conserving Your Social Energy",
+    "slug": "introverts-guide-to-video-chat",
+    "category": "Chat Platforms",
+    "primaryKeyword": "introverts video chat tips",
+    "secondaryKeywords": [
+      "social battery video calls",
+      "introvert friendly video chat",
+      "short video calls strangers"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Introverts & Remote Workers",
+    "priority": "Medium",
+    "contentAngle": "Setting 10-minute micro-call limits and honoring your battery without guilt",
+    "status": "scheduled"
+  },
+  {
+    "id": 47,
+    "scheduledDate": "2026-12-14",
+    "title": "How to Ask Thoughtful Questions That Spark Unforgettable Answers",
+    "slug": "how-to-ask-thoughtful-questions-online",
+    "category": "Conversation Skills",
+    "primaryKeyword": "thoughtful questions to ask strangers",
+    "secondaryKeywords": [
+      "deep questions for friends",
+      "good conversation questions",
+      "memorable questions chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "The difference between interrogation questions and 'open door' curiosity questions",
+    "status": "scheduled"
+  },
+  {
+    "id": 48,
+    "scheduledDate": "2026-12-15",
+    "title": "College Khatam Hone Ke Baad Dost Kaise Banayein (Real Solutions)",
+    "slug": "college-ke-baad-dost-kaise-banayein-guide",
+    "category": "Cultural Connections",
+    "primaryKeyword": "college ke baad naye dost",
+    "secondaryKeywords": [
+      "job life loneliness India",
+      "making friends in Bangalore Mumbai Delhi",
+      "Indian adult social life"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Coping with the shift from college campus camaraderie to corporate isolation in Indian tech hubs",
+    "status": "scheduled"
+  },
+  {
+    "id": 49,
+    "scheduledDate": "2026-12-16",
+    "title": "Why You Don't Need Romantic Intentions to Enjoy 1-on-1 Online Chats",
+    "slug": "platonic-connections-online-without-dating",
+    "category": "Friendship Advice",
+    "primaryKeyword": "platonic chat with strangers",
+    "secondaryKeywords": [
+      "non dating random chat",
+      "friends only online chat",
+      "casual platonic conversation"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Why platonic social discovery is far more relaxing and rewarding than exhausting dating apps",
+    "status": "scheduled"
+  },
+  {
+    "id": 50,
+    "scheduledDate": "2026-12-17",
+    "title": "How to Protect Your Emotional Energy When Chatting With Strangers Online",
+    "slug": "protect-emotional-energy-online-chat",
+    "category": "Online Safety",
+    "primaryKeyword": "emotional boundaries online chat",
+    "secondaryKeywords": [
+      "avoid trauma dumping strangers",
+      "protect energy social chat",
+      "healthy chat boundaries"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Recognizing trauma dumping, establishing kind limits, and prioritizing self-care",
+    "status": "scheduled"
+  },
+  {
+    "id": 51,
+    "scheduledDate": "2026-12-18",
+    "title": "The Science of Voice and Pitch in Connecting With New People",
+    "slug": "science-of-voice-pitch-online-calls",
+    "category": "Chat Platforms",
+    "primaryKeyword": "vocal tone in online calls",
+    "secondaryKeywords": [
+      "audio rapport video chat",
+      "how voice builds trust",
+      "talking to strangers voice tips"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Why vocal cadence and audio clarity account for 40% of perceived warmth in video calls",
+    "status": "scheduled"
+  },
+  {
+    "id": 52,
+    "scheduledDate": "2026-12-19",
+    "title": "Holiday Loneliness: How to Stay Connected When You Are Spending Holidays Alone",
+    "slug": "holiday-loneliness-staying-connected",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "spending holidays alone lonely",
+    "secondaryKeywords": [
+      "holiday isolation support",
+      "talk to people christmas new year",
+      "festive season loneliness"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Practical coping strategies and connecting with millions of others celebrating solo worldwide",
+    "status": "scheduled"
+  },
+  {
+    "id": 53,
+    "scheduledDate": "2026-12-20",
+    "title": "25 Quick Would-You-Rather Questions for Rapid Online Icebreaking",
+    "slug": "would-you-rather-questions-online-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "would you rather questions for strangers",
+    "secondaryKeywords": [
+      "funny dilemma questions chat",
+      "icebreaker questions random chat",
+      "party questions online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Playful, clean dilemmas guaranteed to spark funny arguments and laughter",
+    "status": "scheduled"
+  },
+  {
+    "id": 54,
+    "scheduledDate": "2026-12-21",
+    "title": "How Music Connects People Across Borders: Finding Music Buddies Online",
+    "slug": "finding-music-buddies-online-shared-taste",
+    "category": "Friendship Advice",
+    "primaryKeyword": "find music friends online",
+    "secondaryKeywords": [
+      "share music taste online chat",
+      "bond over music strangers",
+      "indie music discussion chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Exchanging Spotify links, discovering obscure genres, and building friendships on rhythm",
+    "status": "scheduled"
+  },
+  {
+    "id": 55,
+    "scheduledDate": "2026-12-22",
+    "title": "How to Deal With Trolls and Rude People in Online Chat Rooms",
+    "slug": "how-to-deal-with-trolls-online-chat",
+    "category": "Online Safety",
+    "primaryKeyword": "how to deal with online trolls",
+    "secondaryKeywords": [
+      "handling rude strangers chat",
+      "troll psychology online",
+      "don't feed the trolls chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Understanding the attention economy of trolls: the instant block method vs wasting energy arguing",
+    "status": "scheduled"
+  },
+  {
+    "id": 56,
+    "scheduledDate": "2026-12-23",
+    "title": "Hindi Stranger Chat: Naye Logo Se Baat Karne Ke Liye Safe Platform",
+    "slug": "hindi-stranger-chat-safe-platform",
+    "category": "Cultural Connections",
+    "primaryKeyword": "Hindi random chat",
+    "secondaryKeywords": [
+      "Hindi stranger chat free",
+      "talk in Hindi online stranger",
+      "Desi random video chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Highlighting language filter matching on Meetly for Hindi-speaking adult users",
+    "status": "scheduled"
+  },
+  {
+    "id": 57,
+    "scheduledDate": "2026-12-24",
+    "title": "New Year Reflections: Setting Healthy Social Goals for Meaningful Connection",
+    "slug": "new-year-social-goals-for-connection",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "make new friends new year resolution",
+    "secondaryKeywords": [
+      "social goals for adults",
+      "expand social circle new year",
+      "overcoming isolation resolutions"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Replacing unrealistic goals with micro-commitments: having one spontaneous 15-minute chat weekly",
+    "status": "scheduled"
+  },
+  {
+    "id": 58,
+    "scheduledDate": "2026-12-25",
+    "title": "How Gamers Can Turn In-Game Squad Mates Into Genuine Friends",
+    "slug": "turning-gaming-buddies-into-real-friends",
+    "category": "Friendship Advice",
+    "primaryKeyword": "make gamer friends online",
+    "secondaryKeywords": [
+      "gaming squad friendship",
+      "bond over video games chat",
+      "gamer social discovery"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Moving from Discord callouts to discussing life, humor, and shared aspirations",
+    "status": "scheduled"
+  },
+  {
+    "id": 59,
+    "scheduledDate": "2026-12-26",
+    "title": "The Power of Vulnerability in Online Chats (How Much Is Too Much?)",
+    "slug": "vulnerability-in-online-chats-balance",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how much to share with strangers online",
+    "secondaryKeywords": [
+      "vulnerability in friendship",
+      "boundaries sharing thoughts online",
+      "oversharing in text chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "The graduated disclosure model: mirroring emotional depth without overwhelming your partner",
+    "status": "scheduled"
+  },
+  {
+    "id": 60,
+    "scheduledDate": "2026-12-27",
+    "title": "Peer-to-Peer vs Server-Relayed Chat: What It Means for Your Video Privacy",
+    "slug": "p2p-vs-server-relayed-video-privacy",
+    "category": "Chat Platforms",
+    "primaryKeyword": "peer to peer video privacy",
+    "secondaryKeywords": [
+      "how WebRTC P2P works",
+      "does video chat record calls",
+      "serverless video calls privacy"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Demystifying STUN/TURN, signaling servers, and why peer-to-peer data channels prevent surveillance",
+    "status": "scheduled"
+  },
+  {
+    "id": 61,
+    "scheduledDate": "2026-12-28",
+    "title": "How to Make Friends When You Are in Your 30s and 40s (It's Never Too Late)",
+    "slug": "making-friends-in-your-30s-and-40s",
+    "category": "Friendship Advice",
+    "primaryKeyword": "making friends in your 30s",
+    "secondaryKeywords": [
+      "making friends in your 40s",
+      "adult friendship midlife",
+      "meet new people over 30"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Dispelling the myth that friendships can only be formed in youth; focusing on intentional connections",
+    "status": "scheduled"
+  },
+  {
+    "id": 62,
+    "scheduledDate": "2026-12-29",
+    "title": "Digital Detox Without Isolation: Maintaining Connection Without Toxic Feeds",
+    "slug": "digital-detox-without-social-isolation",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "digital detox stay connected",
+    "secondaryKeywords": [
+      "quit social media loneliness",
+      "healthy internet usage",
+      "screen time balance friends"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Replacing endless mindless scrolling with targeted, intentional 1-on-1 human conversations",
+    "status": "scheduled"
+  },
+  {
+    "id": 63,
+    "scheduledDate": "2026-12-30",
+    "title": "How to Ask Someone to Be Your Online Friend (Without Awkwardness)",
+    "slug": "how-to-ask-someone-to-be-online-friends",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to ask someone to be friends online",
+    "secondaryKeywords": [
+      "asking to stay in touch online",
+      "exchanging Discord handles",
+      "smooth friendship transition"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Casual, zero-pressure scripts for exchanging contact handles at the end of a great conversation",
+    "status": "scheduled"
+  },
+  {
+    "id": 64,
+    "scheduledDate": "2026-12-31",
+    "title": "New Year's Eve Solo? How to Ring in the New Year Connecting Online",
+    "slug": "new-years-eve-solo-online-connection",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "spending new years eve alone",
+    "secondaryKeywords": [
+      "solo new year chat strangers",
+      "new year midnight talk",
+      "celebrating new year alone"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "A festive, positive celebration of solo New Year celebrations and global countdown conversations",
+    "status": "scheduled"
+  },
+  {
+    "id": 65,
+    "scheduledDate": "2027-01-01",
+    "title": "The DPDP Act 2023: How India's New Privacy Laws Protect You in Online Chats",
+    "slug": "dpdp-act-india-online-chat-privacy",
+    "category": "Online Safety",
+    "primaryKeyword": "DPDP Act online privacy India",
+    "secondaryKeywords": [
+      "data protection law online chat",
+      "digital personal data protection India",
+      "user rights Meetly"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Plain-language overview of user data rights, consent withdrawal, and grievance redressal under Indian law",
+    "status": "scheduled"
+  },
+  {
+    "id": 66,
+    "scheduledDate": "2027-01-02",
+    "title": "How Introverts and Extroverts Can Understand Each Other in Random Chats",
+    "slug": "introverts-and-extroverts-in-online-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "introvert extrovert communication online",
+    "secondaryKeywords": [
+      "conversational styles chat",
+      "energy levels in text messaging",
+      "complementary communication"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Decoding pacing differences: fast texters vs reflective paragraph writers",
+    "status": "scheduled"
+  },
+  {
+    "id": 67,
+    "scheduledDate": "2027-01-03",
+    "title": "Book Lovers Unite: How Readers Meet and Debate Literature Online",
+    "slug": "book-lovers-literature-chat-online",
+    "category": "Friendship Advice",
+    "primaryKeyword": "find book lover friends online",
+    "secondaryKeywords": [
+      "talk about books online chat",
+      "virtual book club 1 on 1",
+      "discuss literature with strangers"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Using the Books interest tag on Meetly to discover book recommendations and debate literary plots",
+    "status": "scheduled"
+  },
+  {
+    "id": 68,
+    "scheduledDate": "2027-01-04",
+    "title": "Why Video Chatting With Someone Across the World Shrinks the Planet",
+    "slug": "global-video-chat-cultural-empathy",
+    "category": "Cultural Connections",
+    "primaryKeyword": "talk to strangers worldwide video",
+    "secondaryKeywords": [
+      "cultural exchange video chat",
+      "meet international people webcam",
+      "global empathy online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Personal stories of how speaking face-to-face with people across continents dismantles stereotypes",
+    "status": "scheduled"
+  },
+  {
+    "id": 69,
+    "scheduledDate": "2027-01-05",
+    "title": "Recognizing Online Manipulation: Gaslighting, Guilt-Tripping, and Coercion",
+    "slug": "recognizing-online-manipulation-chat",
+    "category": "Online Safety",
+    "primaryKeyword": "online manipulation red flags",
+    "secondaryKeywords": [
+      "gaslighting in online chat",
+      "emotional coercion strangers",
+      "toxic strangers online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Actionable checklists of warning phrases used by digital manipulators and instant exit strategies",
+    "status": "scheduled"
+  },
+  {
+    "id": 70,
+    "scheduledDate": "2027-01-06",
+    "title": "The Warm-Up Effect: Why Your 3rd Chat of the Night Is Always the Best",
+    "slug": "warm-up-effect-social-momentum-chat",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "social momentum online chat",
+    "secondaryKeywords": [
+      "conversation warm up",
+      "building social confidence chat",
+      "overcome initial hesitation"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Introverts & Remote Workers",
+    "priority": "Medium",
+    "contentAngle": "The psychological ramp of social momentum: why awkward first minutes yield fluent late conversations",
+    "status": "scheduled"
+  },
+  {
+    "id": 71,
+    "scheduledDate": "2027-01-07",
+    "title": "Travel Stories: How to Share Adventures With Strangers Online",
+    "slug": "sharing-travel-stories-online-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "talk about travel with strangers",
+    "secondaryKeywords": [
+      "share travel stories chat",
+      "travel conversation starters",
+      "backpacking stories online"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Prompting sensory travel memories: the best street meal, near-misses, and hidden gems",
+    "status": "scheduled"
+  },
+  {
+    "id": 72,
+    "scheduledDate": "2027-01-08",
+    "title": "Online Friendship In India: Overcoming Stereotypes and Cultural Barriers",
+    "slug": "online-friendship-india-cultural-barriers",
+    "category": "Cultural Connections",
+    "primaryKeyword": "online friendship India",
+    "secondaryKeywords": [
+      "making friends in Indian cities",
+      "social stigma online chat India",
+      "genuine friendships online India"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Addressing family and peer skepticism about digital friendships in contemporary urban India",
+    "status": "scheduled"
+  },
+  {
+    "id": 73,
+    "scheduledDate": "2027-01-09",
+    "title": "How to Clean Your Digital Footprint Before Using Random Chat Apps",
+    "slug": "clean-digital-footprint-before-chatting",
+    "category": "Online Safety",
+    "primaryKeyword": "clean digital footprint online safety",
+    "secondaryKeywords": [
+      "browser privacy settings chat",
+      "prevent doxxing online chat",
+      "camera security checklist"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Auditing browser extensions, clearing cookies, disabling location permissions, and verifying camera indicators",
+    "status": "scheduled"
+  },
+  {
+    "id": 74,
+    "scheduledDate": "2027-01-10",
+    "title": "The Ephemeral Web: Why Disappearing Messages Encourage Honest Conversations",
+    "slug": "ephemeral-web-disappearing-messages-honesty",
+    "category": "Chat Platforms",
+    "primaryKeyword": "ephemeral messaging benefits",
+    "secondaryKeywords": [
+      "disappearing chat psychology",
+      "why no logs chat feels safer",
+      "in the moment conversations"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "How the permanent archiving of social media created self-censorship, and why ephemerality liberates expression",
+    "status": "scheduled"
+  },
+  {
+    "id": 75,
+    "scheduledDate": "2027-01-11",
+    "title": "Creative Block? How a 15-Minute Chat With a Stranger Sparks New Ideas",
+    "slug": "overcoming-creative-block-casual-chat",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "overcome creative block talk to someone",
+    "secondaryKeywords": [
+      "brainstorm with strangers",
+      "creative inspiration casual chat",
+      "break mental rut talking"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Cross-pollination of ideas: how talking to someone outside your industry unlocks stuck projects",
+    "status": "scheduled"
+  },
+  {
+    "id": 76,
+    "scheduledDate": "2027-01-12",
+    "title": "How to Give a Genuine Compliment in Online Chat Without Being Creepy",
+    "slug": "how-to-give-genuine-compliments-online-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "how to compliment someone online chat",
+    "secondaryKeywords": [
+      "genuine compliments strangers",
+      "avoid creepy compliments chat",
+      "positive reinforcement conversation"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Complimenting choices, taste, insights, and humor rather than physical appearance",
+    "status": "scheduled"
+  },
+  {
+    "id": 77,
+    "scheduledDate": "2027-01-13",
+    "title": "Finding Fellow Founders and Solo Entrepreneurs Online for Mental Support",
+    "slug": "founders-solo-entrepreneurs-online-support",
+    "category": "Friendship Advice",
+    "primaryKeyword": "solo founder loneliness friends",
+    "secondaryKeywords": [
+      "entrepreneur support network chat",
+      "bootstrapper friends online",
+      "talk to other founders"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "The unique isolation of building a startup and finding peers who understand the grind",
+    "status": "scheduled"
+  },
+  {
+    "id": 78,
+    "scheduledDate": "2027-01-14",
+    "title": "Virtual Backgrounds vs Natural Rooms: What Works Best in Video Chat?",
+    "slug": "virtual-backgrounds-vs-natural-rooms-video-chat",
+    "category": "Chat Platforms",
+    "primaryKeyword": "virtual background video chat privacy",
+    "secondaryKeywords": [
+      "blur background webcam calls",
+      "clean video chat setup",
+      "room framing video calls"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Balancing authentic domestic realism with privacy-preserving blur and backdrop tools",
+    "status": "scheduled"
+  },
+  {
+    "id": 79,
+    "scheduledDate": "2027-01-15",
+    "title": "Naye Shehar Mein Naye Dost: Metro Cities Mein Dosti Banane Ki Tips",
+    "slug": "naye-shehar-mein-naye-dost-metro-cities",
+    "category": "Cultural Connections",
+    "primaryKeyword": "naye shehar mein dost kaise banaye",
+    "secondaryKeywords": [
+      "Bangalore Gurgaon loneliness",
+      "shifting to Mumbai new friends",
+      "Indian PG life social connection"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Navigating PG accommodations, long commutes, and finding like-minded young professionals online",
+    "status": "scheduled"
+  },
+  {
+    "id": 80,
+    "scheduledDate": "2027-01-16",
+    "title": "How to Protect Your Children and Keep Minors Off Adult Chat Platforms",
+    "slug": "keeping-minors-off-adult-chat-platforms",
+    "category": "Online Safety",
+    "primaryKeyword": "age verification online chat",
+    "secondaryKeywords": [
+      "child safety online chat",
+      "18+ adults only platforms",
+      "parental controls random chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Why Meetly strictly enforces Google authentication and 18+ verification, and tips for parents",
+    "status": "scheduled"
+  },
+  {
+    "id": 81,
+    "scheduledDate": "2027-01-17",
+    "title": "Overcoming Texting Burnout: When Typing Feels Like Too Much Work",
+    "slug": "overcoming-texting-burnout-chat-fatigue",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "texting burnout fatigue",
+    "secondaryKeywords": [
+      "tired of texting all day",
+      "switch from text to video chat",
+      "chat exhaustion recovery"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Why 5 minutes of real-time voice or video restores energy faster than 2 hours of texting",
+    "status": "scheduled"
+  },
+  {
+    "id": 82,
+    "scheduledDate": "2027-01-18",
+    "title": "How to Handle Rejection When Someone Skips You in Random Chat",
+    "slug": "handling-rejection-when-skipped-online-chat",
+    "category": "Conversation Skills",
+    "primaryKeyword": "why people skip in random chat",
+    "secondaryKeywords": [
+      "feeling rejected random chat",
+      "don't take skips personally",
+      "video chat skip psychology"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Understanding that skips are 90% about timezone, camera lag, or language preferences—not your worth",
+    "status": "scheduled"
+  },
+  {
+    "id": 83,
+    "scheduledDate": "2027-01-19",
+    "title": "Finding Workout and Fitness Accountability Partners Online",
+    "slug": "finding-fitness-accountability-partners-online",
+    "category": "Friendship Advice",
+    "primaryKeyword": "fitness accountability partner online",
+    "secondaryKeywords": [
+      "workout motivation friends chat",
+      "gym buddies online",
+      "healthy lifestyle chat partners"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Sharing weekly fitness goals, celebrating PRs, and maintaining discipline through mutual check-ins",
+    "status": "scheduled"
+  },
+  {
+    "id": 84,
+    "scheduledDate": "2027-01-20",
+    "title": "Microphone Quality and Echo Cancellation in Web Video Calls",
+    "slug": "microphone-quality-echo-cancellation-video-calls",
+    "category": "Chat Platforms",
+    "primaryKeyword": "improve audio quality video calls",
+    "secondaryKeywords": [
+      "stop echo video chat",
+      "best headset for random chat",
+      "browser microphone settings"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Simple headphone tips, input level adjustments, and browser WebRTC acoustic echo suppression",
+    "status": "scheduled"
+  },
+  {
+    "id": 85,
+    "scheduledDate": "2027-01-21",
+    "title": "Online Friendships vs In-Person Friendships: Pros, Cons, and Nuances",
+    "slug": "online-friendships-vs-in-person-friendships",
+    "category": "Friendship Advice",
+    "primaryKeyword": "online friends vs real life friends",
+    "secondaryKeywords": [
+      "are internet friends real friends",
+      "pros and cons online friendship",
+      "hybrid social life"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Why the modern healthy adult benefits from a hybrid circle: local friends for activities, online friends for niche passions",
+    "status": "scheduled"
+  },
+  {
+    "id": 86,
+    "scheduledDate": "2027-01-22",
+    "title": "Reporting Harassment Under India's IT Intermediary Rules (Rule 3(2))",
+    "slug": "reporting-harassment-it-intermediary-rules-india",
+    "category": "Online Safety",
+    "primaryKeyword": "report cyber harassment India",
+    "secondaryKeywords": [
+      "IT Intermediary Rules 2021",
+      "Meetly grievance officer",
+      "cyber crime reporting India"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults India",
+    "priority": "High",
+    "contentAngle": "Step-by-step statutory process for escalating abuse to our Grievance Officer and national authorities",
+    "status": "scheduled"
+  },
+  {
+    "id": 87,
+    "scheduledDate": "2027-01-23",
+    "title": "How to Ask for Advice Online Without Revealing Your Personal Identity",
+    "slug": "asking-for-advice-online-anonymously",
+    "category": "Wellbeing & Connection",
+    "primaryKeyword": "ask for advice anonymously online",
+    "secondaryKeywords": [
+      "unbiased advice strangers",
+      "impartial feedback online chat",
+      "talk through difficult decisions"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "The power of the objective stranger: getting honest feedback without social judgment",
+    "status": "scheduled"
+  },
+  {
+    "id": 88,
+    "scheduledDate": "2027-01-24",
+    "title": "The Art of the Debrief: How a Quick Nightly Chat Helps Process Your Day",
+    "slug": "nightly-debrief-chat-process-your-day",
+    "category": "Conversation Skills",
+    "primaryKeyword": "talk about your day online",
+    "secondaryKeywords": [
+      "nightly debrief conversation",
+      "unwind talking to someone",
+      "verbal processing chat"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Verbal processing and how sharing funny micro-anecdotes helps decompress before sleep",
+    "status": "scheduled"
+  },
+  {
+    "id": 89,
+    "scheduledDate": "2027-01-25",
+    "title": "Why Video Chat Is Becoming the New Coffee Shop for Global Digital Nomads",
+    "slug": "video-chat-digital-nomads-coffee-shop",
+    "category": "Cultural Connections",
+    "primaryKeyword": "digital nomad community chat",
+    "secondaryKeywords": [
+      "remote worker global meetups",
+      "nomad social discovery",
+      "talk to nomads worldwide"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "Medium",
+    "contentAngle": "Connecting across timezones to share coworking recommendations, visa tips, and local travel stories",
+    "status": "scheduled"
+  },
+  {
+    "id": 90,
+    "scheduledDate": "2027-01-26",
+    "title": "The Future of Social Discovery: Human Connection in an AI-Dominated Internet",
+    "slug": "future-of-social-discovery-human-connection",
+    "category": "Friendship Advice",
+    "primaryKeyword": "future of online friendship",
+    "secondaryKeywords": [
+      "human connection vs AI bots",
+      "real human conversations online",
+      "authentic social platforms 2027"
+    ],
+    "searchIntent": "Informational",
+    "targetAudience": "Adults Worldwide",
+    "priority": "High",
+    "contentAngle": "Why authentic 1-on-1 human connection will be the most valuable social commodity of the next decade",
+    "status": "scheduled"
+  }
+]

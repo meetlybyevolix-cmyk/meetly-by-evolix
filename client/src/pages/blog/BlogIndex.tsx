@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ArrowRight, BookOpen, Clock, Filter, MessageCircle, Search, Shield, Sparkles, Tag, User } from "lucide-react";
 import { Link } from "wouter";
 import SEOHead from "@/components/SEOHead";
-import { BLOG_POSTS, BlogPostMeta } from "@/components/BlogLayout";
+import { getAllPublishedArticles } from "@/lib/blogArticles";
 
 const CATEGORIES = [
   "All",
@@ -11,13 +11,15 @@ const CATEGORIES = [
   "Conversation Skills",
   "Online Safety",
   "Chat Platforms",
+  "Cultural Connections",
 ] as const;
 
 export default function BlogIndex() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const allPosts = getAllPublishedArticles();
 
-  const filteredPosts = BLOG_POSTS.filter(post => {
+  const filteredPosts = allPosts.filter(post => {
     const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
     const matchesSearch =
       searchQuery.trim() === "" ||

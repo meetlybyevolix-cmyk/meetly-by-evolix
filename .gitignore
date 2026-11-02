@@ -70,5 +70,9 @@ meetly-clean-source.zip
 .parcel-cache/
 .eslintcache/
 
+# Content automation drafts
+content/drafts/*.json
+!content/drafts/.gitkeep
+
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json

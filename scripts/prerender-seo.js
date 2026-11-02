@@ -236,128 +236,62 @@ const PAGES = [
         <p>In accordance with Rule 3(2) of the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, Meetly maintains a dedicated Grievance Officer to acknowledge and redress complaints within statutory timelines.</p>
       </section>
     `
-  },
-  {
-    route: "blog",
-    title: "Meetly Blog — Tips for Making Friends, Safe Chat & Conversation Advice",
-    description: "Explore practical guides, icebreakers, online safety tips, and expert advice for meeting new people and making genuine friends online as an adult.",
-    canonical: "https://meet-ly.in/blog",
-    h1: "The Meetly Blog: Social Discovery, Guides & Conversation Advice",
-    content: `
-      <section>
-        <h2>Guides, Advice &amp; Safety Insights for Adult Social Connection</h2>
-        <p>Welcome to the Meetly Blog. Whether you are looking to make new friends as an adult, overcome transient loneliness, master the art of conversation starters, or ensure your digital privacy while chatting with strangers, our editorial guides provide actionable, evidence-based advice.</p>
-        <ul>
-          <li><a href="/blog/how-to-make-friends-online-as-an-adult">How to Make Friends Online as an Adult</a></li>
-          <li><a href="/blog/what-to-do-when-you-feel-lonely-and-want-to-talk">Feeling Lonely and Want to Talk? Healthy Ways to Connect</a></li>
-          <li><a href="/blog/how-to-start-a-conversation-with-someone-new">How to Start a Conversation With Someone New: 15 Icebreakers</a></li>
-          <li><a href="/blog/how-to-chat-safely-with-strangers-online">How to Chat Safely With Strangers Online: 8 Essential Rules</a></li>
-          <li><a href="/blog/text-chat-vs-video-chat">Text Chat vs Video Chat: Which Is Better for Meeting New People?</a></li>
-        </ul>
-      </section>
-    `
-  },
-  {
-    route: "blog/how-to-make-friends-online-as-an-adult",
-    title: "How to Make Friends Online as an Adult: A Practical Guide — Meetly",
-    description: "Struggling to make friends after college or moving? Discover 5 proven, low-pressure ways to meet like-minded adults online safely and naturally.",
-    canonical: "https://meet-ly.in/blog/how-to-make-friends-online-as-an-adult",
-    h1: "How to Make Friends Online as an Adult: A Practical, Low-Pressure Guide",
-    content: `
-      <section>
-        <h2>The Adult Friendship Cliff (And How to Overcome It)</h2>
-        <p>Losing the spontaneous proximity of school and college naturally shrinks social circles in adulthood. Meetly provides low-stakes, interest-aligned 1-on-1 conversations without the performance pressure of traditional social networks.</p>
-        <h2>The 3-Stage Friendship Blueprint</h2>
-        <ol>
-          <li><strong>The Casual Exchange:</strong> Test conversational rhythm and shared humor with low-friction open-ended questions.</li>
-          <li><strong>Mutual Exploration:</strong> Exchange stories, songs, and perspectives over low-pressure touchpoints.</li>
-          <li><strong>Transitioning to Long-Term Friends:</strong> Safely move to persistent channels once mutual trust is verified.</li>
-        </ol>
-      </section>
-    `,
-    faq: [
-      { q: "How long does it take to make an adult friend online?", a: "Research suggests it takes roughly 50 hours of shared interaction to move from acquaintance to friend. Frequent short exchanges (15-20 minutes) online accelerate this timeline." },
-      { q: "Is it safe to meet friends online?", a: "Yes, when following zero-PII boundaries: never share financial info, exact addresses, or personal phone numbers until trust is deeply established." }
-    ]
-  },
-  {
-    route: "blog/what-to-do-when-you-feel-lonely-and-want-to-talk",
-    title: "Feeling Lonely and Want to Talk? Healthy Ways to Connect — Meetly",
-    description: "When you feel disconnected or lonely and want someone to talk to, here are healthy, low-pressure steps to find casual human connection right now.",
-    canonical: "https://meet-ly.in/blog/what-to-do-when-you-feel-lonely-and-want-to-talk",
-    h1: "Feeling Lonely and Want to Talk? Healthy Ways to Connect Right Now",
-    content: `
-      <section>
-        <h2>Normalizing Transient Loneliness</h2>
-        <p>Transient loneliness is a temporary biological signal craving social reciprocity. Unlike doomscrolling on social media—which increases social comparison—having a casual, two-way conversation with a friendly stranger resets your mental state.</p>
-        <h2>Mental Health Helplines (24/7 Free Support)</h2>
-        <p>Meetly is a casual social platform, not healthcare. If you need crisis support in India, contact Tele-MANAS at 14416 or KIRAN at 1800-599-0019.</p>
-      </section>
-    `,
-    faq: [
-      { q: "Can talking to a stranger help with loneliness?", a: "Yes. Short, low-pressure conversations with friendly strangers provide zero-baggage social reciprocity that reduces emotional isolation." }
-    ]
-  },
-  {
-    route: "blog/how-to-start-a-conversation-with-someone-new",
-    title: "How to Start a Conversation With Someone New: 15 Proven Openers — Meetly",
-    description: "Skip the boring 'hey' and 'what's up'. Master the art of starting engaging online chats with tested icebreakers, fun questions, and conversational hooks.",
-    canonical: "https://meet-ly.in/blog/how-to-start-a-conversation-with-someone-new",
-    h1: "How to Start a Conversation With Someone New (15 Icebreakers That Work)",
-    content: `
-      <section>
-        <h2>Why 'Hey' and 'ASL' Fail Every Time</h2>
-        <p>Low-effort openers force the recipient to carry 100% of the cognitive burden. Great conversation starters give your partner an effortless hook: a playful debate, an easy opinion, or a fun memory.</p>
-        <h2>Top Tested Icebreakers</h2>
-        <ul>
-          <li><em>What is the most overrated movie everyone seems to love?</em></li>
-          <li><em>If you could teleport to any city right now for dinner, where are we going?</em></li>
-          <li><em>What is one song that never fails to boost your mood?</em></li>
-        </ul>
-      </section>
-    `,
-    faq: [
-      { q: "What should I say after the icebreaker?", a: "Follow the Ping-Pong rule: always answer with a specific detail and attach an open-ended question back to keep the momentum flowing." }
-    ]
-  },
-  {
-    route: "blog/how-to-chat-safely-with-strangers-online",
-    title: "How to Chat Safely With Strangers Online: 8 Essential Rules — Meetly",
-    description: "Learn how to protect your privacy and stay secure while chatting with strangers online. Essential safety rules, red flags, and digital boundary tips.",
-    canonical: "https://meet-ly.in/blog/how-to-chat-safely-with-strangers-online",
-    h1: "How to Chat Safely With Strangers Online: 8 Essential Rules for Adults",
-    content: `
-      <section>
-        <h2>Essential Digital Privacy Rules</h2>
-        <ol>
-          <li><strong>Zero Personally Identifiable Information:</strong> Never disclose full legal names, home addresses, or workplace locations.</li>
-          <li><strong>Absolute Financial Boundary:</strong> Never send funds, cryptocurrency, or gift cards to online chat contacts.</li>
-          <li><strong>Audit Camera Backgrounds:</strong> Verify no mail, diplomas, or badges are visible in video calls.</li>
-          <li><strong>Avoid Rushing to WhatsApp/Telegram:</strong> Protect your real phone number until trust is established over time.</li>
-        </ol>
-      </section>
-    `,
-    faq: [
-      { q: "Is Meetly anonymous?", a: "Yes. Meetly does not display public profiles, real names, or email addresses to chat partners. Text chats are ephemeral and video connections are direct peer-to-peer WebRTC." }
-    ]
-  },
-  {
-    route: "blog/text-chat-vs-video-chat",
-    title: "Text Chat vs Video Chat: Which Is Better for Meeting New People? — Meetly",
-    description: "Comparing random text chat and video chat for meeting strangers. Discover the pros, cons, privacy differences, and which mode fits your social style.",
-    canonical: "https://meet-ly.in/blog/text-chat-vs-video-chat",
-    h1: "Text Chat vs Video Chat: Which Is Better for Meeting New People?",
-    content: `
-      <section>
-        <h2>Choosing the Right Format for Your Social Battery</h2>
-        <p>Text chat provides low-pressure, asynchronous-style introspection without camera fatigue. Video chat delivers instantaneous laughter, facial micro-expressions, and authentic rapport. Meetly lets you switch between both with a single click.</p>
-      </section>
-    `,
-    faq: [
-      { q: "Are Meetly video chats recorded?", a: "No. Video calls use peer-to-peer WebRTC encryption directly between user browsers with no intermediate recording servers." }
-    ]
   }
 ];
+
+// Dynamically load blog articles from content repository
+const articlesFilePath = path.resolve(__dirname, "../content/blog/articles.json");
+let dynamicArticles = [];
+if (fs.existsSync(articlesFilePath)) {
+  try {
+    dynamicArticles = JSON.parse(fs.readFileSync(articlesFilePath, "utf-8"));
+  } catch (err) {
+    console.warn("[Prerender] Warning: Could not parse content/blog/articles.json", err);
+  }
+}
+
+// 1. Add /blog hub page with dynamic article listing
+const publishedArticles = dynamicArticles.filter(a => a.isPublished);
+PAGES.push({
+  route: "blog",
+  title: "Meetly Blog — Tips for Making Friends, Safe Chat & Conversation Advice",
+  description: "Explore practical guides, icebreakers, online safety tips, and expert advice for meeting new people and making genuine friends online as an adult.",
+  canonical: "https://meet-ly.in/blog",
+  h1: "The Meetly Blog: Social Discovery, Guides & Conversation Advice",
+  content: `
+    <section>
+      <h2>Guides, Advice &amp; Safety Insights for Adult Social Connection</h2>
+      <p>Welcome to the Meetly Blog. Whether you are looking to make new friends as an adult, overcome transient loneliness, master the art of conversation starters, or ensure your digital privacy while chatting with strangers, our editorial guides provide actionable, evidence-based advice.</p>
+      <ul>
+        ${publishedArticles.map(a => `<li><a href="/blog/${a.slug}"><strong>${a.title}</strong></a> — ${a.description}</li>`).join("\n        ")}
+      </ul>
+    </section>
+  `
+});
+
+// 2. Add each individual published blog post dynamically
+for (const article of publishedArticles) {
+  PAGES.push({
+    route: `blog/${article.slug}`,
+    title: article.seoTitle || article.title,
+    description: article.description,
+    canonical: `https://meet-ly.in/blog/${article.slug}`,
+    h1: article.title,
+    content: `
+      <section>
+        <div style="font-size:12px;font-weight:700;color:#176e68;text-transform:uppercase;margin-bottom:12px">${article.category}</div>
+        ${article.keyTakeaways && article.keyTakeaways.length > 0 ? `
+          <div style="background:#f8f7f1;border:1px solid #e5e7eb;padding:16px;border-radius:10px;margin-bottom:24px">
+            <strong>Quick Key Takeaways</strong>
+            <ul>${article.keyTakeaways.map(t => `<li>${t}</li>`).join("")}</ul>
+          </div>
+        ` : ""}
+        ${article.contentHtml}
+      </section>
+    `,
+    faq: article.faqs ? article.faqs.map(f => ({ q: f.question, a: f.answer })) : []
+  });
+}
 
 console.log(`[Prerender] Generating static HTML for ${PAGES.length} routes...`);
 

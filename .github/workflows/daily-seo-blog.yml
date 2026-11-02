@@ -1,0 +1,109 @@
+name: Daily SEO Blog Publishing Engine
+
+on:
+  schedule:
+    # 03:30 UTC = 09:00 AM Indian Standard Time (IST) every day
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry Run Mode (Validate quality gates without committing/publishing)'
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: 'Force publish next unwritten topic'
+        required: false
+        type: boolean
+        default: false
+      topic_slug:
+        description: 'Specific topic slug from calendar to publish (optional)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  publish-daily-blog:
+    name: Generate & Publish Daily Blog Post
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Get pnpm Store Directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Daily Blog Generation Engine
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          BLOG_AUTOMATION_PAUSED: ${{ vars.BLOG_AUTOMATION_PAUSED }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
+          fi
+          if [ -n "${{ inputs.topic_slug }}" ]; then
+            ARGS="$ARGS --slug=${{ inputs.topic_slug }}"
+          fi
+          echo "Executing: node scripts/daily-blog-engine.js $ARGS"
+          node scripts/daily-blog-engine.js $ARGS
+
+      - name: Verify TypeScript Types
+        run: pnpm run check
+
+      - name: Verify Unit & Integration Tests
+        run: pnpm run test
+
+      - name: Build & Prerender Static HTML
+        run: pnpm run build
+
+      - name: Commit & Push Daily Article
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          git config user.name "Meetly Blog Automation Bot"
+          git config user.email "bot@meet-ly.in"
+          
+          # Check if there are changes to commit
+          if [ -n "$(git status --porcelain)" ]; then
+            git add content/blog/ client/public/sitemap.xml DAILY_BLOG_AUTOMATION_REPORT.md
+            LATEST_TITLE=$(node -e "try { const a = JSON.parse(require('fs').readFileSync('content/blog/articles.json','utf-8')); console.log(a[a.length-1].title); } catch { console.log('New Article'); }")
+            git commit -m "chore(blog): daily auto-publish '$LATEST_TITLE' [skip ci]"
+            git push origin main
+            echo "Successfully committed and pushed new article to main. Cloudflare Pages auto-deploy triggered!"
+          else
+            echo "No new articles published or no changes detected."
+          fi
