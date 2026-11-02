@@ -1,14 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
+import { useCurrentUser, saveAuthSession, clearAuthSession } from "@/lib/auth";
 import { getFirstName, getFunkyAvatar } from "@/lib/funkyAvatar";
 import {
   CheckCircle2,
   ChevronDown,
   LogOut,
   ShieldCheck,
-  Sparkles,
   Trash2,
-  User as UserIcon,
   X,
 } from "lucide-react";
 
@@ -115,25 +114,20 @@ export default function GoogleAuthButton({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isWaitingGis, setIsWaitingGis] = useState(false);
 
   const buttonRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch current user from server session
-  const { data: user, refetch: refetchUser, isLoading: userLoading } = trpc.auth.me.useQuery();
+  // Fast, non-blocking auth hook: 0ms initial render for guests, instant cache for logged-in users
+  const { user, refetch: refetchUser } = useCurrentUser();
 
   const googleLoginMutation = trpc.auth.googleLogin.useMutation();
   const logoutMutation = trpc.auth.logout.useMutation();
   const deleteAccountMutation = trpc.auth.deleteAccount.useMutation();
 
-  const { data: authConfig } = trpc.auth.config.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000,
-  });
-
   const googleClientId =
-    import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-    authConfig?.googleClientId ||
-    HARDCODED_GOOGLE_CLIENT_ID;
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || HARDCODED_GOOGLE_CLIENT_ID;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -162,43 +156,91 @@ export default function GoogleAuthButton({
   }, [user?.userId, user?.name, user?.email]);
 
   // Handle GIS credential callback
-  const handleCredentialResponse = async (credential: string) => {
-    setErrorNotice(null);
-    try {
-      const result = await googleLoginMutation.mutateAsync({ idToken: credential });
-      if (result.sessionToken) {
-        localStorage.setItem("meetly-auth-token", result.sessionToken);
+  const handleCredentialResponse = useCallback(
+    async (credential: string) => {
+      setErrorNotice(null);
+      try {
+        const result = await googleLoginMutation.mutateAsync({ idToken: credential });
+        if (result.sessionToken && result.user) {
+          saveAuthSession(result.sessionToken, result.user);
+        }
+        if (result.user) {
+          postUserToGoogleSheet({
+            userId: result.user.userId,
+            name: result.user.name,
+            email: result.user.email,
+            action: "upsert",
+          });
+        }
+        await refetchUser();
+        if (onSuccess && result.user) {
+          onSuccess({
+            name: result.user.name || "Google User",
+            userId: result.user.userId,
+            isNewUser: result.isNewUser,
+          });
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Google authentication failed";
+        setErrorNotice(msg);
       }
-      if (result.user) {
-        postUserToGoogleSheet({
-          userId: result.user.userId,
-          name: result.user.name,
-          email: result.user.email,
-          action: "upsert",
-        });
-      }
-      await refetchUser();
-      if (onSuccess && result.user) {
-        onSuccess({
-          name: result.user.name || "Google User",
-          userId: result.user.userId,
-          isNewUser: result.isNewUser,
-        });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Google authentication failed";
-      setErrorNotice(msg);
-    }
-  };
+    },
+    [googleLoginMutation, refetchUser, onSuccess]
+  );
 
   // Initialize official Google Identity Services button
+  const initGis = useCallback(() => {
+    if (!window.google?.accounts?.id || !buttonRef.current) return false;
+    try {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: response => {
+          if (response?.credential) {
+            void handleCredentialResponse(response.credential);
+          }
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+
+      buttonRef.current.innerHTML = "";
+      window.google.accounts.id.renderButton(buttonRef.current, {
+        type: "standard",
+        theme: "outline",
+        size: compact ? "medium" : "large",
+        text: buttonText,
+        shape: "pill",
+        width: compact ? 180 : 250,
+      });
+      return true;
+    } catch (e) {
+      console.warn("[Google Identity] Render button initialization error:", e);
+      return false;
+    }
+  }, [googleClientId, compact, buttonText, handleCredentialResponse]);
+
   useEffect(() => {
     if (!googleClientId || user || !buttonRef.current) {
       return;
     }
 
-    const initGis = () => {
-      if (!window.google?.accounts?.id || !buttonRef.current) return false;
+    if (initGis()) return;
+
+    // High frequency check for the first 1 second, then fallback
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (initGis() || attempts >= 40) {
+        clearInterval(interval);
+      }
+    }, attempts < 20 ? 50 : 250);
+
+    return () => clearInterval(interval);
+  }, [googleClientId, user, initGis]);
+
+  const handleManualLoginClick = () => {
+    setErrorNotice(null);
+    if (window.google?.accounts?.id) {
       try {
         window.google.accounts.id.initialize({
           client_id: googleClientId,
@@ -210,51 +252,53 @@ export default function GoogleAuthButton({
           auto_select: false,
           cancel_on_tap_outside: true,
         });
-
-        buttonRef.current.innerHTML = "";
-        window.google.accounts.id.renderButton(buttonRef.current, {
-          type: "standard",
-          theme: "outline",
-          size: compact ? "medium" : "large",
-          text: buttonText,
-          shape: "pill",
-          width: compact ? 180 : 250,
-        });
-        return true;
-      } catch (e) {
-        console.warn("[Google Identity] Render button initialization error:", e);
-        return false;
+        window.google.accounts.id.prompt();
+      } catch (err) {
+        console.warn("[Google Identity] Prompt error:", err);
       }
-    };
-
-    if (initGis()) return;
-
-    // Retry checking if script is still loading
-    const interval = setInterval(() => {
-      if (initGis()) {
-        clearInterval(interval);
-      }
-    }, 250);
-
-    return () => clearInterval(interval);
-  }, [googleClientId, user, compact, buttonText]);
-
-  const handleManualLoginClick = () => {
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setErrorNotice("Google authentication is loading. Please wait a moment.");
+      return;
     }
+
+    // If clicked before Google Identity script finished downloading, show loading & trigger when ready
+    setIsWaitingGis(true);
+    let attempts = 0;
+    const checkTimer = setInterval(() => {
+      attempts++;
+      if (window.google?.accounts?.id) {
+        clearInterval(checkTimer);
+        setIsWaitingGis(false);
+        try {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: response => {
+              if (response?.credential) {
+                void handleCredentialResponse(response.credential);
+              }
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
+          window.google.accounts.id.prompt();
+        } catch (err) {
+          console.warn("[Google Identity] Prompt error after wait:", err);
+        }
+      } else if (attempts >= 40) {
+        clearInterval(checkTimer);
+        setIsWaitingGis(false);
+        setErrorNotice("Google authentication is loading. Please check your connection or ad blocker.");
+      }
+    }, 100);
   };
 
   const handleLogout = async () => {
     setDropdownOpen(false);
+    clearAuthSession();
     try {
-      localStorage.removeItem("meetly-auth-token");
       await logoutMutation.mutateAsync();
-      await refetchUser();
     } catch (err) {
       console.error("[Logout] Failed:", err);
+    } finally {
+      await refetchUser();
     }
   };
 
@@ -268,21 +312,14 @@ export default function GoogleAuthButton({
           action: "delete",
         });
       }
-      localStorage.removeItem("meetly-auth-token");
+      clearAuthSession();
       await deleteAccountMutation.mutateAsync();
-      await refetchUser();
     } catch (err) {
       setErrorNotice(err instanceof Error ? err.message : "Account deletion failed");
+    } finally {
+      await refetchUser();
     }
   };
-
-  if (userLoading) {
-    return (
-      <div className="google-auth-loading">
-        <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-      </div>
-    );
-  }
 
   // User is logged in: Display verified user badge with funky avatar and profile dropdown
   if (user) {
@@ -402,7 +439,14 @@ export default function GoogleAuthButton({
     );
   }
 
-  // User is not logged in: Display official Google Identity button
+  // User is not logged in: Render button instantly on Frame 0 with zero delay
+  const buttonLabel =
+    buttonText === "signup_with"
+      ? "Sign up with Google"
+      : buttonText === "signin_with"
+        ? "Sign in with Google"
+        : "Continue with Google";
+
   return (
     <div className="google-auth-wrapper">
       <div ref={buttonRef} className="google-gis-host">
@@ -410,14 +454,15 @@ export default function GoogleAuthButton({
           type="button"
           className={`google-signin-btn ${compact ? "compact" : ""}`}
           onClick={handleManualLoginClick}
-          disabled={googleLoginMutation.isPending}
+          disabled={googleLoginMutation.isPending || isWaitingGis}
+          title="Sign in with your Google account"
         >
-          {googleLoginMutation.isPending ? (
+          {googleLoginMutation.isPending || isWaitingGis ? (
             <span className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
           ) : (
-            <GoogleIcon size={17} />
+            <GoogleIcon size={compact ? 15 : 17} />
           )}
-          <span>{buttonText === "signup_with" ? "Sign up with Google" : "Continue with Google"}</span>
+          <span>{buttonLabel}</span>
         </button>
       </div>
 

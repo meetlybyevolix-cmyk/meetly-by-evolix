@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { getWsUrl } from "@/lib/api";
+import { useCurrentUser } from "@/lib/auth";
 import { getFirstName, getFunkyAvatar } from "@/lib/funkyAvatar";
 import VideoCall from "@/components/VideoCall";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
@@ -293,7 +294,7 @@ export default function Home() {
     refetchInterval: 10_000,
   });
   const [onlineCount, setOnlineCount] = useState<number>(120);
-  const { data: user, refetch: refetchUser } = trpc.auth.me.useQuery();
+  const { user, refetch: refetchUser } = useCurrentUser();
 
   useEffect(() => {
     if (typeof statsQuery.data?.onlineCount === "number") {
