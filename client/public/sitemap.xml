@@ -40,6 +40,44 @@
     <priority>0.9</priority>
   </url>
 
+  <!-- Blog & Guides -->
+  <url>
+    <loc>https://meet-ly.in/blog</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://meet-ly.in/blog/how-to-make-friends-online-as-an-adult</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://meet-ly.in/blog/what-to-do-when-you-feel-lonely-and-want-to-talk</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://meet-ly.in/blog/how-to-start-a-conversation-with-someone-new</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://meet-ly.in/blog/how-to-chat-safely-with-strangers-online</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://meet-ly.in/blog/text-chat-vs-video-chat</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Trust, Safety & Compliance Pages -->
   <url>
     <loc>https://meet-ly.in/safety</loc>

@@ -8,6 +8,8 @@ Allow: /talk-to-someone-online
 Allow: /chat-with-strangers
 Allow: /random-video-chat
 Allow: /anonymous-text-chat
+Allow: /blog
+Allow: /blog/
 Allow: /terms
 Allow: /privacy
 Allow: /community-guidelines

@@ -20,6 +20,14 @@ import ChatWithStrangers from "./pages/landing/ChatWithStrangers";
 import RandomVideoChat from "./pages/landing/RandomVideoChat";
 import AnonymousTextChat from "./pages/landing/AnonymousTextChat";
 
+// SEO Blog Hub & Articles
+import BlogIndex from "./pages/blog/BlogIndex";
+import MakeFriendsOnlineAdult from "./pages/blog/MakeFriendsOnlineAdult";
+import FeelingLonelyWantToTalk from "./pages/blog/FeelingLonelyWantToTalk";
+import HowToStartConversation from "./pages/blog/HowToStartConversation";
+import ChatSafelyWithStrangers from "./pages/blog/ChatSafelyWithStrangers";
+import TextVsVideoChat from "./pages/blog/TextVsVideoChat";
+
 function Router() {
   return (
     <Switch>
@@ -31,6 +39,14 @@ function Router() {
       <Route path="/chat-with-strangers" component={ChatWithStrangers} />
       <Route path="/random-video-chat" component={RandomVideoChat} />
       <Route path="/anonymous-text-chat" component={AnonymousTextChat} />
+
+      {/* SEO Blog & Guides */}
+      <Route path="/blog" component={BlogIndex} />
+      <Route path="/blog/how-to-make-friends-online-as-an-adult" component={MakeFriendsOnlineAdult} />
+      <Route path="/blog/what-to-do-when-you-feel-lonely-and-want-to-talk" component={FeelingLonelyWantToTalk} />
+      <Route path="/blog/how-to-start-a-conversation-with-someone-new" component={HowToStartConversation} />
+      <Route path="/blog/how-to-chat-safely-with-strangers-online" component={ChatSafelyWithStrangers} />
+      <Route path="/blog/text-chat-vs-video-chat" component={TextVsVideoChat} />
 
       {/* Legal & Compliance Pages */}
       <Route path="/terms" component={TermsOfService} />

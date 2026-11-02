@@ -134,3 +134,4 @@ export function useCurrentUser() {
     clearSession: clearAuthSession,
   };
 }
+

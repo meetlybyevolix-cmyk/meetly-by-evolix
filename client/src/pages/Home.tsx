@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Ban,
+  BookOpen,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -154,6 +155,8 @@ function Footer() {
           <Link href="/random-video-chat" style={{ color: "var(--muted)", textDecoration: "none" }}>Random Video Chat</Link>
           <span style={{ color: "var(--line)" }}>·</span>
           <Link href="/anonymous-text-chat" style={{ color: "var(--muted)", textDecoration: "none" }}>Anonymous Text Chat</Link>
+          <span style={{ color: "var(--line)" }}>·</span>
+          <Link href="/blog" style={{ color: "var(--muted)", textDecoration: "none" }}>Blog &amp; Guides</Link>
         </div>
 
         {/* Legal & Compliance Links */}
@@ -843,6 +846,10 @@ export default function Home() {
               );
             }}
           />
+          <Link href="/blog" className="top-link">
+            <BookOpen size={16} />
+            Blog
+          </Link>
           <Link href="/safety" className="top-link">
             <CircleHelp size={16} />
             Safety first

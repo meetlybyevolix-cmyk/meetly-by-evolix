@@ -51,6 +51,9 @@ export default function LandingLayout({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <Link href="/blog" style={{ fontSize: "13px", fontWeight: 600, color: "var(--muted)", textDecoration: "none" }}>
+            Blog &amp; Guides
+          </Link>
           <Link href="/" className="button button-primary button-small" style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
             Start Chatting <ArrowRight size={14} />
           </Link>
@@ -160,6 +163,7 @@ export default function LandingLayout({
               <Link href="/chat-with-strangers" style={{ color: "var(--muted)" }}>Chat With Strangers</Link>
               <Link href="/random-video-chat" style={{ color: "var(--muted)" }}>Random Video Chat</Link>
               <Link href="/anonymous-text-chat" style={{ color: "var(--muted)" }}>Anonymous Text Chat</Link>
+              <Link href="/blog" style={{ color: "var(--muted)" }}>Blog &amp; Guides</Link>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
