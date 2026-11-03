@@ -16,7 +16,7 @@ export default function MakeFriendsOnline() {
           "name": "How can I make real friends online safely?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Start on platforms with verified adult communities like Meetly that do not require exposing personal social media profiles or phone numbers. Select shared interest tags (books, gaming, philosophy, art) to connect with people who share your vibe, and keep conversations anonymous until mutual trust is built."
+            "text": "Start on platforms with adults-only communities with reporting controls like Meetly that do not require exposing personal social media profiles or phone numbers. Select shared interest tags (books, gaming, philosophy, art) to connect with people who share your vibe, and keep conversations anonymous until mutual trust is built."
           }
         },
         {
@@ -32,7 +32,7 @@ export default function MakeFriendsOnline() {
           "name": "Does Meetly store my conversations or contact details?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Meetly operates under privacy-by-design principles compliant with India's DPDP Act 2023. Text conversations are never logged to a database, video calls are direct peer-to-peer WebRTC connections, and your real identity remains private in every chat."
+            "text": "Google sign-in details are processed for authentication and administration. Ordinary text is relayed in temporary memory, but reports and uploaded images can be retained separately. Video uses WebRTC. Your Google name and email are not displayed to partners; see the Privacy Policy for storage details."
           }
         }
       ]
@@ -44,7 +44,7 @@ export default function MakeFriendsOnline() {
       seo={seo}
       kicker="Community & Social Discovery"
       h1="Make New Friends Online Through Real Conversations"
-      subtitle="Making friends as an adult doesn't have to feel difficult or intimidating. Meetly lets you connect one-on-one with verified adults worldwide based on shared passions and mutual respect."
+      subtitle="Making friends as an adult doesn't have to feel difficult or intimidating. Meetly lets you connect one-on-one with people who confirm they are 18+ worldwide based on shared passions and mutual respect."
       currentPath="/make-friends-online"
     >
       <section style={{ marginBottom: "36px" }}>

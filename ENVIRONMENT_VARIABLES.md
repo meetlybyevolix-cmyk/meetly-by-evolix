@@ -89,6 +89,16 @@ This document details all environment variables recognized by Meetly, their purp
 
 ---
 
+## Advertising (frontend build configuration)
+
+Set these on the host that builds the frontend, including Cloudflare/Netlify static builds, and rebuild. Runtime-only Render settings do not change an already built frontend.
+
+- `ADSENSE_CLIENT_ID`: the real `ca-pub-` publisher ID copied from your AdSense account. Leave empty until known. Invalid IDs cannot enable advertising.
+- `ENABLE_ADS`: `false` by default. Set `true` only when ready to serve approved ads.
+- `ADSENSE_CMP_READY`: `false` by default. Set `true` only after publishing and verifying a certified CMP, including consent choices and withdrawal. This is an operator assertion, not visitor consent.
+
+A valid publisher ID adds Google's `google-adsense-account` verification meta tag in the HTML head even while ad serving is off. The build emits `/ads.txt` with the matching seller entry; without an ID it contains only a comment and no authorized seller. The standard async AdSense script is included in every page head, as requested by the owner. Ad requests are paused before it executes unless activation/consent setup is confirmed and the document is a known top-level guide article. Loading the library still contacts Google; pausing ad requests is not a substitute for a CMP. AdSense Auto ads settings, page/area exclusions and consent messages must be configured in the account. See [AdSense readiness and setup](docs/ADSENSE_READINESS.md).
+
 ## 5. Deprecated / Removed Variables
 
 The following legacy variables from Manus AI starter configurations have been completely removed and are **no longer recognized or required**:

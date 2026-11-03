@@ -243,7 +243,7 @@ export default function BlogPost() {
             Ready to Start a Real Conversation?
           </h3>
           <p style={{ fontSize: "14px", lineHeight: 1.6, color: "rgba(255,255,255,0.9)", maxWidth: "600px", marginBottom: "20px" }}>
-            Meetly lets you connect with friendly adults worldwide via 1-on-1 random text or video chat. Free, verified 18+ community, with no public profiles.
+            Meetly offers one-to-one random text or video chat with no public profiles. Adults 18+ only; Google sign-in and age confirmation do not independently verify age.
           </p>
           <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
             <Link href="/" className="button" style={{ background: "#ffffff", color: "#176e68", fontWeight: 700, padding: "10px 22px", borderRadius: "999px", display: "inline-flex", alignItems: "center", gap: "8px" }}>
@@ -297,6 +297,9 @@ export default function BlogPost() {
           &copy; {new Date().getFullYear()} Meetly by Evolix Studio. Adults only (18+). Safe, respectful conversations.
         </p>
         <div style={{ display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
+          <Link href="/about" style={{ color: "var(--muted)" }}>About &amp; Contact</Link>
+          <Link href="/cookies" style={{ color: "var(--muted)" }}>Cookie &amp; Ad Policy</Link>
+          <Link href="/community-guidelines" style={{ color: "var(--muted)" }}>Community Guidelines</Link>
           <Link href="/make-friends-online" style={{ color: "var(--muted)" }}>Make Friends Online</Link>
           <Link href="/talk-to-someone-online" style={{ color: "var(--muted)" }}>Talk to Someone</Link>
           <Link href="/chat-with-strangers" style={{ color: "var(--muted)" }}>Chat with Strangers</Link>

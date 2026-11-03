@@ -5,7 +5,7 @@ import { Lock, ShieldCheck, Sparkles, UserCheck, Video } from "lucide-react";
 export default function ChatWithStrangers() {
   const seo = {
     title: "Chat with Strangers Online | Safe Anonymous Random Chat — Meetly",
-    description: "Chat with strangers safely on Meetly. Connect with random adults worldwide via text or video. 18+ verified, private, and free modern Omegle alternative.",
+    description: "Chat with strangers safely on Meetly. Connect with random adults worldwide via text or video. 18+ only, private, and free modern Omegle alternative.",
     canonicalPath: "/chat-with-strangers",
     jsonLd: {
       "@context": "https://schema.org",
@@ -61,7 +61,7 @@ export default function ChatWithStrangers() {
         <h2 style={{ fontSize: "1.35rem", fontWeight: 700, marginBottom: "16px" }}>Why People Choose Meetly to Chat With Strangers</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
           <div>
-            <strong style={{ color: "#183b32", fontSize: "15px" }}>✓ 100% Anonymous Identity</strong>
+            <strong style={{ color: "#183b32", fontSize: "15px" }}>✓ Identity Hidden From Partners</strong>
             <p style={{ margin: "6px 0 0 0", color: "var(--muted)", fontSize: "13px", lineHeight: 1.5 }}>
               Your partner only sees your first name or a randomized alias. Your email, phone, location, and social media handles are never displayed.
             </p>

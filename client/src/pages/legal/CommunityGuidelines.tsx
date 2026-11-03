@@ -45,7 +45,7 @@ export default function CommunityGuidelines() {
             <ShieldAlert size={20} /> Zero-Tolerance Violations (Immediate Ban & Escalation)
           </h2>
           <p>
-            The following violations result in <strong>immediate session termination, IP address banning, and mandatory escalation to law enforcement authorities</strong> (such as the National Cyber Crime Reporting Portal <code>cybercrime.gov.in</code> and NCMEC):
+            The following conduct is prohibited. Use Report and Leave immediately if you encounter it. Reports are prioritized for operator review; restrictions and escalation depend on review and applicable obligations. Automated detection and immediate human intervention are not guaranteed.
           </p>
           <div style={{ background: "rgba(200, 110, 85, 0.05)", borderLeft: "4px solid var(--coral)", padding: "16px", borderRadius: "0 8px 8px 0", margin: "14px 0" }}>
             <h4 style={{ margin: "0 0 8px 0", color: "var(--coral)", fontSize: "15px", fontWeight: 700 }}>
@@ -56,10 +56,10 @@ export default function CommunityGuidelines() {
             </p>
 
             <h4 style={{ margin: "12px 0 8px 0", color: "var(--coral)", fontSize: "15px", fontWeight: 700 }}>
-              2. Non-Consensual Sexual Content & Intimate Imagery
+              2. Nudity, Sexual Content & Intimate Imagery
             </h4>
             <p style={{ margin: "0 0 10px 0", fontSize: "13px" }}>
-              Streaming, sharing, or displaying non-consensual intimate imagery, nudity, sexual acts, or deepfake/synthetic sexual depictions without the explicit consent of the subject. In compliance with Rule 3(2)(b) of the IT Rules 2021, such material is subject to 24-hour statutory takedown.
+              Nudity, sexual acts, sexual solicitation and sexually explicit imagery are prohibited, including when participants consent. Non-consensual intimate imagery and synthetic sexual depictions are also prohibited. Do not record, download or redistribute suspected illegal material; report the session instead.
             </p>
 
             <h4 style={{ margin: "12px 0 8px 0", color: "var(--coral)", fontSize: "15px", fontWeight: 700 }}>

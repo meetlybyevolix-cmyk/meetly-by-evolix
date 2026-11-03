@@ -16,7 +16,7 @@ export default function TermsOfService() {
             1. Operator Identification & Website Ownership
           </h2>
           <p>
-            This website and service (<strong>"Meetly"</strong>, accessible at <code>meetly.evolix.studio</code>) is developed, maintained, and operated by <strong>Evolix Studio</strong> (the <strong>"Operator"</strong>, <strong>"we"</strong>, <strong>"us"</strong>, or <strong>"our"</strong>).
+            This website and service (<strong>"Meetly"</strong>, accessible at <code>meet-ly.in</code>) is developed, maintained, and operated by <strong>Evolix Studio</strong> (the <strong>"Operator"</strong>, <strong>"we"</strong>, <strong>"us"</strong>, or <strong>"our"</strong>).
           </p>
           <p>
             Meetly provides an anonymous, real-time, stranger-to-stranger text and opt-in live WebRTC video communication platform. The Operator operates as an <strong>Intermediary</strong> within the meaning of Section 2(1)(w) of the <em>Information Technology Act, 2000</em> (India) and the <em>Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021</em>.
@@ -34,7 +34,7 @@ export default function TermsOfService() {
             <strong>Strict Age Requirement:</strong> Meetly is exclusively designed and intended for individuals who are at least <strong>18 years of age</strong> (or the age of legal majority in your jurisdiction).
           </p>
           <p>
-            Under Section 9 of the <em>Digital Personal Data Protection Act, 2023</em> (India), processing personal data of children (defined as any individual under 18 years) requires verifiable parental consent and prohibits tracking, behavioral monitoring, or targeted advertising. Because Meetly is built on anonymous, ephemeral sessions without account registration or identity verification documents, <strong>minors under 18 years of age are strictly prohibited from accessing or using Meetly</strong>.
+            <strong>Minors under 18 years of age are strictly prohibited from using Meetly.</strong> Google sign-in authenticates an account; it does not independently verify age. You must actively confirm adult eligibility and accept the policies before matchmaking.
           </p>
           <p>
             By accessing Meetly, you represent, warrant, and affirm that you are at least 18 years of age and legally competent to enter into this contract under the <em>Indian Contract Act, 1872</em>.
@@ -152,7 +152,7 @@ export default function TermsOfService() {
             9. Advertising & Third-Party Monetization
           </h2>
           <p>
-            The Operator may display advertisements on eligible static informational pages (such as the Homepage, Safety Center, and Policy pages) through Google AdSense or other advertising networks.
+            The Operator may display Google AdSense Auto ads on published guide articles. The homepage, safety and legal pages, forms, blog index and live communication interfaces are excluded.
           </p>
           <p>
             <strong>Chat Isolation Guarantee:</strong> Advertisements are strictly prohibited and disabled on active chat screens, live video calls, searching screens, and error views. Advertisers have no access to your live conversation content or WebRTC media. Third-party advertising technologies and cookie disclosures are governed by our <Link href="/cookies" style={{ color: "var(--teal)" }}>Cookie & Ad Disclosure</Link>.

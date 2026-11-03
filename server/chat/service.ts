@@ -920,16 +920,11 @@ export function getOnlineStats() {
     }
   }
 
-  const onlineDisplayCount =
-    process.env.NODE_ENV === "test"
-      ? realOnlineCount
-      : Math.max(120, 120 + realOnlineCount);
-
   return {
     activeSessions: realOnlineCount,
     activeRooms: rooms.size,
     queuedUsers: queue.size,
-    onlineCount: onlineDisplayCount,
+    onlineCount: realOnlineCount,
     syntheticCount,
   };
 }

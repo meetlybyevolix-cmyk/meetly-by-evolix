@@ -5,6 +5,8 @@ import { Redirect, Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import About from "./pages/About";
+import { AdvertisingBoundary } from "./components/AdvertisingBoundary";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import CommunityGuidelines from "./pages/legal/CommunityGuidelines";
@@ -28,6 +30,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/about" component={About} />
 
       {/* SEO Discovery Landing Pages */}
       <Route path="/make-friends-online" component={MakeFriendsOnline} />
@@ -35,10 +38,6 @@ function Router() {
       <Route path="/chat-with-strangers" component={ChatWithStrangers} />
       <Route path="/random-video-chat" component={RandomVideoChat} />
       <Route path="/anonymous-text-chat" component={AnonymousTextChat} />
-
-      {/* SEO Blog & Guides */}
-      <Route path="/blog" component={BlogIndex} />
-      <Route path="/blog/:slug" component={BlogPost} />
 
       {/* SEO Blog & Guides */}
       <Route path="/blog" component={BlogIndex} />
@@ -72,7 +71,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <AdvertisingBoundary><Router /></AdvertisingBoundary>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

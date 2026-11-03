@@ -13,6 +13,7 @@ interface LegalLayoutProps {
 }
 
 export const LEGAL_TABS = [
+  { href: "/about", label: "About & Contact", icon: HelpCircle },
   { href: "/terms", label: "Terms of Service", icon: Scale },
   { href: "/privacy", label: "Privacy Policy", icon: Lock },
   { href: "/community-guidelines", label: "Community Guidelines", icon: BookOpen },
@@ -144,7 +145,7 @@ export function LegalLayout({
               Meetly<span className="brand-period">.</span>
             </div>
             <p style={{ fontSize: "13px", color: "var(--muted)", margin: "0 0 12px 0" }}>
-              Anonymous stranger-to-stranger text and live WebRTC video chat. No profile registration.
+              Text and WebRTC video conversations with no public profiles. Google sign-in is required before matchmaking.
             </p>
             <span style={{ fontSize: "12px", color: "var(--muted)" }}>
               Operated by Evolix Studio © {new Date().getFullYear()}

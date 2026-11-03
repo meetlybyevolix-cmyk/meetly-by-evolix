@@ -8,11 +8,15 @@ dist/
 build/
 *.dist
 .vite/
+.playwright-cli/
+output/playwright/
 
 # Environment variables
 .env
 .env.*
 !.env.example
+# Public frontend build settings only. Secrets belong in ignored .env.local files.
+!.env.production
 
 # IDE and editor files
 .vscode/

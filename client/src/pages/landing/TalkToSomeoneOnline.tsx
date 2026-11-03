@@ -16,7 +16,7 @@ export default function TalkToSomeoneOnline() {
           "name": "Can I talk to someone online right now without downloading an app?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Meetly works directly in any desktop or mobile browser. Simply complete a quick Google 18+ verification and you can begin chatting 1-on-1 with another adult immediately."
+            "text": "Yes. Meetly works directly in any desktop or mobile browser. Simply complete a quick Google sign-in and 18+ confirmation and you can begin chatting 1-on-1 with another adult immediately."
           }
         },
         {

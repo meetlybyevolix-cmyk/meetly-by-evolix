@@ -12,6 +12,8 @@
  * Unconfigured required fields are marked as launch blockers.
  */
 
+import { validPublisherId } from "../shared/advertising";
+
 export interface LegalConfig {
   siteName: string;
   publicSiteUrl: string;
@@ -37,7 +39,7 @@ export function getLegalConfig(): LegalConfig {
   return {
     siteName: process.env.SITE_NAME?.trim() || "Meetly",
     publicSiteUrl:
-      process.env.PUBLIC_SITE_URL?.trim() || "https://meetly.evolix.studio",
+      process.env.PUBLIC_SITE_URL?.trim() || "https://meet-ly.in",
     operatorName: process.env.LEGAL_OPERATOR_NAME?.trim() || "Evolix Studio",
     operatorEntityType:
       process.env.LEGAL_ENTITY_TYPE?.trim() ||
@@ -67,8 +69,8 @@ export function getLegalConfig(): LegalConfig {
     certInLogRetentionDays: Number(
       process.env.CERT_IN_LOG_RETENTION_DAYS || 180
     ),
-    enableAds: process.env.ENABLE_ADS === "true",
-    adsenseClientId: process.env.ADSENSE_CLIENT_ID?.trim() || "",
+    enableAds: process.env.ENABLE_ADS === "true" && process.env.ADSENSE_CMP_READY === "true" && !!validPublisherId(process.env.ADSENSE_CLIENT_ID),
+    adsenseClientId: validPublisherId(process.env.ADSENSE_CLIENT_ID),
     analyticsProvider: process.env.ANALYTICS_PROVIDER?.trim() || "Disabled (Privacy-by-Design)",
     hostingProvider: process.env.HOSTING_PROVIDER?.trim() || "Self-Hosted / Cloud VPS",
   };
@@ -119,10 +121,14 @@ export function checkLegalLaunchReadiness(
     );
   }
 
-  if (config.enableAds && !config.adsenseClientId) {
+  if (process.env.ENABLE_ADS === "true" && !config.adsenseClientId) {
     missing.push(
       "ENABLE_ADS is true but ADSENSE_CLIENT_ID is missing. Ads cannot be served without a verified publisher ID."
     );
+  }
+
+  if (process.env.ENABLE_ADS === "true" && process.env.ADSENSE_CMP_READY !== "true") {
+    advisories.push("Advertising stays disabled until ADSENSE_CMP_READY=true after publishing and verifying a certified consent management platform.");
   }
 
   return {

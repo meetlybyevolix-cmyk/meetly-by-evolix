@@ -20,7 +20,7 @@ export default function CookieDisclosure() {
             Cookies and web storage technologies (such as <code>localStorage</code> and <code>sessionStorage</code>) are small text files and key-value data stores placed on your device by websites you visit. They are widely used to make web applications function efficiently and provide reporting insights.
           </p>
           <p>
-            At Meetly, we maintain a strict policy of <strong>storage minimization</strong>. We do not use persistent tracking cookies to follow your activity across external websites.
+            Meetly uses storage for authentication and preferences. If advertising is enabled on published guide articles, Google's advertising technologies may also use cookies and identifiers, subject to the choices presented by the configured consent management platform.
           </p>
         </section>
 
@@ -40,6 +40,13 @@ export default function CookieDisclosure() {
                 </tr>
               </thead>
               <tbody>
+                <tr style={{ borderBottom: "1px solid var(--line)" }}>
+                  <td style={{ padding: "10px" }}><code>meetly-auth-token</code>, <code>meetly-user-profile</code></td>
+                  <td style={{ padding: "10px" }}><code>localStorage</code></td>
+                  <td style={{ padding: "10px" }}>Authentication</td>
+                  <td style={{ padding: "10px" }}>Stores the authentication token and cached Google profile. Not displayed to partners.</td>
+                  <td style={{ padding: "10px" }}>Until sign-out or browser storage is cleared; the token has its own expiry.</td>
+                </tr>
                 <tr style={{ borderBottom: "1px solid var(--line)" }}>
                   <td style={{ padding: "10px" }}><code>meetly-session</code></td>
                   <td style={{ padding: "10px" }}><code>sessionStorage</code></td>
@@ -71,12 +78,14 @@ export default function CookieDisclosure() {
             3. Third-Party Advertising & Google AdSense Disclosures
           </h2>
           <p>
-            Meetly may display advertisements on eligible static informational pages (such as our Homepage and Safety Center) through Google AdSense and its certified advertising partners:
+            Meetly may display Google AdSense Auto ads on published guide articles at <code>/blog/</code>. The homepage, matchmaking, text chat, video calls, legal and safety pages, request forms, blog index and error pages keep advertising requests paused. Advertising remains disabled until a publisher ID and consent setup have been configured.
           </p>
           <ul>
+            <li><strong>Consent choices:</strong> When advertising is enabled, use the consent message's manage options or withdrawal control to change advertising choices. Google sign-in and the 18+ checkbox do not provide advertising consent. Choosing non-personalized ads does not necessarily eliminate cookies. If the consent controls are unavailable, contact the operator through the <Link href="/data-rights">Data Rights Portal</Link>.</li>
             <li><strong>Chat Screen Isolation:</strong> Advertisements are strictly prohibited and disabled during active text chats, live video calls, matchmaking searches, and error screens. Unmoderated user-generated content is never monetized.</li>
             <li><strong>DoubleClick & Third-Party Cookies:</strong> Google, as a third-party vendor, uses cookies to serve ads on Meetly. Google's use of advertising cookies enables it and its partners to serve ads based on your visit to Meetly and/or other websites on the Internet.</li>
             <li><strong>Personalized Advertising:</strong> In eligible regions, ads may be personalized based on your browsing interests. You may opt out of personalized advertising by visiting Google's <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)" }}>My Ad Center</a>.</li>
+            <li><strong>Google's data use:</strong> Google and its partners may receive your IP address, device/browser information and advertising interactions. Read <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">how Google uses information from sites that use its services</a>.</li>
           </ul>
         </section>
 

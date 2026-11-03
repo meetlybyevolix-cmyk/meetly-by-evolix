@@ -4,7 +4,7 @@
  *
  * Generates crawlable, static HTML files with custom meta tags, canonical URLs,
  * Open Graph / Twitter cards, JSON-LD structured data, and semantic readable content
- * for all public routes. Guarantees 100% indexability by Googlebot without relying
+ * for all public routes. Provides readable HTML for crawlers without relying
  * on client-side JavaScript execution.
  */
 
@@ -25,6 +25,14 @@ const baseTemplate = fs.readFileSync(baseTemplatePath, "utf-8");
 
 const PAGES = [
   {
+    route: "about",
+    title: "About Meetly & Contact — Meetly",
+    description: "How Meetly works, who maintains it, and where to get help.",
+    canonical: "https://meet-ly.in/about",
+    h1: "About Meetly & Contact",
+    content: `<section><h2>Conversations with someone new</h2><p>Meetly is an online friendship and random chat platform maintained by Evolix Studio for adults 18+. Google sign-in is required before matchmaking. Select interests and a language to look for a one-to-one text or video conversation. Matching depends on availability.</p><h2>Stay in control</h2><p>Next, Leave, Block and Report help you respond to unwanted behavior. Google sign-in and age confirmation do not independently verify age. Video can connect automatically after matching and browser permission. Direct WebRTC connections may reveal your public IP address. A partner can record their screen.</p><h2>Contact and support</h2><p>Use our <a href="/grievance">grievance and contact form</a> for complaints or our <a href="/data-rights">data rights form</a> for privacy requests. Keep the tracking code returned by the form. These are not emergency services.</p><p>Read our <a href="/blog">guides</a>, <a href="/safety">safety center</a>, <a href="/community-guidelines">guidelines</a>, <a href="/privacy">privacy policy</a> and <a href="/cookies">advertising disclosure</a>.</p></section>`,
+  },
+  {
     route: "",
     title: "Meetly – Make New Friends Online | Text & Video Chat",
     description: "Meet new people through random text and video conversations on Meetly. Connect with adults worldwide, explore shared interests, and start chatting.",
@@ -33,12 +41,12 @@ const PAGES = [
     content: `
       <section>
         <h2>Connect With Real People Worldwide</h2>
-        <p>Want to make a new friend or simply have someone to talk to? Meetly helps adults connect with new people through random text and video conversations. 100% private with no public profiles.</p>
+        <p>Want to make a new friend or simply have someone to talk to? Meetly helps adults connect with new people through random text and video conversations. no public profiles; authentication and security data are processed.</p>
         <p>Choose your vibe with interest tags, connect one-on-one, and chat freely without tracking or public scrutiny. Available for adults 18+ worldwide and across India.</p>
         <ul>
           <li><strong>Text &amp; Video Mode:</strong> Choose casual typing or mutual opt-in peer-to-peer WebRTC video.</li>
           <li><strong>No Public Profiles:</strong> Your email and real identity remain private in every conversation.</li>
-          <li><strong>Community Safety:</strong> Verified 18+ adult community with zero tolerance for harassment or unsolicited explicit content.</li>
+          <li><strong>Community Safety:</strong> Adults-only community with self-attested age confirmation with zero tolerance for harassment or unsolicited explicit content.</li>
         </ul>
       </section>
     `,
@@ -52,7 +60,7 @@ const PAGES = [
     content: `
       <section>
         <h2>Why Making Friends as an Adult Feels Hard (And How to Fix It)</h2>
-        <p>Between busy work schedules, relocations, and daily responsibilities, traditional ways of making friends often fade after college. Meetly lets you connect one-on-one with verified adults worldwide based on shared passions and mutual respect.</p>
+        <p>Between busy work schedules, relocations, and daily responsibilities, traditional ways of making friends often fade after college. Meetly lets you connect one-on-one with people who confirm they are 18+ worldwide based on shared passions and mutual respect.</p>
         <h2>How Meetly Works in 3 Simple Steps</h2>
         <ol>
           <li><strong>Choose Your Interests:</strong> Tag topics like music, cinema, tech, books, sports, or creative writing.</li>
@@ -62,9 +70,9 @@ const PAGES = [
       </section>
     `,
     faq: [
-      { q: "How can I make real friends online safely?", a: "Start on platforms with verified adult communities like Meetly that do not require exposing personal social media profiles or phone numbers. Select shared interest tags to connect with people who share your vibe." },
+      { q: "How can I make real friends online safely?", a: "Start on platforms with adults-only communities with reporting controls like Meetly that do not require exposing personal social media profiles or phone numbers. Select shared interest tags to connect with people who share your vibe." },
       { q: "Is it normal to make friends online as an adult?", a: "Yes, millions of adults find it difficult to make new friends after university or relocation. Online social discovery platforms provide a welcoming space to meet people outside your daily routine." },
-      { q: "Does Meetly store my conversations or contact details?", a: "No. Meetly operates under privacy-by-design principles compliant with India's DPDP Act 2023. Text conversations are never logged to a database, and video calls are direct peer-to-peer WebRTC connections." }
+      { q: "Does Meetly store my conversations or contact details?", a: "Google sign-in details are processed for authentication and administration. Ordinary text is relayed in temporary memory, but reports and uploaded images can be retained separately. Video uses WebRTC. Your Google name and email are not displayed to partners; see the Privacy Policy for storage details." }
     ]
   },
   {
@@ -76,19 +84,19 @@ const PAGES = [
     content: `
       <section>
         <h2>Why Casual Conversations Matter When You Feel Disconnected</h2>
-        <p>Sometimes you just need to talk about your day, share a thought, or have a relaxed chat with someone new. Meetly gives you a safe, welcoming space to connect one-on-one with verified adults.</p>
+        <p>Sometimes you just need to talk about your day, share a thought, or have a relaxed chat with someone new. Meetly gives you a safe, welcoming space to connect one-on-one with people who confirm they are 18+.</p>
         <p><strong>Note on Community Scope:</strong> Meetly provides informal social discovery. We are not a medical service or crisis helpline. For acute mental health support in India, please contact Tele-MANAS at 14416 or KIRAN at 1800-599-0019.</p>
       </section>
     `,
     faq: [
-      { q: "Can I talk to someone online right now without downloading an app?", a: "Yes. Meetly works directly in any desktop or mobile browser. Simply complete a quick Google 18+ verification and you can begin chatting 1-on-1 immediately." },
+      { q: "Can I talk to someone online right now without downloading an app?", a: "Yes. Meetly works directly in any desktop or mobile browser. Simply complete a quick Google sign-in and 18+ confirmation and you can begin chatting 1-on-1 immediately." },
       { q: "Is Meetly a therapy or crisis helpline?", a: "No. Meetly is a social discovery platform for casual, informal human conversations between adults. If you need professional support, please contact dedicated free helplines." }
     ]
   },
   {
     route: "chat-with-strangers",
     title: "Chat with Strangers Online | Safe Anonymous Random Chat — Meetly",
-    description: "Chat with strangers safely on Meetly. Connect with random adults worldwide via text or video. 18+ verified, private, and free modern Omegle alternative.",
+    description: "Chat with strangers safely on Meetly. Connect with random adults worldwide via text or video. 18+ only, private, and free modern Omegle alternative.",
     canonical: "https://meet-ly.in/chat-with-strangers",
     h1: "Chat with Strangers Online — Safely & Anonymously",
     content: `
@@ -97,7 +105,7 @@ const PAGES = [
         <p>Experience the thrill of meeting someone completely new. Meetly reimagines random online chatting for adults with real safety controls, shared interest matching, and zero public profiles.</p>
         <h2>Why Choose Meetly to Chat with Strangers?</h2>
         <ul>
-          <li><strong>100% Anonymous Identity:</strong> Your real name, email, and social handles are never displayed.</li>
+          <li><strong>Identity Hidden From Partners:</strong> Your real name, email, and social handles are never displayed.</li>
           <li><strong>Topic &amp; Interest Matching:</strong> Tag topics to avoid awkward silences and find common ground.</li>
           <li><strong>Instant Skip &amp; Block:</strong> Complete control over every interaction with one-click Skip and Report tools.</li>
         </ul>
@@ -155,7 +163,7 @@ const PAGES = [
     content: `
       <section>
         <h2>Our Commitment to Community Safety</h2>
-        <p>Meetly enforces strict safety controls including Google 18+ adult verification, instant reporting, real-time safety classifiers, and a designated Grievance Officer under India's IT Rules 2021.</p>
+        <p>Meetly enforces strict safety controls including Google sign-in and self-attested 18+ confirmation, instant reporting, reporting controls and on-device screening heuristics. Screening and self-attested age confirmation cannot guarantee safety or verify a participant's age. Operator contact details must be confirmed before launch.</p>
       </section>
     `
   },
@@ -168,14 +176,14 @@ const PAGES = [
     content: `
       <section>
         <h2>Acceptable Use on Meetly</h2>
-        <p>Every participant on Meetly agrees to treat others with dignity and respect. Prohibited behaviors include non-consensual sexual content, hate speech, harassment, spam, and commercial solicitation.</p>
+        <p>Every participant on Meetly agrees to treat others with dignity and respect. Prohibited behaviors include nudity, sexually explicit or non-consensual sexual content, hate speech, harassment, spam, and commercial solicitation.</p>
       </section>
     `
   },
   {
     route: "privacy",
     title: "Privacy Policy & Data Processing Notice — Meetly",
-    description: "Meetly's Privacy Policy compliant with India's Digital Personal Data Protection (DPDP) Act 2023. Transparent disclosures on Google authentication and data retention.",
+    description: "Meetly's Privacy Policy and data processing notice. Transparent disclosures on Google authentication and data retention.",
     canonical: "https://meet-ly.in/privacy",
     h1: "Privacy Policy & Data Processing Notice",
     content: `
@@ -201,13 +209,13 @@ const PAGES = [
   {
     route: "cookies",
     title: "Cookie & Advertising Technology Disclosure — Meetly",
-    description: "Learn about Meetly's minimal cookie policy. We only use essential session cookies for authentication and do not use intrusive tracking cookies.",
+    description: "Learn about authentication storage, Google advertising technologies on guide articles, and consent choices on Meetly.",
     canonical: "https://meet-ly.in/cookies",
     h1: "Cookie & Advertising Technology Disclosure",
     content: `
       <section>
-        <h2>Essential Cookies Only</h2>
-        <p>Meetly utilizes strictly essential session cookies to manage temporary chat states and authenticate authorized users. We do not use third-party behavioral advertising cookies.</p>
+        <h2>Authentication, Preferences and Optional Advertising</h2>
+        <p>Meetly stores session and authentication information and preferences. When enabled on published guide articles, Google and its partners may use cookies and identifiers to deliver and measure ads, subject to applicable consent choices. Live chat, video, legal pages and forms do not load AdSense. Read the full cookie disclosure for controls and Google data-use links.</p>
       </section>
     `
   },
@@ -233,7 +241,7 @@ const PAGES = [
     content: `
       <section>
         <h2>Statutory Grievance Redressal</h2>
-        <p>In accordance with Rule 3(2) of the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, Meetly maintains a dedicated Grievance Officer to acknowledge and redress complaints within statutory timelines.</p>
+        <p>In accordance with Rule 3(2) of the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, Meetly provides a grievance submission and status portal. The operator must confirm the appointed officer and working contact details before launch.</p>
       </section>
     `
   }
@@ -403,6 +411,9 @@ for (const page of PAGES) {
           <a href="/safety">Safety</a> · 
           <a href="/terms">Terms</a> · 
           <a href="/privacy">Privacy</a>
+          · <a href="/about">About &amp; Contact</a>
+          · <a href="/community-guidelines">Community Guidelines</a>
+          · <a href="/cookies">Cookie &amp; Ad Policy</a>
         </p>
       </footer>
     </div>

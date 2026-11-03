@@ -186,6 +186,17 @@ describe("Meetly Phase 7: Video Call Side Chat & Online User Indicator Suite", (
   });
 
   describe("Feature 2: Real-Time Deduplicated Online Presence & Staging Load Test", () => {
+    it("does not inflate online presence in production", () => {
+      const previous = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = "production";
+        expect(getOnlineStats().onlineCount).toBe(0);
+      } finally {
+        if (previous === undefined) delete process.env.NODE_ENV;
+        else process.env.NODE_ENV = previous;
+      }
+    });
+
     it("tracks real active users and deduplicates reconnections from the same client", () => {
       const initialStats = getOnlineStats();
       expect(initialStats.onlineCount).toBe(0);

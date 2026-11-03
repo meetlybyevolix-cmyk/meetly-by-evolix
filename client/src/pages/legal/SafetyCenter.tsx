@@ -63,7 +63,7 @@ export default function SafetyCenter() {
             When you choose <strong>Video Chat</strong>, please be aware of how real-time media operates:
           </p>
           <ul>
-            <li><strong>Both Users Must Opt In:</strong> Your camera and microphone will never be transmitted until you click <em>Join Video</em>, grant browser permissions, and the other participant also explicitly opts in.</li>
+            <li><strong>Video Mode and Browser Permissions:</strong> Selecting video mode can request camera and microphone permission during matchmaking. Once both participants enter a video room and their browsers allow capture, the call can connect automatically. Use text mode if you do not want to share media.</li>
             <li><strong>Direct WebRTC Connection:</strong> Video packets travel directly peer-to-peer between your device and the stranger's device using WebRTC. Because direct connections exchange network candidates via STUN, technical users can inspect network packets to discover your public IP address.</li>
             <li><strong>Privacy Recommendation:</strong> If you do not want strangers to potentially observe your network IP address or surroundings, we recommend using <strong>Text Chat only</strong> or using a reputable VPN service.</li>
             <li><strong>Be Mindful of Your Surroundings:</strong> Check what is visible in your camera background (e.g. family photos, street signs outside your window, mail with your address, work badges, or school uniforms).</li>

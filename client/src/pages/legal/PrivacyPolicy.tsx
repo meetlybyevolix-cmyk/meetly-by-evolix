@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
             This Privacy Policy explains how <strong>Evolix Studio</strong> (the <strong>"Data Fiduciary"</strong>, <strong>"Operator"</strong>, <strong>"we"</strong>, or <strong>"us"</strong>) processes information in connection with your anonymous use of <strong>Meetly</strong>.
           </p>
           <p>
-            We adhere to the core principles of <strong>Privacy by Design</strong> and <strong>Data Minimization</strong>. We do not require registration, usernames, email addresses, phone numbers, or social logins. However, operating a secure, abuse-resistant web platform and complying with statutory cybersecurity mandates requires the processing of certain technical network metadata.
+            Meetly uses Google sign-in before matchmaking. We process your Google account identifier, name and email for authentication and account administration; those details are not displayed to chat partners. Technical network metadata is also processed for security. Chatting under a temporary identity does not make your use anonymous to the operator or infrastructure providers.
           </p>
           <div style={{ background: "var(--card)", border: "1px solid var(--line)", padding: "14px 18px", borderRadius: "8px", fontSize: "13px", margin: "14px 0" }}>
             <div><strong>Data Protection Officer / Privacy Contact:</strong> <code>privacy@meetly.evolix.studio</code></div>
@@ -59,8 +59,10 @@ export default function PrivacyPolicy() {
                 <li>Your optional written description and optional user-selected message excerpt (capped at 1,000 characters).</li>
               </ol>
             </li>
-            <li>Abuse reports are stored in an encrypted MySQL database, accessible only to authenticated operators for triage and law-enforcement compliance.</li>
+            <li>Abuse reports are persisted in the configured MySQL database for operator review. Encryption at rest, backup security and retention depend on the deployment and must be verified by the operator.</li>
           </ul>
+          <h3 style={{ fontSize: "16px", fontWeight: 600, margin: "16px 0 8px 0" }}>D. Images Shared in Chat</h3>
+          <p>Photos you upload are stored on the server and referenced by a media record, rather than sent only through WebRTC. Ordinary uploads have a two-hour expiry; reported images can be retained for moderation for up to 30 days, subject to preservation requirements. Expiry and access restrictions do not prevent a participant from saving a copy. Do not upload sensitive or intimate images.</p>
         </section>
 
         <section style={{ marginBottom: "32px" }}>
@@ -71,7 +73,7 @@ export default function PrivacyPolicy() {
             Video calling on Meetly is strictly opt-in and operates over <strong>WebRTC (Web Real-Time Communication)</strong>:
           </p>
           <ul>
-            <li><strong>Local Preview:</strong> Your camera and microphone remain strictly local on your device until both you and your matched partner explicitly grant browser permissions and click to join video.</li>
+            <li><strong>Camera and Microphone:</strong> Choosing video mode can request browser permission while matchmaking. The call attempts to connect automatically when both participants enter the video room and their browsers allow capture. You can disable the camera or microphone, leave, or choose text mode instead.</li>
             <li><strong>Direct Peer-to-Peer Transmission:</strong> Video and audio streams flow directly between your browser and the stranger's browser using DTLS-SRTP encryption. <strong>Meetly does not record, intercept, view, or store raw video or audio packets.</strong></li>
             <li><strong>IP Address Disclosure Warning:</strong> In standard WebRTC, browsers exchange network candidates via STUN (Session Traversal Utilities for NAT). Tech-savvy participants inspecting browser network internals can discover your public IP address. If this is a concern, we recommend using text mode or connecting through a trusted virtual private network (VPN).</li>
             <li><strong>External Screen Recording:</strong> Meetly cannot technically prevent another participant from taking screenshots, filming their screen with another device, or using recording software. Never show intimate, sensitive, or identifying content to strangers.</li>
@@ -118,9 +120,9 @@ export default function PrivacyPolicy() {
           </p>
           <ul>
             <li><code>sessionStorage</code>: Stores the ephemeral <code>meetly-session</code> token and consent flag. Scoped strictly to the active tab and deleted when the tab closes.</li>
-            <li><code>localStorage</code>: Stores your UI color theme preference (<code>theme: "light" | "dark"</code>). Contains zero personal or tracking data.</li>
+            <li><code>localStorage</code>: Stores your UI theme preference, the <code>meetly-auth-token</code> authentication token, and a cached Google account profile in <code>meetly-user-profile</code>. These persist across browser restarts until cleared or you sign out. Avoid signing in on a shared device.</li>
             <li><code>meetly_session</code> (Cookie): Secure HTTP-only, SameSite=None cookie used exclusively for authenticated Google sessions. Contains a cryptographically signed HMAC token verifying your account.</li>
-            <li><strong>Advertising Cookies (Google AdSense):</strong> If advertising is enabled on informational pages, Google and its advertising partners may use cookies (such as the DoubleClick cookie) to serve ads based on your prior visits to this or other websites. Detailed opt-out instructions and cookie management are described in our <Link href="/cookies" style={{ color: "var(--teal)" }}>Cookie & Ad Disclosure</Link>.</li>
+            <li><strong>Advertising (Google AdSense):</strong> If enabled on published guide articles, Google and its partners may use cookies, web beacons, IP addresses and other identifiers to deliver, measure and personalize advertising based on visits to this and other sites. The configured consent management platform presents applicable choices. The homepage, matchmaking, chats, video, legal pages and request forms keep advertising requests paused. See our <Link href="/cookies" style={{ color: "var(--teal)" }}>Cookie & Ad Disclosure</Link> and <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">how Google uses information from partner sites</a>.</li>
           </ul>
         </section>
 
@@ -159,8 +161,8 @@ export default function PrivacyPolicy() {
                 </tr>
                 <tr style={{ borderBottom: "1px solid var(--line)" }}>
                   <td style={{ padding: "10px" }}>Abuse Safety Reports</td>
-                  <td style={{ padding: "10px" }}>Encrypted MySQL Database</td>
-                  <td style={{ padding: "10px" }}>90 days rolling</td>
+                  <td style={{ padding: "10px" }}>Configured MySQL Database</td>
+                  <td style={{ padding: "10px" }}>Operator-managed retention; no automatic 90-day deletion is implemented</td>
                   <td style={{ padding: "10px" }}>Review of abuse, operator triage, legal preservation.</td>
                 </tr>
                 <tr style={{ borderBottom: "1px solid var(--line)" }}>
@@ -171,8 +173,8 @@ export default function PrivacyPolicy() {
                 </tr>
                 <tr>
                   <td style={{ padding: "10px" }}>Grievance Complaints</td>
-                  <td style={{ padding: "10px" }}>Encrypted MySQL Database</td>
-                  <td style={{ padding: "10px" }}>1 year following resolution</td>
+                  <td style={{ padding: "10px" }}>Configured MySQL Database</td>
+                  <td style={{ padding: "10px" }}>Operator-managed retention, subject to applicable obligations</td>
                   <td style={{ padding: "10px" }}>Compliance audit under Rule 3(2) IT Rules, 2021.</td>
                 </tr>
               </tbody>

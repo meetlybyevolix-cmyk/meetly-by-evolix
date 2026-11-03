@@ -4054,6 +4054,19 @@ a {
    MOBILE-FIRST RESPONSIVE FIXES (PHONE OPTIMIZATIONS)
    ========================================================================== */
 @media (max-width: 640px) {
+  /* GIS supplies a fixed-width sign-in iframe. Let header controls wrap on
+     narrow screens instead of pushing the page beyond the viewport. */
+  .topbar:has(.topbar-right) {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 60px;
+    padding: 8px 0;
+  }
+  .topbar-right {
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
   /* Prevent header overlapping on small screens */
   .topbar {
     width: calc(100% - 24px);

@@ -163,6 +163,7 @@ function Footer() {
         <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: "12px", width: "100%", borderTop: "1px solid var(--line)", paddingTop: "12px", fontSize: "12px" }}>
           <span style={{ color: "var(--muted)" }}>Meetly · Anonymous text &amp; video conversations · 18+ Adults Only</span>
           <nav aria-label="Site information" style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
+            <Link href="/about">About &amp; Contact</Link>
             <Link href="/safety">Safety</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
@@ -222,7 +223,7 @@ function MediaModePicker({
           <Video size={16} />
           <span>
             <strong>Video chat</strong>
-            <small>Both people opt in first</small>
+            <small>Camera/mic can start after matching</small>
           </span>
         </button>
       </div>
@@ -254,10 +255,7 @@ export default function Home() {
   const [liveSocket, setLiveSocket] = useState<WebSocket | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<Interest[]>([]);
   const [language, setLanguage] = useState<Language>("Any");
-  const [adultConfirmed, setAdultConfirmed] = useState(true);
-  const [termsAccepted, setTermsAccepted] = useState(true);
-  const [privacyAccepted, setPrivacyAccepted] = useState(true);
-  const [signupConsent, setSignupConsent] = useState(true);
+  const [signupConsent, setSignupConsent] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
@@ -296,12 +294,12 @@ export default function Home() {
   const statsQuery = trpc.chat.stats.useQuery(undefined, {
     refetchInterval: 10_000,
   });
-  const [onlineCount, setOnlineCount] = useState<number>(120);
+  const [onlineCount, setOnlineCount] = useState<number>(0);
   const { user, refetch: refetchUser } = useCurrentUser();
 
   useEffect(() => {
     if (typeof statsQuery.data?.onlineCount === "number") {
-      setOnlineCount(Math.max(120, statsQuery.data.onlineCount));
+      setOnlineCount(Math.max(0, statsQuery.data.onlineCount));
     }
   }, [statsQuery.data?.onlineCount]);
 
@@ -311,7 +309,7 @@ export default function Home() {
       if (token) {
         setSessionToken(token);
         const consent = sessionStorage.getItem("meetly-consent");
-        if (consent === "confirmed") setAdultConfirmed(true);
+        if (consent === "confirmed") setSignupConsent(true);
       }
     } catch {
       /* This browser will need session storage for an anonymous session. */
@@ -492,6 +490,10 @@ export default function Home() {
   }, [mode, language]);
 
   const startSearching = async (randomOnly = false) => {
+    if (!signupConsent) {
+      setNotice("Confirm that you are 18+ and accept the Terms and Privacy Policy before matchmaking.");
+      return;
+    }
     if (!user) {
       setNotice("Please sign up or sign in with Google to start chatting.");
       if (window.google?.accounts?.id) {
@@ -837,7 +839,7 @@ export default function Home() {
   };
 
   const sessionWorking = createSession.isPending || search.isPending;
-  const canStart = Boolean(user) && !sessionWorking;
+  const canStart = Boolean(user) && signupConsent && !sessionWorking;
 
   return (
     <div className="app-shell">
@@ -849,12 +851,12 @@ export default function Home() {
       <header className="topbar">
         <Brand />
         <div className="topbar-right">
-          <span className="text-mode-pill" title={`${onlineCount || 120} active sessions`}>
+          <span className="text-mode-pill" title={`${onlineCount} active sessions`}>
             <span className="live-status-dot-wrap">
               <span className="live-status-dot-pulse" />
               <span className="live-status-dot-core" />
             </span>
-            {`${onlineCount || 120} online now`}
+            {`${onlineCount} online now`}
           </span>
           <GoogleAuthButton
             compact
@@ -1000,7 +1002,7 @@ export default function Home() {
                   <span className="live-status-dot-core" />
                 </span>
                 <span className="hero-presence-text">
-                  <strong>{`${onlineCount || 120} online now`}</strong>
+                  <strong>{`${onlineCount} online now`}</strong>
                   <span className="hero-presence-sub"> — Active text & video chat</span>
                 </span>
               </div>
@@ -1015,7 +1017,7 @@ export default function Home() {
                 </span>
                 <span>
                   <Check size={15} />
-                  {`${onlineCount || 120} online now`}
+                  {`${onlineCount} online now`}
                 </span>
               </div>
             </section>
@@ -1138,6 +1140,10 @@ export default function Home() {
               leave or report at any time.
             </p>
             <MediaModePicker value={mediaMode} onChange={handleMediaModeChange} />
+            <label className="signup-consent-label" style={{ margin: "16px 0" }}>
+              <input type="checkbox" className="signup-consent-checkbox" checked={signupConsent} onChange={event => setSignupConsent(event.target.checked)} />
+              <span>I confirm I am 18 or older and accept the <Link href="/terms" target="_blank">Terms</Link> and <Link href="/privacy" target="_blank">Privacy Policy</Link>.</span>
+            </label>
             {notice && (
               <div className="inline-alert" role="alert">
                 {notice}
@@ -1261,6 +1267,10 @@ export default function Home() {
               ))}
             </select>
             <MediaModePicker value={mediaMode} onChange={handleMediaModeChange} />
+            <label className="signup-consent-label" style={{ margin: "16px 0" }}>
+              <input type="checkbox" className="signup-consent-checkbox" checked={signupConsent} onChange={event => setSignupConsent(event.target.checked)} />
+              <span>I confirm I am 18 or older and accept the <Link href="/terms" target="_blank">Terms</Link> and <Link href="/privacy" target="_blank">Privacy Policy</Link>.</span>
+            </label>
             {notice && (
               <div className="inline-alert" role="alert">
                 {notice}
@@ -1313,7 +1323,7 @@ export default function Home() {
             )}
             <p className="under-button-note">
               <LockKeyhole size={13} />
-              No email or phone number. You can leave whenever you like.
+              Your Google name and email are not shown to partners. You can leave whenever you like.
             </p>
           </div>
         </main>
@@ -1614,7 +1624,7 @@ export default function Home() {
       {mode === "chat" && (
         <div className="chat-footer">
           <Brand compact />
-          <span>Temporary conversation · no account</span>
+          <span>Temporary conversation · no public profile</span>
           <Link href="/privacy">Privacy details</Link>
         </div>
       )}
