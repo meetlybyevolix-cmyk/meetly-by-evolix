@@ -8,6 +8,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 export interface AuthSessionPayload {
   openId: string;
   role: string;
+  name?: string | null;
+  email?: string | null;
   iat: number;
   exp: number;
 }
@@ -36,12 +38,16 @@ export function parseCookies(header?: string): Record<string, string> {
 
 /**
  * Creates a cryptographically signed HMAC-SHA256 session token.
+ * Embeds user identity so authenticated sessions can be safely restored
+ * across server cold starts, memory flushes, or database restarts.
  */
 export function createAuthSessionToken(user: User): string {
   const now = Math.floor(Date.now() / 1000);
   const payload: AuthSessionPayload = {
     openId: user.openId,
     role: user.role,
+    name: user.name ?? null,
+    email: user.email ?? null,
     iat: now,
     exp: now + SESSION_TTL_SECONDS,
   };

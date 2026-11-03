@@ -119,3 +119,4 @@ Search queries where Meetly appeared in the top 50 search results that represent
 - [ ] **Search Console Resubmissions:** Submit newly published URLs from the past 7 days to Google Search Console URL Inspection for priority indexing.
 - [ ] **Social Media / Community Syndication:** Share top-performing guides on community channels (Reddit r/MakeNewFriendsHere, Twitter/X, LinkedIn).
 - [ ] **Prune & Refresh:** Check any 30+ day old articles with low CTR to test refreshed meta titles and descriptions.
+

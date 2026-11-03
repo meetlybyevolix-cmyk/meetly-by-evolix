@@ -31,3 +31,4 @@ export function getRelatedArticles(currentSlug: string, count = 3): BlogArticle[
 
   return [...explicit, ...sameCategory].slice(0, count);
 }
+

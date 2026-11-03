@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { getWsUrl } from "@/lib/api";
-import { useCurrentUser } from "@/lib/auth";
+import { useCurrentUser, getStoredAuthToken, clearAuthSession } from "@/lib/auth";
 import { getFirstName, getFunkyAvatar } from "@/lib/funkyAvatar";
 import VideoCall from "@/components/VideoCall";
 import GoogleAuthButton from "@/components/GoogleAuthButton";
@@ -514,6 +514,7 @@ export default function Home() {
     }
     try {
       let token = sessionToken;
+      const storedAuthToken = getStoredAuthToken() || undefined;
       if (!token) {
         const result = await createSession.mutateAsync({
           ageConfirmed: true,
@@ -524,6 +525,7 @@ export default function Home() {
             language: randomOnly ? "Any" : language,
             mediaMode,
           },
+          authToken: storedAuthToken,
         });
         token = result.token;
         setSessionToken(token);
@@ -571,6 +573,7 @@ export default function Home() {
               language: randomOnly ? "Any" : language,
               mediaMode,
             },
+            authToken: storedAuthToken,
           });
           setSessionToken(fresh.token);
           try {
@@ -593,10 +596,29 @@ export default function Home() {
         setMode("chat");
       }
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+
+      // Handle invalid, revoked, or unauthenticated session gracefully:
+      // Clear the invalid session, reset user state, and immediately display the Google Sign-in button.
       if (
-        error instanceof Error &&
-        (/session has expired/i.test(error.message) ||
-          /age assurance/i.test(error.message))
+        /Google sign-in is required/i.test(errMsg) ||
+        /unauthorized/i.test(errMsg)
+      ) {
+        clearAuthSession();
+        void refetchUser();
+        setMode("preferences");
+        setNotice("Your previous Google sign-in expired. Please sign in below to start chatting.");
+        if (window.google?.accounts?.id) {
+          try {
+            window.google.accounts.id.prompt();
+          } catch {}
+        }
+        return;
+      }
+
+      if (
+        /session has expired/i.test(errMsg) ||
+        /age assurance/i.test(errMsg)
       ) {
         setSessionToken("");
         try {

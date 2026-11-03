@@ -315,3 +315,4 @@ export default function BlogLayout({ meta, children }: BlogLayoutProps) {
     </div>
   );
 }
+

@@ -144,3 +144,4 @@ If an article fails any of the strict editorial gates (minimum 450 words, maximu
 2. **Crisis Directory:** Any article covering loneliness, emotional isolation, or mental health must retain the 24/7 crisis hotlines (Tele-MANAS: 14416, KIRAN: 1800-599-0019).
 3. **No Therapy Claims:** Meetly must strictly be described as a casual social chat platform, never as therapy, medical treatment, or a crisis intervention service.
 4. **No Keyword Stuffing:** Keyword density must never exceed 3.0%.
+

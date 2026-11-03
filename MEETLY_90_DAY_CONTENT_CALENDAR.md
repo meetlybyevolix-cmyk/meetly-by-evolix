@@ -151,3 +151,4 @@ Each article scheduled above is generated, fact-checked, and validated against t
 3. **Internal Linking Mesh:** Contextual links are injected back to Meetly core landing pages (`/make-friends-online`, `/talk-to-someone-online`, `/chat-with-strangers`, `/random-video-chat`, `/anonymous-text-chat`, `/safety`).
 4. **Mandatory Mental Health Helpline Box:** Any topic under "Wellbeing & Connection" or discussing loneliness must include the verified 24/7 helpline directory (**Tele-MANAS: 14416**, **KIRAN: 1800-599-0019**, Vandrevala Foundation) and a clear non-medical disclaimer.
 5. **Quality Gate Fallback:** If an article fails quality checks, word count bounds, or safety standards, the engine automatically saves it as a draft in `content/drafts/` and halts publication.
+

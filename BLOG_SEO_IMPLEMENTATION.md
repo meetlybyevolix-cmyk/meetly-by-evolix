@@ -152,3 +152,4 @@ The automated generation script ([`scripts/daily-blog-engine.js`](file:///d:/mee
 - **Gate 4 (Completeness):** Validates the presence of title, description, key takeaways, and FAQs.
 
 Articles failing any gate are quarantined into `content/drafts/<slug>.json` for human editorial review and logged in `DAILY_BLOG_AUTOMATION_REPORT.md`.
+

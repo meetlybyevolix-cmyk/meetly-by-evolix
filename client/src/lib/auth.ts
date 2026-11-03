@@ -27,8 +27,15 @@ export function getStoredAuthToken(): string | null {
 export function getStoredUser(): CurrentUser | null {
   if (typeof window === "undefined" || !window.localStorage) return null;
   try {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     const raw = localStorage.getItem(USER_PROFILE_KEY);
-    if (!raw) return null;
+    if (!token || !raw) {
+      // If a cached profile exists without a valid auth token, purge to avoid client/server desync
+      if (raw && !token) {
+        localStorage.removeItem(USER_PROFILE_KEY);
+      }
+      return null;
+    }
     return JSON.parse(raw) as CurrentUser;
   } catch {
     return null;
@@ -110,8 +117,8 @@ export function useCurrentUser() {
       try {
         localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(meQuery.data));
       } catch {}
-    } else if (meQuery.isFetched && !meQuery.data && hasToken) {
-      // Server rejected or expired token
+    } else if (meQuery.isFetched && meQuery.data === null && hasToken) {
+      // Server explicitly returned null (session invalid or revoked)
       clearAuthSession();
       setCachedUser(null);
     }

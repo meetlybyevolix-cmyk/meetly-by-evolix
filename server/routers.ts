@@ -27,6 +27,7 @@ import {
   deleteUserByOpenId,
   getInternalUserId,
 } from "./db";
+import type { User } from "../drizzle/schema";
 import {
   assertAgeAssuranceEligible,
   initiateAgeAssurance,
@@ -37,6 +38,7 @@ import { verifyGoogleIdToken, assertGoogleAuthRateLimit } from "./googleAuth";
 import { syncUserRegistration, syncUserDeletion } from "./googleSheets";
 import {
   createAuthSessionToken,
+  verifyAuthSessionToken,
   setAuthCookie,
   clearAuthCookie,
 } from "./authSession";
@@ -267,10 +269,37 @@ export const appRouter = router({
             privacyAccepted: z.literal(true),
             preferences: preferencesSchema,
             isSynthetic: z.boolean().optional(),
+            authToken: z.string().optional(),
           })
         )
         .mutation(async ({ ctx, input }) => {
-          if (config.isProduction && !ctx.user && !input.isSynthetic) {
+          let effectiveUser = ctx.user;
+
+          // Double redundancy: if headers were stripped across CORS/reverse-proxy, verify token from payload
+          if (!effectiveUser && input.authToken) {
+            const payload = verifyAuthSessionToken(input.authToken);
+            if (payload?.openId) {
+              effectiveUser = (await getUserByOpenId(payload.openId)) ?? null;
+              if (!effectiveUser) {
+                const now = new Date();
+                const restoredUser: User = {
+                  id: 0,
+                  openId: payload.openId,
+                  name: payload.name ?? "Google User",
+                  email: payload.email ?? null,
+                  loginMethod: "google",
+                  role: payload.role === "admin" ? "admin" : "user",
+                  createdAt: new Date((payload.iat || Math.floor(now.getTime() / 1000)) * 1000),
+                  updatedAt: now,
+                  lastSignedIn: now,
+                };
+                effectiveUser = restoredUser;
+                void upsertUser(restoredUser).catch(() => {});
+              }
+            }
+          }
+
+          if (config.isProduction && !effectiveUser && !input.isSynthetic) {
             throw new TRPCError({
               code: "UNAUTHORIZED",
               message: "Google sign-in is required before starting a chat session.",

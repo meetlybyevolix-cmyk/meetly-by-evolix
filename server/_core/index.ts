@@ -14,6 +14,7 @@ import { registerChatSocket, closeChatSocket } from "../chat/live";
 import { getSession, getOnlineStats } from "../chat/service";
 import { saveUploadedImage, getAuthorizedMedia, reportMedia } from "../chat/media";
 import { appRouter } from "../routers";
+import type { User } from "../../drizzle/schema";
 import {
   listSafetyReports,
   updateSafetyReportStatus,
@@ -150,7 +151,7 @@ async function startServer() {
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Meetly-Session, X-Moderator-Key"
+      "Content-Type, Authorization, X-Auth-Token, X-Meetly-Session, X-Moderator-Key"
     );
     res.setHeader("Access-Control-Max-Age", "86400");
     if (req.method === "OPTIONS") {
@@ -442,8 +443,11 @@ async function startServer() {
     try {
       const rawCookie = req.headers.cookie || "";
       const parsedCookies = parseCookies(rawCookie);
+      const xAuthHeader = req.headers["x-auth-token"];
+      const xAuthToken = typeof xAuthHeader === "string" ? xAuthHeader.trim() : undefined;
       const token =
         parsedCookies[COOKIE_NAME] ||
+        xAuthToken ||
         req.headers.authorization?.replace(/^Bearer\s+/i, "");
 
       if (!token) {
@@ -455,9 +459,22 @@ async function startServer() {
         return res.status(200).json({ authenticated: false, user: null });
       }
 
-      const user = await getUserByOpenId(payload.openId);
+      let user = await getUserByOpenId(payload.openId);
       if (!user) {
-        return res.status(200).json({ authenticated: false, user: null });
+        const now = new Date();
+        const restoredUser: User = {
+          id: 0,
+          openId: payload.openId,
+          name: payload.name ?? "Google User",
+          email: payload.email ?? null,
+          loginMethod: "google",
+          role: payload.role === "admin" ? "admin" : "user",
+          createdAt: new Date((payload.iat || Math.floor(now.getTime() / 1000)) * 1000),
+          updatedAt: now,
+          lastSignedIn: now,
+        };
+        user = restoredUser;
+        void upsertUser(restoredUser).catch(() => {});
       }
 
       return res.status(200).json({

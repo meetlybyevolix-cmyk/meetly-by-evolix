@@ -41,7 +41,10 @@ const trpcClient = trpc.createClient({
           const chatSession = sessionStorage.getItem("meetly-session");
           if (chatSession) headers["X-Meetly-Session"] = chatSession;
           const authToken = localStorage.getItem("meetly-auth-token");
-          if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+          if (authToken) {
+            headers["Authorization"] = `Bearer ${authToken}`;
+            headers["X-Auth-Token"] = authToken;
+          }
         } catch {
           // Tab-scoped storage unavailable in this browser
         }

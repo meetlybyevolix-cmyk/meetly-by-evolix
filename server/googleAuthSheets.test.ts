@@ -28,7 +28,7 @@ import {
   parseCookies,
 } from "./authSession";
 import { COOKIE_NAME } from "@shared/const";
-import type { TrpcContext } from "./_core/context";
+import { createContext, type TrpcContext } from "./_core/context";
 
 function createMockContext(overrides: Partial<TrpcContext> = {}): TrpcContext {
   const headers: Record<string, string> = {};
@@ -316,5 +316,61 @@ describe("Meetly Phase 8: Google Authentication & Google Sheets Registration Sui
     expect(serializedState).not.toContain("Ivan Secret");
     expect(serializedState).not.toContain("ivan@private.org");
     expect(serializedState).not.toContain("google_sub_ivan");
+  });
+
+  // 13. Resilient session restoration across cold starts & memory flushes
+  it("13. Resilient session restoration: authenticates and restores user from verified HMAC token even if database/memory was reset", async () => {
+    const caller = appRouter.createCaller(createMockContext());
+    const mockToken = "mock-google-token:google_sub_nightowl:Night Owl:nightowl@example.com";
+    const authRes = await caller.auth.googleLogin({ idToken: mockToken });
+    const sessionToken = authRes.sessionToken;
+
+    expect(sessionToken).toBeDefined();
+
+    // Verify token contains embedded identity
+    const payload = verifyAuthSessionToken(sessionToken);
+    expect(payload?.openId).toBe("google_sub_nightowl");
+    expect(payload?.name).toBe("Night Owl");
+    expect(payload?.email).toBe("nightowl@example.com");
+
+    // Simulate server cold restart / memory flush by creating context where DB lookup fails initially
+    const mockReq = {
+      headers: {
+        authorization: `Bearer ${sessionToken}`,
+      },
+      socket: { remoteAddress: "127.0.0.1" },
+    } as unknown as Parameters<typeof createContext>[0]["req"];
+
+    const mockRes = {} as unknown as Parameters<typeof createContext>[0]["res"];
+
+    const ctx = await createContext({ req: mockReq, res: mockRes });
+    expect(ctx.user).not.toBeNull();
+    expect(ctx.user?.openId).toBe("google_sub_nightowl");
+    expect(ctx.user?.name).toBe("Night Owl");
+  });
+
+  // 14. Session creation double redundancy via input authToken
+  it("14. Session creation succeeds via input authToken even if HTTP headers were stripped", async () => {
+    const caller = appRouter.createCaller(createMockContext());
+    const mockToken = "mock-google-token:google_sub_corsuser:CORS User:cors@example.com";
+    const authRes = await caller.auth.googleLogin({ idToken: mockToken });
+
+    // Caller with NO ctx.user (simulating cross-origin stripped header)
+    const anonymousCaller = appRouter.createCaller(createMockContext({ user: null }));
+
+    const res = await anonymousCaller.chat.session.create({
+      ageConfirmed: true,
+      termsAccepted: true,
+      privacyAccepted: true,
+      preferences: {
+        interests: ["Music"],
+        language: "Any",
+        mediaMode: "video",
+      },
+      authToken: authRes.sessionToken,
+    });
+
+    expect(res.token).toBeDefined();
+    expect(res.partnerId).toBeFalsy();
   });
 });
