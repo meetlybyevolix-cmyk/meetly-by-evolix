@@ -22,6 +22,8 @@ if (!fs.existsSync(baseTemplatePath)) {
 }
 
 const baseTemplate = fs.readFileSync(baseTemplatePath, "utf-8");
+const discoveryContent = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../content/discovery.json"), "utf8"));
+const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 
 const PAGES = [
   {
@@ -34,8 +36,8 @@ const PAGES = [
   },
   {
     route: "",
-    title: "Meetly – Make New Friends Online | Text & Video Chat",
-    description: "Meet new people through random text and video conversations on Meetly. Connect with adults worldwide, explore shared interests, and start chatting.",
+    title: "Meetly | Make Friends Online & Talk to Strangers",
+    description: "Make friends online and talk to strangers on Meetly with free text and video chat. For adults 18+. Google sign-in required; no public profiles.",
     canonical: "https://meet-ly.in/",
     h1: "Meet New People. Start Real Conversations.",
     content: `
@@ -53,8 +55,8 @@ const PAGES = [
   },
   {
     route: "make-friends-online",
-    title: "How to Make Friends Online as an Adult | Free & Safe — Meetly",
-    description: "Learn how to make genuine friends online as an adult. Connect with people worldwide over shared interests in private, safe, 1-on-1 random text and video chats.",
+    title: "Make Friends Online Free | Meetly Text & Video Chat",
+    description: "Make friends online for free with Meetly. Meet new people through shared interests, text or video chat. Adults 18+; Google sign-in required.",
     canonical: "https://meet-ly.in/make-friends-online",
     h1: "Make New Friends Online Through Real Conversations",
     content: `
@@ -95,8 +97,8 @@ const PAGES = [
   },
   {
     route: "chat-with-strangers",
-    title: "Chat with Strangers Online | Safe Anonymous Random Chat — Meetly",
-    description: "Chat with strangers safely on Meetly. Connect with random adults worldwide via text or video. 18+ only, private, and free modern Omegle alternative.",
+    title: "Talk to Strangers Online | Free Chat on Meetly",
+    description: "Talk to strangers online with Meetly: free one-to-one text and video chat for adults 18+. Choose interests and language; leave or report anytime.",
     canonical: "https://meet-ly.in/chat-with-strangers",
     h1: "Chat with Strangers Online — Safely & Anonymously",
     content: `
@@ -281,6 +283,7 @@ PAGES.push({
 for (const article of publishedArticles) {
   PAGES.push({
     route: `blog/${article.slug}`,
+    article,
     title: article.seoTitle || article.title,
     description: article.description,
     canonical: `https://meet-ly.in/blog/${article.slug}`,
@@ -305,14 +308,20 @@ console.log(`[Prerender] Generating static HTML for ${PAGES.length} routes...`);
 
 for (const page of PAGES) {
   let html = baseTemplate;
+  // The same useful discovery text is rendered for people and non-JS crawlers.
+  const sections = discoveryContent[`/${page.route}`] || [];
+  const discoveryHtml = sections.map(section => `<section><h2>${escapeHtml(section.heading)}</h2>${section.paragraphs.map(text => `<p>${escapeHtml(text)}</p>`).join("")}</section>`).join("");
+  const extraLinks = sections.length ? '<p>Read our <a href="/blog/how-to-start-a-conversation-with-someone-new">conversation starters</a> and <a href="/blog/how-to-chat-safely-with-strangers-online">guide to chatting safely</a>.</p>' : '';
+  const title = escapeHtml(page.title);
+  const description = escapeHtml(page.description);
 
   // Replace Title
-  html = html.replace(/<title>.*?<\/title>/s, `<title>${page.title}</title>`);
+  html = html.replace(/<title>.*?<\/title>/s, `<title>${title}</title>`);
 
   // Replace Meta Description
   html = html.replace(
     /<meta\s+name="description"\s+content=".*?"\s*\/?>/s,
-    `<meta name="description" content="${page.description}" />`
+    `<meta name="description" content="${description}" />`
   );
 
   // Replace Canonical URL
@@ -324,11 +333,11 @@ for (const page of PAGES) {
   // Replace Open Graph Tags
   html = html.replace(
     /<meta\s+property="og:title"\s+content=".*?"\s*\/?>/s,
-    `<meta property="og:title" content="${page.title}" />`
+    `<meta property="og:title" content="${title}" />`
   );
   html = html.replace(
     /<meta\s+property="og:description"\s+content=".*?"\s*\/?>/s,
-    `<meta property="og:description" content="${page.description}" />`
+    `<meta property="og:description" content="${description}" />`
   );
   html = html.replace(
     /<meta\s+property="og:url"\s+content=".*?"\s*\/?>/s,
@@ -338,11 +347,11 @@ for (const page of PAGES) {
   // Replace Twitter Tags
   html = html.replace(
     /<meta\s+name="twitter:title"\s+content=".*?"\s*\/?>/s,
-    `<meta name="twitter:title" content="${page.title}" />`
+    `<meta name="twitter:title" content="${title}" />`
   );
   html = html.replace(
     /<meta\s+name="twitter:description"\s+content=".*?"\s*\/?>/s,
-    `<meta name="twitter:description" content="${page.description}" />`
+    `<meta name="twitter:description" content="${description}" />`
   );
   html = html.replace(
     /<meta\s+name="twitter:url"\s+content=".*?"\s*\/?>/s,
@@ -350,7 +359,20 @@ for (const page of PAGES) {
   );
 
   // Inject Page-Specific FAQ Schema if available
-  if (page.faq && page.faq.length > 0) {
+  if (page.article) {
+    html = html.replace(/<meta\s+property="og:type"\s+content=".*?"\s*\/?>/, '<meta property="og:type" content="article" />');
+    const article = page.article;
+    const schema = {
+      "@context": "https://schema.org", "@type": "BlogPosting",
+      headline: article.title, description: article.description, url: page.canonical,
+      mainEntityOfPage: page.canonical, datePublished: article.publishedDate,
+      dateModified: article.lastUpdated, inLanguage: "en",
+      author: { "@type": "Organization", name: article.author },
+      publisher: { "@type": "Organization", name: "Meetly by Evolix Studio", url: "https://meet-ly.in/" },
+    };
+    html = html.replace("</head>", `<script type="application/ld+json">${JSON.stringify(schema).replace(/</g, "\\u003c")}</script></head>`);
+  }
+  if (page.article && page.faq && page.faq.length > 0) {
     const faqSchema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -387,7 +409,7 @@ for (const page of PAGES) {
         <article>
           <h1 style="font-size:2.2rem;font-weight:800;color:#183b32;margin-bottom:16px">${page.h1}</h1>
           <p style="font-size:1.1rem;color:#4b5563;line-height:1.6;margin-bottom:24px">${page.description}</p>
-          ${page.content}
+          ${page.content}${discoveryHtml}${extraLinks}
           ${
             page.faq && page.faq.length > 0
               ? `
@@ -437,4 +459,24 @@ for (const page of PAGES) {
 }
 
 console.log("[Prerender] Complete! All static HTML pages successfully generated.");
+
+// A real static error document lets Cloudflare/Netlify return 404, rather than
+// treating arbitrary missing URLs as successful copies of the homepage.
+const notFoundHtml = baseTemplate
+  .replace(/<title>.*?<\/title>/s, "<title>Page Not Found — Meetly</title>")
+  .replace(/<meta\s+name="robots"\s+content=".*?"\s*\/?>/s, '<meta name="robots" content="noindex, follow" />')
+  .replace(/<link\s+rel="canonical"\s+href=".*?"\s*\/?>/s, '<link rel="canonical" href="https://meet-ly.in/404" />')
+  .replace('<div id="root"></div>', '<div id="root"><main><h1>Page not found</h1><p>This page does not exist. <a href="/">Visit Meetly</a> or <a href="/blog">browse our guides</a>.</p></main></div>');
+fs.writeFileSync(path.join(distDir, "404.html"), notFoundHtml);
+
+// Derive submitted URLs from the pages actually built, including published blogs.
+// Keep truthful article dates and only update the dates of edited discovery pages.
+const sourceSitemap = fs.readFileSync(path.resolve(__dirname, "../client/public/sitemap.xml"), "utf8");
+const previousDates = new Map([...sourceSitemap.matchAll(/<url>\s*<loc>(.*?)<\/loc>[\s\S]*?<lastmod>(.*?)<\/lastmod>[\s\S]*?<\/url>/g)].map(match => [match[1], match[2]]));
+const editedRoutes = new Set(["", "make-friends-online", "chat-with-strangers"]);
+const urls = PAGES.map(page => {
+  const date = page.article?.lastUpdated || (editedRoutes.has(page.route) ? "2026-11-04" : previousDates.get(page.canonical));
+  return `  <url><loc>${escapeHtml(page.canonical)}</loc>${date ? `<lastmod>${escapeHtml(date)}</lastmod>` : ""}</url>`;
+});
+fs.writeFileSync(path.join(distDir, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`);
 

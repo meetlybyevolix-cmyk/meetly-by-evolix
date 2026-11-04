@@ -1,11 +1,12 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin, type HtmlTagDescriptor } from "vite";
 import { advertisingConfig, adsTxt } from "./shared/advertising";
 import articles from "./content/blog/articles.json";
 
 export default defineConfig(({ mode }) => {
+  const buildEnv = { ...loadEnv(mode, import.meta.dirname, ""), ...process.env };
   const settings = advertisingConfig({
     ...loadEnv(mode, import.meta.dirname, ""),
     ...process.env,
@@ -13,7 +14,7 @@ export default defineConfig(({ mode }) => {
   const advertisingPlugin: Plugin = {
     name: "meetly-advertising",
     transformIndexHtml() {
-      return settings.publisherId
+      const tags: HtmlTagDescriptor[] = settings.publisherId
         ? [
             {
               tag: "meta",
@@ -42,6 +43,11 @@ export default defineConfig(({ mode }) => {
             },
           ]
         : [];
+      const verification = buildEnv.GOOGLE_SITE_VERIFICATION?.trim();
+      if (verification) tags.push({
+        tag: "meta", attrs: { name: "google-site-verification", content: verification }, injectTo: "head",
+      });
+      return tags;
     },
     generateBundle() {
       this.emitFile({

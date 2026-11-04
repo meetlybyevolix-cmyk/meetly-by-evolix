@@ -85,15 +85,28 @@ export function serveStatic(app: Express) {
     }
   });
 
-  app.use(express.static(distPath));
+  app.get(["/guidelines", "/report-abuse"], (req, res) => {
+    res.redirect(301, req.path === "/guidelines" ? "/community-guidelines" : "/grievance");
+  });
+
+  // Serve known prerendered pages without directory redirects or SPA fallbacks.
+  app.use(express.static(distPath, { redirect: false }));
+  app.get("*", (req, res, next) => {
+    const pathname = req.path.replace(/\/$/, "") || "/";
+    const pagePath = path.resolve(distPath, `.${pathname}`, "index.html");
+    if (pagePath.startsWith(`${path.resolve(distPath)}${path.sep}`) && fs.existsSync(pagePath)) {
+      return res.sendFile(pagePath);
+    }
+    next();
+  });
 
   // the app's not-found page keeps a real 404 status for crawlers
   app.get("/404", (_req, res) => {
-    res.status(404).sendFile(path.resolve(distPath, "index.html"));
+    res.status(404).sendFile(path.resolve(distPath, "404.html"));
   });
 
-  // fall through to index.html if the file doesn't exist
+  // Missing URLs must not masquerade as the homepage for search crawlers.
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.status(404).sendFile(path.resolve(distPath, "404.html"));
   });
 }

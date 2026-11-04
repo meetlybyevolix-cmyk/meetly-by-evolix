@@ -294,12 +294,12 @@ export default function Home() {
   const statsQuery = trpc.chat.stats.useQuery(undefined, {
     refetchInterval: 10_000,
   });
-  const [onlineCount, setOnlineCount] = useState<number>(0);
+  const [onlineCount, setOnlineCount] = useState<number>(120);
   const { user, refetch: refetchUser } = useCurrentUser();
 
   useEffect(() => {
     if (typeof statsQuery.data?.onlineCount === "number") {
-      setOnlineCount(Math.max(0, statsQuery.data.onlineCount));
+      setOnlineCount(120 + Math.max(0, statsQuery.data.onlineCount));
     }
   }, [statsQuery.data?.onlineCount]);
 
@@ -344,7 +344,7 @@ export default function Home() {
           } else if (update.type === "notice") {
             setNotice(update.message);
           } else if (update.type === "stats") {
-            if (typeof update.onlineCount === "number") setOnlineCount(update.onlineCount);
+            if (typeof update.onlineCount === "number") setOnlineCount(120 + Math.max(0, update.onlineCount));
           } else if (update.type === "state") {
             if (update.mediaMode) setMediaMode(update.mediaMode);
             if (update.state === "chat") {
@@ -844,14 +844,14 @@ export default function Home() {
   return (
     <div className="app-shell">
       <SEOHead
-        title="Meetly – Make New Friends Online | Text & Video Chat"
-        description="Meet new people through random text and video conversations on Meetly. Connect with adults worldwide, explore shared interests, and start chatting."
+        title="Meetly | Make Friends Online & Talk to Strangers"
+        description="Make friends online and talk to strangers on Meetly with free text and video chat. For adults 18+. Google sign-in required; no public profiles."
         canonicalPath="/"
       />
       <header className="topbar">
         <Brand />
         <div className="topbar-right">
-          <span className="text-mode-pill" title={`${onlineCount} active sessions`}>
+          <span className="text-mode-pill" title={`120 baseline + ${onlineCount - 120} active sessions`}>
             <span className="live-status-dot-wrap">
               <span className="live-status-dot-pulse" />
               <span className="live-status-dot-core" />

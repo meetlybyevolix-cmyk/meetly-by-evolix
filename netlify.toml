@@ -25,14 +25,18 @@
 #   force = true
 
 # ------------------------------------------------------------------------------
-# SPA Single-Page Application Fallback Routing
-# All client routes (/terms, /privacy, /safety, /guidelines, /grievance, etc.)
-# are routed to index.html for client-side resolution via Wouter
+# Public routes are prerendered by build:static. Missing routes use 404.html.
+# Keep legacy links pointing at their canonical pages.
 # ------------------------------------------------------------------------------
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  from = "/guidelines"
+  to = "/community-guidelines"
+  status = 301
+
+[[redirects]]
+  from = "/report-abuse"
+  to = "/grievance"
+  status = 301
 
 # ------------------------------------------------------------------------------
 # Security & Privacy Headers

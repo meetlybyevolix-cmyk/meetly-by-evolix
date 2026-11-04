@@ -1,42 +1,13 @@
+import DiscoveryContent from "@/components/DiscoveryContent";
 import React from "react";
 import LandingLayout from "@/components/LandingLayout";
 import { Lock, ShieldCheck, Sparkles, UserCheck, Video } from "lucide-react";
 
 export default function ChatWithStrangers() {
   const seo = {
-    title: "Chat with Strangers Online | Safe Anonymous Random Chat — Meetly",
-    description: "Chat with strangers safely on Meetly. Connect with random adults worldwide via text or video. 18+ only, private, and free modern Omegle alternative.",
+    title: "Talk to Strangers Online | Free Chat on Meetly",
+    description: "Talk to strangers online with Meetly: free one-to-one text and video chat for adults 18+. Choose interests and language; leave or report anytime.",
     canonicalPath: "/chat-with-strangers",
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Is it safe to chat with strangers on Meetly?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Meetly enforces an adults-only (18+) community via Google verification, protects your personal data with DPDP Act 2023 compliance, does not expose social profiles, and provides immediate skip, block, and reporting tools in every conversation."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How is Meetly different from old sites like Omegle?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Unlike unmoderated legacy platforms that shut down due to abuse and bot spam, Meetly requires adult verification, operates automated safety classifiers, and gives users full control over interest tags and text/video preferences."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can I chat with strangers in India and worldwide?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes. Meetly has a thriving community in India as well as international users. You can choose to match globally or filter by preferred conversation languages including English and Hindi."
-          }
-        }
-      ]
-    }
   };
 
   return (
@@ -53,7 +24,7 @@ export default function ChatWithStrangers() {
           The original appeal of random stranger chat was simple: connecting with someone across the globe you would never otherwise cross paths with. However, legacy platforms like Omegle became notorious for bots, unsolicited content, and toxic behavior, eventually leading to their shutdown.
         </p>
         <p>
-          <strong>Meetly was created to solve these exact problems.</strong> We believe spontaneous conversations between adults should be fun, respectful, and safe. By introducing age verification, automated no-nudity safety classifiers, and interest-based matchmaking, Meetly delivers the excitement of random chatting without the chaos.
+          <strong>Meetly was created to solve these exact problems.</strong> We believe spontaneous conversations between adults should be fun, respectful, and safe. Meetly combines adult age confirmation, interest-based matching and reporting controls. Sign-in does not independently verify age, and automated screening cannot guarantee safe conversations.
         </p>
       </section>
 
@@ -81,7 +52,7 @@ export default function ChatWithStrangers() {
           <div>
             <strong style={{ color: "#183b32", fontSize: "15px" }}>✓ Instant Skip &amp; Block</strong>
             <p style={{ margin: "6px 0 0 0", color: "var(--muted)", fontSize: "13px", lineHeight: 1.5 }}>
-              In full control of your experience: tap Next to change partners or Block to permanently prevent reconnection.
+              In full control of your experience: tap Next to change partners or Block to limit reconnection during your temporary sessions.
             </p>
           </div>
         </div>
@@ -93,7 +64,7 @@ export default function ChatWithStrangers() {
           <li><strong>Never share personally identifiable information (PII):</strong> Keep your home address, financial details, workplace, and passwords strictly private.</li>
           <li><strong>Use platform features:</strong> Chat inside Meetly's secure interface rather than rushing to share personal phone numbers or external messaging handles.</li>
           <li><strong>Trust your instincts:</strong> If a conversation feels uncomfortable, invasive, or disrespectful, click Next immediately. You never owe anyone your time.</li>
-          <li><strong>Report violations:</strong> If someone violates community guidelines, click Report so our moderation team can take immediate disciplinary action.</li>
+          <li><strong>Report violations:</strong> If someone violates community guidelines, click Report to submit the incident for operator review.</li>
         </ol>
       </section>
 
@@ -114,6 +85,7 @@ export default function ChatWithStrangers() {
           </details>
         </div>
       </section>
+      <DiscoveryContent path="/chat-with-strangers" />
     </LandingLayout>
   );
 }

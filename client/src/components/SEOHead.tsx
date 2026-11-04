@@ -39,11 +39,11 @@ export default function SEOHead({
     setMeta("name", "description", description);
 
     // 3. Robots
-    setMeta("name", "robots", noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
+    setMeta("name", "robots", noindex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
 
     // 4. Canonical
-    const cleanPath = canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`;
-    const canonicalUrl = `${BASE_URL}${cleanPath === "/" ? "" : cleanPath}`;
+    const cleanPath = `/${canonicalPath.split(/[?#]/)[0].replace(/^\/+|\/+$/g, "")}`;
+    const canonicalUrl = `${BASE_URL}${cleanPath}`;
     let canonicalEl = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!canonicalEl) {
       canonicalEl = document.createElement("link");

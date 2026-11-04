@@ -1,0 +1,34 @@
+{
+  "/make-friends-online": [
+    {
+      "heading": "Make friends online for free, one conversation at a time",
+      "paragraphs": [
+        "Meetly is a browser-based place for adults to meet new people through one-to-one text and video chat. There are no public follower counts or profiles to build. Google sign-in is required before matching, but your Google name and email are not displayed to your partner. Start with text if you want to get comfortable before sharing your voice or camera.",
+        "Choose interests you actually want to discuss: a game you are learning, a film you enjoyed, or a hobby you would like to try. A shared tag gives you a useful opening, but matching depends on who is available. You may have to wait, and a language or interest match is not guaranteed."
+      ]
+    },
+    {
+      "heading": "A practical first conversation",
+      "paragraphs": [
+        "Try a question with an easy answer: 'What have you been watching lately?' Follow up on one detail rather than moving straight to a new question. If your partner mentions a favourite film, ask what they liked about it. You do not need to share your workplace, address, phone number or private social accounts to have a good conversation.",
+        "Friendship usually takes repeated, mutual effort; a random match does not guarantee a lasting friend. A short, friendly conversation can still be worthwhile. Use Next for a different match, Leave when you are finished, and Report or Block for unwanted conduct. Adults-only rules and sign-in do not guarantee that a stranger is safe."
+      ]
+    }
+  ],
+  "/chat-with-strangers": [
+    {
+      "heading": "Talk to strangers online using text or video",
+      "paragraphs": [
+        "Meetly lets adults start a one-to-one conversation in their browser without downloading an app. Sign in with Google, confirm that you are 18 or older, choose text or video, and look for a match. Text mode needs no camera or microphone. In video mode, your browser can request permissions during matching, and media can connect automatically after both people enter the room.",
+        "Use a language you are comfortable speaking and add a few interests if you want a starting topic. Available participants determine the match. Meetly does not promise an instant connection, a particular country, or that every partner will share your interests."
+      ]
+    },
+    {
+      "heading": "What to say and when to leave",
+      "paragraphs": [
+        "A simple opener such as 'What is a hobby you could talk about for hours?' gives the other person room to answer. Keep the conversation mutual: respond to their answer and let them ask a question too. You can politely end a conversation without exchanging contact details or agreeing to another call.",
+        "Leave and report if someone pressures you for money, intimate images, private information or contact outside the site. Nudity, sexual content, threats and harassment are prohibited. Google sign-in does not verify someone's age, and automated screening can make mistakes. Direct WebRTC calls can disclose your public IP address, and another participant can record their screen."
+      ]
+    }
+  ]
+}

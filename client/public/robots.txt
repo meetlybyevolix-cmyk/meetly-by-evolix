@@ -22,7 +22,7 @@ Allow: /cookies
 Disallow: /api/
 Disallow: /trpc/
 Disallow: /auth/
-Disallow: /404
+# Allow crawling error pages so their noindex directive can be read.
 
 # Host
 Host: https://meet-ly.in
