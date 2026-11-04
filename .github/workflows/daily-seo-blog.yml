@@ -87,11 +87,15 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Daily Blog Generation Engine
+      - name: Validate remaining prepared articles
+        run: node scripts/daily-blog-engine.js --validate-queue
+
+      - name: Verify publication works without API access
+        run: node scripts/check-keyless-publishing.mjs
+
+      - name: Publish the next prepared daily article
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BLOG_AUTOMATION_PAUSED: ${{ vars.BLOG_AUTOMATION_PAUSED }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
           INPUT_FORCE: ${{ inputs.force }}
           INPUT_TOPIC_SLUG: ${{ inputs.topic_slug }}

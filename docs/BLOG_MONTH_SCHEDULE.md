@@ -4,11 +4,11 @@ The existing GitHub workflow `.github/workflows/daily-seo-blog.yml` is reused. N
 
 All eight existing articles are preserved. A new 705-word article, **How to Find People With Similar Interests Online**, was authored and validated on 4 November. The next 30 unpublished topics have one date each in the month window. Scheduled jobs skip outside that window and when a published article already exists for the India date. An explicit manual `force` run can override those limits; automatic runs cannot. Concurrent workflow runs are serialized, and existing article slugs cannot be republished or overwritten.
 
-## Generation setup still required
+## No API-key setup is required
 
-Read-only inspection confirmed the GitHub workflow is active but **GEMINI_API_KEY is not configured** in this repository. Add that key under the repository's **Settings → Secrets and variables → Actions → New repository secret**, named `GEMINI_API_KEY`. Do not paste the key into chat or source files. An optional Actions variable `GEMINI_MODEL` can override the documented `gemini-flash-latest` alias. API access and billing/quota depend on the operator's Google account.
+The daily publisher now reads 30 distinct prepared posts from the three monthly-queue JSON files in content/editorial. It makes no generation API calls and does not read a Gemini key or model setting. The workflow no longer requests those secrets or variables. Existing published articles remain unchanged, and future articles stay unpublished until their scheduled date.
 
-Without that secret or a supplied reviewed article file, the legacy offline template is evaluated as a draft. It will not be silently published when it repeats old posts or lacks a direct answer. Rejected drafts are uploaded as a GitHub Actions artifact and the run fails visibly. The schedule is configured, but fresh daily AI-written publication requires the missing secret and passing checks. No score gains or daily publication success are guaranteed.
+Posts contain direct answers, topic-specific examples, headings, takeaways and complete FAQs. They range from 459 to 523 words. Each article is checked against existing and earlier queued articles for substantial overlap before publication. Unsafe or incomplete content is still held for review; removing the API requirement did not disable those checks. Extending publication beyond this one-month window requires additional prepared content and an updated schedule, not an API subscription.
 
 ## Editorial checks for SEO, answer clarity and AI-search visibility
 
@@ -16,7 +16,7 @@ Without that secret or a supplied reviewed article file, the legacy offline temp
 - Preserve real publication/update dates and author attribution. Existing article rendering produces visible FAQs, BlogPosting schema, canonical URLs and the build sitemap. The workflow checks the built pages before committing.
 - Reject substantially repeated five-word passages, duplicate slugs, unsafe embedded HTML and unsupported safety/performance/ranking claims. Keep the existing length/completeness checks as internal editorial rules, not Google ranking thresholds.
 - Explain product limits accurately: Google sign-in is not age verification; matching depends on availability; video can start after matching and permissions; WebRTC can expose IP addresses; reports and uploaded images may be retained. Avoid fabricated statistics, citations, medical advice and helpline numbers.
-- API errors, missing credentials and content-quality failures do not justify publishing repeated filler. The owner can review the saved draft and retry with a reviewed article or working API configuration.
+- A missing prepared article or failed content check stops publication and preserves a review draft when available. No network-generated fallback or repeated generic template is silently published.
 
 Google says normal useful-content and technical SEO practices remain relevant to AI features; it offers no special guaranteed AEO/GEO score or ranking mechanism. See [Google's AI-search guidance](https://developers.google.com/search/docs/appearance/ai-features) and [GitHub scheduled workflow timing](https://docs.github.com/en/actions/how-tos/troubleshoot-workflows).
 
@@ -28,4 +28,6 @@ Check the current date gate with `node scripts/daily-blog-engine.js --schedule-c
 
 The job retains existing type checks, tests and production build, adds built SEO validation, and commits to `main` only after those checks pass. A hosting deployment is separate from a GitHub commit: verify Cloudflare's deployment status and the live article URL rather than assuming a successful push means the article is live.
 
-Validation completed: 173 tests across 14 files, TypeScript, production build, SEO checks for 24 public pages, workflow YAML parsing, schedule boundary/daily-limit tests and a missing-key dry-run rejection with no content side effects. All eight pre-existing articles were compared with their committed versions and remain identical. Real Gemini generation was not tested because the repository has no API key.
+Validation includes every queued article against all earlier content, a full month of publisher runs in an isolated fixture with network calls blocked and API-key variables absent, same-day rerun protection and automatic stop after 4 December. Existing published posts are compared unchanged. No production publication is performed by that simulation.
+
+The prepared queue is intentionally separate from the public article store: it does not add 30 future articles to the website at once. Every queued post has at least 450 words, a direct opening answer, complete FAQs and topic-specific sections. The tests also check that every scheduled day has exactly one prepared article and that the posts do not substantially repeat each other.

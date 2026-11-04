@@ -5,8 +5,8 @@
  * Runs daily at 9:00 AM IST (03:30 UTC) via GitHub Actions or manual CLI.
  * 1. Reads 90-day topic calendar (content/blog/calendar.json)
  * 2. Selects the next qualified, unwritten topic
- * 3. Researches intent & keywords
- * 4. Generates a human-first, search-optimized article
+ * 3. Reads topic-specific prepared editorial content
+ * 4. Formats the next article without external APIs or credentials
  * 5. Runs strict multi-point quality gates (word count, keyword density, safety compliance, schema)
  * 6. Publishes qualified articles to content/blog/articles.json & regenerates sitemap.xml
  * 7. Records execution results to DAILY_BLOG_AUTOMATION_REPORT.md
@@ -16,6 +16,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { indiaDate, publicationDecision, contentIssues } from "./blog-publishing-policy.mjs";
+import { prepareBlogPost } from "./prepared-blog-post.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -56,8 +57,23 @@ if (args.includes("--schedule-check")) {
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `run_today=${decision.allowed}\n`);
   process.exit(0);
 }
-if (!decision.allowed && !isForce) {
+if (!decision.allowed && !isForce && !args.includes("--validate-queue")) {
   console.log(`[Blog Engine] ${decision.reason} (${decision.date}). No publication.`);
+  process.exit(0);
+}
+
+if (args.includes("--validate-queue")) {
+  const pending = calendar.filter(topic => topic.status === "scheduled" && topic.scheduledDate >= publishingSchedule.startDate && topic.scheduledDate <= publishingSchedule.endDate);
+  const simulated = [...articles];
+  for (const topic of pending) {
+    const article = await generateArticle(topic);
+    const result = runQualityGate(article, topic);
+    const issues = [...new Set([...result.issues, ...contentIssues(article, simulated)])];
+    if (issues.length) throw new Error(topic.slug + ": " + issues.join("; "));
+    simulated.push(article);
+    console.log("Prepared article validated: " + topic.slug + " (" + result.wordCount + " words)");
+  }
+  console.log("Validated " + pending.length + " prepared daily articles without API credentials.");
   process.exit(0);
 }
 
@@ -84,187 +100,13 @@ if (publishedSlugs.has(selectedTopic.slug)) {
 
 console.log(`[Blog Engine] Selected Topic #${selectedTopic.id}: "${selectedTopic.title}" (Slug: ${selectedTopic.slug})`);
 
-// 4. Content Generation Function
+// 4. Load prepared editorial content. No network requests or API keys.
 async function generateArticle(topic) {
   if (articleFile) return formatGeneratedOutput(topic, JSON.parse(fs.readFileSync(path.resolve(rootDir, articleFile), "utf8")));
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-
-  if (apiKey) {
-    console.log("[Blog Engine] Generating article via Gemini API...");
-    try {
-      const prompt = `
-You are a Senior Content Strategist and Writer for Meetly (https://meet-ly.in), an adults-only (18+) social discovery platform offering anonymous 1-on-1 random text chat and opt-in peer-to-peer video calls with interest tags.
-
-Write an in-depth, human-first, highly practical blog article for adults.
-
-Topic: ${topic.title}
-Category: ${topic.category}
-Primary Keyword: ${topic.primaryKeyword}
-Secondary Keywords: ${topic.secondaryKeywords.join(", ")}
-Target Audience: ${topic.targetAudience}
-Content Angle: ${topic.contentAngle}
-
-STRICT EDITORIAL RULES:
-1. Target length: 900 to 1,300 words.
-2. Natural, engaging English. Never sound robotic or repetitive.
-3. Answer the searcher's question with actionable steps, relatable examples, and real conversational scripts.
-4. Open contentHtml with a short paragraph directly answering the topic in plain language, before any H2. Use keywords naturally without density targets, repeated headings or forced mentions.
-5. Include 4 Quick Key Takeaways at the start.
-6. Include 2-3 detailed FAQ questions with helpful answers.
-7. Naturally integrate contextual links to Meetly features:
-   - <a href="/make-friends-online">making friends online</a>
-   - <a href="/talk-to-someone-online">talking to someone online</a>
-   - <a href="/chat-with-strangers">chat with strangers</a>
-   - <a href="/random-video-chat">random video chat</a>
-   - <a href="/anonymous-text-chat">anonymous text chat</a>
-   - <a href="/safety">Safety Center</a>
-8. ${topic.category === "Wellbeing & Connection" ? "Clarify Meetly is casual adult social connection, not therapy or emergency support. Do not provide unverified medical advice or helpline numbers." : ""}
-9. Write genuinely topic-specific advice and examples. Do not invent statistics, research, citations, legal compliance, user counts, personal experience, or promises of safety or ranking. AEO/GEO means useful direct answers and clear facts, not a guaranteed score or special AI markup.
-10. Product facts: Google sign-in is required before matchmaking; it does not verify age. Matching depends on available people and interests are not guaranteed. Video can start automatically after matching and browser permissions. Direct WebRTC may expose public IPs. Report and uploaded image evidence may be retained; no total anonymity or zero-data promise. Link to /privacy for details.
-11. Use only simple article HTML, no scripts, iframes, event handlers, inline styles or forms. Avoid repeating the same introductory paragraphs or FAQ answers across articles. Do not add external factual claims unless their sources have actually been checked.
-
-Return ONLY a valid JSON object matching this exact schema:
-{
-  "title": "${topic.title}",
-  "seoTitle": "${topic.title} — Meetly",
-  "description": "Meta description under 155 characters summarizing the article with primary keyword.",
-  "readTime": "6 min read",
-  "keyTakeaways": ["takeaway 1", "takeaway 2", "takeaway 3", "takeaway 4"],
-  "contentHtml": "<h2>...</h2><p>...</p>...",
-  "faqs": [
-    {"question": "Q1?", "answer": "A1."},
-    {"question": "Q2?", "answer": "A2."}
-  ]
-}
-`;
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL || "gemini-flash-latest"}:generateContent`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-          signal: AbortSignal.timeout(90000),
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (jsonText) {
-          const parsed = JSON.parse(jsonText);
-          return formatGeneratedOutput(topic, parsed);
-        }
-      } else {
-        console.warn(`[Blog Engine] Gemini API request failed (${response.status}). Falling back to editorial synthesis engine.`);
-      }
-    } catch (apiErr) {
-      console.warn("[Blog Engine] Gemini API call error:", apiErr.message);
-    }
-  } else {
-    console.log("[Blog Engine] No GEMINI_API_KEY configured. Offline template output must pass originality checks or be held as a draft.");
-  }
-
-  // High-Quality Offline Synthesis Engine (Deterministic & Complete)
-  return generateEditorialSynthesis(topic);
-}
-
-function generateEditorialSynthesis(topic) {
-  const isLoneliness = topic.category === "Wellbeing & Connection";
-  const isSafety = topic.category === "Online Safety";
-  const isVideo = topic.category === "Chat Platforms";
-  const isConversation = topic.category === "Conversation Skills";
-  const isIndia = topic.targetAudience === "Adults India" || topic.category === "Cultural Connections";
-
-  const takeaways = [
-    `The digital social landscape has evolved: intentional, direct communication beats passive algorithm scrolling every time.`,
-    `Focus on curiosity over performance: approaching conversations to learn about the other person eliminates social anxiety.`,
-    `Respect personal boundaries and privacy: zero personal identifiable information (zero-PII) protects your peace of mind.`,
-    `Small conversational micro-moments compound: even a 15-minute chat can reset cognitive fatigue and uplift your daily mood.`,
-  ];
-
-  let bodyHtml = `
-    <h2>Understanding the Real Need Behind "${topic.title}"</h2>
-    <p>In our hyper-connected modern world, adults frequently find themselves navigating an unexpected paradox: despite having hundreds of contacts on social media, having a genuine, uninterrupted conversation feels harder than ever. When searching for practical advice on <strong>${topic.primaryKeyword}</strong>, most people are not looking for complex psychological theory. They want real, actionable guidance on how to connect naturally without awkwardness, judgment, or social exhaustion.</p>
-    <p>Traditional social feeds are engineered for broadcast and consumption, not conversation. When you scroll through feeds, you are observing polished highlights rather than exchanging spontaneous thoughts. Reclaiming direct human dialogue—whether through focused hobby groups, local activities, or <a href="/make-friends-online">interest-based 1-on-1 chat platforms</a>—is how modern adults are rediscovering the joy of meeting new people.</p>
-
-    <h2>Why Traditional Approaches Often Fall Short</h2>
-    <p>Many adults assume that making new friends or finding someone to talk to requires joining high-commitment clubs or attending loud social events. However, these environments often introduce significant social friction:</p>
-    <ul>
-      <li><strong>High Cognitive Load:</strong> Walking into a crowded room full of strangers triggers social anxiety and performance pressure.</li>
-      <li><strong>Mismatched Expectations:</strong> In general social mixers, people often have divergent agendas ranging from professional networking to romantic pursuit.</li>
-      <li><strong>Geographical Limitations:</strong> Depending on where you live, finding people who share your specific passions (such as indie cinema, niche coding languages, or obscure musical genres) locally can be extremely difficult.</li>
-    </ul>
-    <p>This is why intentional digital discovery has become the preferred alternative. When you engage with <em>${topic.primaryKeyword}</em> in a structured, private setting, you remove superficial distractions and focus entirely on shared wavelength.</p>
-
-    <h2>Step-by-Step Blueprint: Putting This Into Practice</h2>
-    <p>To make meaningful progress, break your social discovery down into three manageable, low-pressure steps:</p>
-
-    <h3>1. Start With Low-Stakes, Focused Micro-Interactions</h3>
-    <p>Do not aim to meet a lifelong best friend in the first five minutes. Instead, aim for a pleasant, engaging 10-to-15-minute exchange. Treat every interaction like a brief, enjoyable chat with someone sitting next to you at a bookstore or coffee lounge. Using <a href="/anonymous-text-chat">anonymous text chat</a> allows you to test conversational chemistry without the pressure of managing facial expressions or camera angles.</p>
-
-    <h3>2. Use the Ping-Pong Conversational Method</h3>
-    <p>The single most common reason online conversations stall is one-sided answering. If your chat partner asks what you enjoyed doing this weekend, avoid answering with a flat <em>"Not much, just watched TV."</em> Instead, expand with sensory detail and return the serve: <em>"I ended up watching an incredible documentary on retro video games, which brought back huge nostalgia. Are you into gaming or do you prefer movies?"</em> This gives your partner an effortless conversational hook to grab onto.</p>
-
-    <h3>3. Anchor Conversations Around Shared Passions</h3>
-    <p>Shared interests are the ultimate shortcut to authentic rapport. When you connect over topics like literature, technology, travel, or creative arts, you bypass superficial small talk and dive directly into topics that both people genuinely care about. On Meetly, selecting custom interest tags ensures that you match with people who are already eager to discuss your favorite subjects.</p>
-
-    <h2>Digital Safety and Healthy Boundaries</h2>
-    <p>Whenever you engage with new people online, safety must remain your foundational priority. Practicing <em>${topic.primaryKeyword}</em> safely means enforcing strict boundaries from the very first message:</p>
-    <ul>
-      <li><strong>Protect Your PII:</strong> Never share your full legal name, home address, workplace details, or banking information. Keep conversations anonymous until mutual trust has been proven over a long period.</li>
-      <li><strong>Avoid Financial Requests:</strong> If anyone ever asks for money, gift cards, or cryptocurrency in an online chat, exit and report them immediately.</li>
-      <li><strong>Verify Moderation:</strong> Always use verified platforms with built-in reporting controls like Meetly's <a href="/safety">Safety Center</a>, which provides instant block-and-report tools and strict 18+ adult age gating.</li>
-    </ul>
-  `;
-
-  if (isVideo) {
-    bodyHtml += `
-      <h2>Maximizing Rapport in Live Video Conversations</h2>
-      <p>When you are ready to transition from typing to face-to-face interaction, <a href="/random-video-chat">random video chat</a> provides instantaneous laughter and micro-expressions that text cannot capture. Ensure your room lighting is positioned in front of you, check that no personal documents or badges are visible in the camera frame, and approach every call with warmth and an open smile.</p>
-    `;
-  }
-
-  if (isLoneliness) {
-    bodyHtml += '<h2>When casual conversation is not enough</h2><p>Meetly is for informal adult conversation, not therapy, medical advice or emergency support. Consider qualified professional support when you need more than a casual chat.</p>';
-  }
-
-  const faqs = [
-    {
-      question: `How can beginners get started with ${topic.primaryKeyword}?`,
-      answer: `Start on platforms that do not require building complex public profiles. Focus on shared interest topics like cinema, gaming, or books, and keep initial conversations light, open-ended, and zero-pressure.`,
-    },
-    {
-      question: `Is it normal to feel nervous when chatting with someone new?`,
-      answer: `Yes, social hesitation is completely natural. The best way to ease anxiety is starting with anonymous text chat where you have time to formulate thoughts without camera pressure.`,
-    },
-    {
-      question: `How does Meetly keep online conversations safe?`,
-      answer: `Meetly enforces strict 18+ adult age gating, does not log private chat transcripts to a database, and provides one-click instant block and safety reporting controls.`,
-    },
-  ];
-
-  return {
-    slug: topic.slug,
-    title: topic.title,
-    seoTitle: `${topic.title} — Meetly`,
-    description: `A practical, in-depth guide on ${topic.primaryKeyword}. Learn how to connect naturally and safely with new people online on Meetly.`,
-    category: topic.category,
-    readTime: "6 min read",
-    publishedDate: indiaDate(),
-    lastUpdated: indiaDate(),
-    author: "Meetly Editorial Team",
-    targetKeywords: [topic.primaryKeyword, ...topic.secondaryKeywords],
-    searchIntent: topic.searchIntent || "Informational",
-    keyTakeaways: takeaways,
-    contentHtml: bodyHtml,
-    faqs: faqs,
-    relatedSlugs: ["how-to-make-friends-online-as-an-adult", "how-to-start-a-conversation-with-someone-new", "how-to-chat-safely-with-strangers-online"],
-    isPublished: true,
-  };
+  const editorialDir = path.join(rootDir, "content/editorial");
+  const queue = fs.readdirSync(editorialDir).filter(file => /^monthly-queue(?:-\d+)?\.json$/.test(file)).flatMap(file => JSON.parse(fs.readFileSync(path.join(editorialDir, file), "utf8")));
+  if (new Set(queue.map(entry => entry.slug)).size !== queue.length) throw new Error("Duplicate slugs in prepared article queue.");
+  return formatGeneratedOutput(topic, prepareBlogPost(topic, queue.find(entry => entry.slug === topic.slug)));
 }
 
 function formatGeneratedOutput(topic, parsed) {

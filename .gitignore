@@ -10,6 +10,7 @@ build/
 .vite/
 .playwright-cli/
 output/playwright/
+output/blog-keyless-*/
 
 # Environment variables
 .env
