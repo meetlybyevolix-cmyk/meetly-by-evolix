@@ -1,5 +1,7 @@
 # Meetly SEO Blog Automation — Deployment & Operations Guide
 
+> **Updated 4 November 2026:** The existing job is limited to **5 November–4 December 2026 at 09:00 India time**, with one automatic post per India date. See [the current one-month schedule and required API-key setup](docs/BLOG_MONTH_SCHEDULE.md). The active repository is `meetlybyevolix-cmyk/meetly-by-evolix`. Missing-key/repetitive fallback content is held for review rather than automatically published; older descriptions below of guaranteed fallback publishing and the retired model are superseded.
+
 > **Project:** Meetly (`https://meet-ly.in`)  
 > **Repository:** `evolixstudio/meetly`  
 > **Maintained by:** Evolix Studio  

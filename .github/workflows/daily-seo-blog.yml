@@ -25,8 +25,31 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: meetly-daily-blog-main
+  cancel-in-progress: false
+
 jobs:
+  schedule-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run_today: ${{ steps.window.outputs.run_today }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check one-month publishing window and daily limit
+        id: window
+        env:
+          MANUAL_OVERRIDE: ${{ github.event_name == 'workflow_dispatch' && (inputs.force || inputs.dry_run) }}
+        run: |
+          if [ "$MANUAL_OVERRIDE" = "true" ]; then
+            echo "run_today=true" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/daily-blog-engine.js --schedule-check
+          fi
+
   publish-daily-blog:
+    needs: schedule-gate
+    if: needs.schedule-gate.outputs.run_today == 'true'
     name: Generate & Publish Daily Blog Post
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -38,10 +61,10 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -68,19 +91,32 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BLOG_AUTOMATION_PAUSED: ${{ vars.BLOG_AUTOMATION_PAUSED }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          INPUT_FORCE: ${{ inputs.force }}
+          INPUT_TOPIC_SLUG: ${{ inputs.topic_slug }}
         run: |
-          ARGS=""
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            ARGS="$ARGS --dry-run"
+          ARGS=()
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
+            ARGS+=(--dry-run --force)
           fi
-          if [ "${{ inputs.force }}" = "true" ]; then
-            ARGS="$ARGS --force"
+          if [ "$INPUT_FORCE" = "true" ]; then
+            ARGS+=(--force)
           fi
-          if [ -n "${{ inputs.topic_slug }}" ]; then
-            ARGS="$ARGS --slug=${{ inputs.topic_slug }}"
+          if [ -n "$INPUT_TOPIC_SLUG" ]; then
+            ARGS+=("--slug=$INPUT_TOPIC_SLUG")
           fi
-          echo "Executing: node scripts/daily-blog-engine.js $ARGS"
-          node scripts/daily-blog-engine.js $ARGS
+          node scripts/daily-blog-engine.js "${ARGS[@]}"
+
+      - name: Preserve rejected drafts and report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-editorial-review-${{ github.run_id }}
+          path: |
+            content/drafts/*.json
+            DAILY_BLOG_AUTOMATION_REPORT.md
+          if-no-files-found: ignore
 
       - name: Verify TypeScript Types
         run: pnpm run check
@@ -90,6 +126,9 @@ jobs:
 
       - name: Build & Prerender Static HTML
         run: pnpm run build
+
+      - name: Check crawlable pages, metadata and sitemap
+        run: node scripts/check-seo.js
 
       - name: Commit & Push Daily Article
         if: ${{ inputs.dry_run != true }}
@@ -101,9 +140,9 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git add content/blog/ client/public/sitemap.xml DAILY_BLOG_AUTOMATION_REPORT.md
             LATEST_TITLE=$(node -e "try { const a = JSON.parse(require('fs').readFileSync('content/blog/articles.json','utf-8')); console.log(a[a.length-1].title); } catch { console.log('New Article'); }")
-            git commit -m "chore(blog): daily auto-publish '$LATEST_TITLE' [skip ci]"
+            git commit -m "chore(blog): daily auto-publish '$LATEST_TITLE'"
             git push origin main
-            echo "Successfully committed and pushed new article to main. Cloudflare Pages auto-deploy triggered!"
+            echo "Successfully committed and pushed new article to main. Verify the connected hosting deployment separately."
           else
             echo "No new articles published or no changes detected."
           fi

@@ -145,7 +145,7 @@
   },
   {
     "id": 9,
-    "scheduledDate": "2026-11-06",
+    "scheduledDate": "2026-11-04",
     "title": "How to Find People With Similar Interests Online (Cinema, Gaming, Tech, Music)",
     "slug": "how-to-find-people-with-similar-interests",
     "category": "Friendship Advice",
@@ -158,12 +158,12 @@
     "searchIntent": "Informational",
     "targetAudience": "Adults Worldwide",
     "priority": "High",
-    "contentAngle": "Why interest tags produce 5x longer conversations than purely random matching",
-    "status": "scheduled"
+    "contentAngle": "Choose a specific shared interest, ask useful follow-up questions, and set realistic matching and privacy expectations without performance claims.",
+    "status": "published"
   },
   {
     "id": 10,
-    "scheduledDate": "2026-11-07",
+    "scheduledDate": "2026-11-05",
     "title": "Random Video Chat: What to Expect and How to Have Great Calls",
     "slug": "random-video-chat-what-to-expect",
     "category": "Chat Platforms",
@@ -181,7 +181,7 @@
   },
   {
     "id": 11,
-    "scheduledDate": "2026-11-08",
+    "scheduledDate": "2026-11-06",
     "title": "How to Make International Friends Online: Bridging Cultures and Timezones",
     "slug": "how-to-make-international-friends-online",
     "category": "Cultural Connections",
@@ -199,7 +199,7 @@
   },
   {
     "id": 12,
-    "scheduledDate": "2026-11-09",
+    "scheduledDate": "2026-11-07",
     "title": "Online Dost Kaise Banaye: Safe Aur Real Tareeqe Naye Dost Banane Ke",
     "slug": "online-dost-kaise-banaye-safe-guide",
     "category": "Cultural Connections",
@@ -217,7 +217,7 @@
   },
   {
     "id": 13,
-    "scheduledDate": "2026-11-10",
+    "scheduledDate": "2026-11-08",
     "title": "Things to Talk About With Someone You Just Met Online: 20 Engaging Topics",
     "slug": "things-to-talk-about-with-someone-you-just-met",
     "category": "Conversation Skills",
@@ -235,7 +235,7 @@
   },
   {
     "id": 14,
-    "scheduledDate": "2026-11-11",
+    "scheduledDate": "2026-11-09",
     "title": "How to Avoid Scams While Chatting With Strangers Online",
     "slug": "how-to-avoid-scams-while-chatting-with-strangers",
     "category": "Online Safety",
@@ -253,7 +253,7 @@
   },
   {
     "id": 15,
-    "scheduledDate": "2026-11-12",
+    "scheduledDate": "2026-11-10",
     "title": "How to Feel More Comfortable Meeting New People Online: Beating Awkwardness",
     "slug": "how-to-feel-comfortable-meeting-people-online",
     "category": "Wellbeing & Connection",
@@ -271,7 +271,7 @@
   },
   {
     "id": 16,
-    "scheduledDate": "2026-11-13",
+    "scheduledDate": "2026-11-11",
     "title": "Chat With Strangers India: The Modern Guide to Respectful Online Conversations",
     "slug": "chat-with-strangers-india-guide",
     "category": "Cultural Connections",
@@ -289,7 +289,7 @@
   },
   {
     "id": 17,
-    "scheduledDate": "2026-11-14",
+    "scheduledDate": "2026-11-12",
     "title": "What to Do When You Feel Bored and Have No One to Talk To",
     "slug": "what-to-do-when-you-feel-bored-want-to-talk",
     "category": "Wellbeing & Connection",
@@ -307,7 +307,7 @@
   },
   {
     "id": 18,
-    "scheduledDate": "2026-11-15",
+    "scheduledDate": "2026-11-13",
     "title": "How to Introduce Yourself Online: 5 Clean Formulas for Instant Rapport",
     "slug": "how-to-introduce-yourself-online",
     "category": "Conversation Skills",
@@ -325,7 +325,7 @@
   },
   {
     "id": 19,
-    "scheduledDate": "2026-11-16",
+    "scheduledDate": "2026-11-14",
     "title": "The Evolution of Omegle Alternatives: Why Moderated 18+ Communities Win",
     "slug": "omegle-alternatives-moderated-communities",
     "category": "Chat Platforms",
@@ -338,12 +338,12 @@
     "searchIntent": "Commercial Investigation",
     "targetAudience": "Adults Worldwide",
     "priority": "High",
-    "contentAngle": "Why unmoderated chat died, and how age assurance and P2P WebRTC created a safe successor",
+    "contentAngle": "Why unmoderated chat died, and how age assurance and P2P WebRTC changed connection and moderation tradeoffs",
     "status": "scheduled"
   },
   {
     "id": 20,
-    "scheduledDate": "2026-11-17",
+    "scheduledDate": "2026-11-15",
     "title": "How to Practice English and Language Skills Through Free Online Video Chat",
     "slug": "practice-language-skills-online-video-chat",
     "category": "Cultural Connections",
@@ -361,7 +361,7 @@
   },
   {
     "id": 21,
-    "scheduledDate": "2026-11-18",
+    "scheduledDate": "2026-11-16",
     "title": "Digital Etiquette: 10 Unwritten Rules for Chatting With Strangers Online",
     "slug": "online-chatting-etiquette-rules",
     "category": "Online Safety",
@@ -379,7 +379,7 @@
   },
   {
     "id": 22,
-    "scheduledDate": "2026-11-19",
+    "scheduledDate": "2026-11-17",
     "title": "Kisi Se Baat Karni Hai: Jab Akelapan Lage Toh Kahan Baat Karein?",
     "slug": "kisi-se-baat-karni-hai-akelapan-guide",
     "category": "Cultural Connections",
@@ -397,7 +397,7 @@
   },
   {
     "id": 23,
-    "scheduledDate": "2026-11-20",
+    "scheduledDate": "2026-11-18",
     "title": "How to Transition Online Friends Into Long-Term Friendships",
     "slug": "transition-online-friends-to-real-life",
     "category": "Friendship Advice",
@@ -415,7 +415,7 @@
   },
   {
     "id": 24,
-    "scheduledDate": "2026-11-21",
+    "scheduledDate": "2026-11-19",
     "title": "How to Handle Uncomfortable or Awkward Online Conversations Gracefully",
     "slug": "how-to-handle-awkward-online-conversations",
     "category": "Conversation Skills",
@@ -433,7 +433,7 @@
   },
   {
     "id": 25,
-    "scheduledDate": "2026-11-22",
+    "scheduledDate": "2026-11-20",
     "title": "Why Ephemeral Anonymous Text Chat Protects Your Digital Identity",
     "slug": "why-anonymous-text-chat-protects-privacy",
     "category": "Online Safety",
@@ -446,12 +446,12 @@
     "searchIntent": "Informational",
     "targetAudience": "Adults Worldwide",
     "priority": "Medium",
-    "contentAngle": "Technical explanation of why not storing permanent message logs prevents data leaks and doxxing",
+    "contentAngle": "Technical explanation of why not storing permanent message logs reduces some storage risks while explaining the limits of anonymity",
     "status": "scheduled"
   },
   {
     "id": 26,
-    "scheduledDate": "2026-11-23",
+    "scheduledDate": "2026-11-21",
     "title": "Making Friends as a Remote Worker: Combating Work-From-Home Isolation",
     "slug": "making-friends-as-a-remote-worker",
     "category": "Friendship Advice",
@@ -469,7 +469,7 @@
   },
   {
     "id": 27,
-    "scheduledDate": "2026-11-24",
+    "scheduledDate": "2026-11-22",
     "title": "WebRTC Video Security: How Peer-to-Peer Encryption Works in Modern Chats",
     "slug": "webrtc-video-security-explained",
     "category": "Chat Platforms",
@@ -487,7 +487,7 @@
   },
   {
     "id": 28,
-    "scheduledDate": "2026-11-25",
+    "scheduledDate": "2026-11-23",
     "title": "Deep Conversation Starters: Moving Beyond Small Talk With New People",
     "slug": "deep-conversation-starters-for-new-friends",
     "category": "Conversation Skills",
@@ -505,7 +505,7 @@
   },
   {
     "id": 29,
-    "scheduledDate": "2026-11-26",
+    "scheduledDate": "2026-11-24",
     "title": "Strangers Se Chat Kaise Kare: Safety Rules Aur Hindi Tips",
     "slug": "strangers-se-chat-kaise-kare-tips",
     "category": "Cultural Connections",
@@ -523,7 +523,7 @@
   },
   {
     "id": 30,
-    "scheduledDate": "2026-11-27",
+    "scheduledDate": "2026-11-25",
     "title": "Late-Night Thoughts: Why People Crave Real Conversations After Midnight",
     "slug": "late-night-conversations-online-chat",
     "category": "Wellbeing & Connection",
@@ -541,7 +541,7 @@
   },
   {
     "id": 31,
-    "scheduledDate": "2026-11-28",
+    "scheduledDate": "2026-11-26",
     "title": "Making Friends After Moving to a New City: Online Tools to Settle In",
     "slug": "making-friends-after-moving-to-a-new-city",
     "category": "Friendship Advice",
@@ -559,7 +559,7 @@
   },
   {
     "id": 32,
-    "scheduledDate": "2026-11-29",
+    "scheduledDate": "2026-11-27",
     "title": "Camera Shyness: How to Overcome Video Call Anxiety Step by Step",
     "slug": "overcoming-camera-shyness-video-call",
     "category": "Wellbeing & Connection",
@@ -577,7 +577,7 @@
   },
   {
     "id": 33,
-    "scheduledDate": "2026-11-30",
+    "scheduledDate": "2026-11-28",
     "title": "The Art of Active Listening in Online Chat: How to Make People Feel Heard",
     "slug": "active-listening-in-online-chat",
     "category": "Conversation Skills",
@@ -595,7 +595,7 @@
   },
   {
     "id": 34,
-    "scheduledDate": "2026-12-01",
+    "scheduledDate": "2026-11-29",
     "title": "Why You Don't Need Real Names on the Internet to Have Genuine Connections",
     "slug": "anonymity-and-authentic-human-connection",
     "category": "Online Safety",
@@ -613,7 +613,7 @@
   },
   {
     "id": 35,
-    "scheduledDate": "2026-12-02",
+    "scheduledDate": "2026-11-30",
     "title": "Best Free Websites to Talk to Strangers Online in 2026 (Safety Comparison)",
     "slug": "best-websites-to-talk-to-strangers-online",
     "category": "Chat Platforms",
@@ -631,7 +631,7 @@
   },
   {
     "id": 36,
-    "scheduledDate": "2026-12-03",
+    "scheduledDate": "2026-12-01",
     "title": "How to Talk to Someone Going Through a Hard Time (Without Being Toxic Positive)",
     "slug": "how-to-talk-to-someone-having-a-hard-time",
     "category": "Wellbeing & Connection",
@@ -649,7 +649,7 @@
   },
   {
     "id": 37,
-    "scheduledDate": "2026-12-04",
+    "scheduledDate": "2026-12-02",
     "title": "Finding Coding and Tech Friends Online: Where Developers Hang Out Casual",
     "slug": "finding-coding-tech-friends-online",
     "category": "Friendship Advice",
@@ -667,7 +667,7 @@
   },
   {
     "id": 38,
-    "scheduledDate": "2026-12-05",
+    "scheduledDate": "2026-12-03",
     "title": "Why You Ghost People (And How to End Conversations Respectfully Instead)",
     "slug": "why-people-ghost-and-how-to-exit-kindly",
     "category": "Conversation Skills",
@@ -685,7 +685,7 @@
   },
   {
     "id": 39,
-    "scheduledDate": "2026-12-06",
+    "scheduledDate": "2026-12-04",
     "title": "The Psychology of First Impressions in 1-on-1 Video Calls",
     "slug": "psychology-of-first-impressions-video-calls",
     "category": "Chat Platforms",

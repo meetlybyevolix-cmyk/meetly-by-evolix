@@ -15,6 +15,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { indiaDate, publicationDecision, contentIssues } from "./blog-publishing-policy.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -30,6 +31,7 @@ const isDryRun = args.includes("--dry-run");
 const isForce = args.includes("--force");
 const targetSlugArg = args.find(a => a.startsWith("--slug="))?.split("=")[1];
 const targetIdArg = args.find(a => a.startsWith("--topic-id="))?.split("=")[1];
+const articleFile = args.find(a => a.startsWith("--article-file="))?.slice("--article-file=".length);
 
 console.log(`[Blog Engine] Initializing daily run... (DryRun: ${isDryRun}, Force: ${isForce})`);
 
@@ -47,6 +49,17 @@ if (!fs.existsSync(calendarPath) || !fs.existsSync(articlesPath)) {
 
 const calendar = JSON.parse(fs.readFileSync(calendarPath, "utf-8"));
 const articles = JSON.parse(fs.readFileSync(articlesPath, "utf-8"));
+const publishingSchedule = JSON.parse(fs.readFileSync(path.join(rootDir, "content/blog/publishing-schedule.json"), "utf8"));
+const decision = publicationDecision(publishingSchedule, articles);
+if (args.includes("--schedule-check")) {
+  console.log(JSON.stringify(decision));
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `run_today=${decision.allowed}\n`);
+  process.exit(0);
+}
+if (!decision.allowed && !isForce) {
+  console.log(`[Blog Engine] ${decision.reason} (${decision.date}). No publication.`);
+  process.exit(0);
+}
 
 // 3. Find Next Candidate Topic
 const publishedSlugs = new Set(articles.map(a => a.slug));
@@ -58,18 +71,22 @@ if (targetSlugArg) {
   selectedTopic = calendar.find(t => t.id === parseInt(targetIdArg, 10));
 } else {
   // Find the first topic whose status is 'scheduled' and slug not yet published
-  selectedTopic = calendar.find(t => t.status === "scheduled" && !publishedSlugs.has(t.slug));
+  selectedTopic = calendar.find(t => t.status === "scheduled" && t.scheduledDate <= indiaDate() && !publishedSlugs.has(t.slug));
 }
 
 if (!selectedTopic) {
   console.log("[Blog Engine] No scheduled topics pending publication in calendar. All topics are up to date!");
   process.exit(0);
 }
+if (publishedSlugs.has(selectedTopic.slug)) {
+  throw new Error("This slug is already published. Existing posts are never overwritten or duplicated.");
+}
 
 console.log(`[Blog Engine] Selected Topic #${selectedTopic.id}: "${selectedTopic.title}" (Slug: ${selectedTopic.slug})`);
 
 // 4. Content Generation Function
 async function generateArticle(topic) {
+  if (articleFile) return formatGeneratedOutput(topic, JSON.parse(fs.readFileSync(path.resolve(rootDir, articleFile), "utf8")));
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
 
   if (apiKey) {
@@ -91,7 +108,7 @@ STRICT EDITORIAL RULES:
 1. Target length: 900 to 1,300 words.
 2. Natural, engaging English. Never sound robotic or repetitive.
 3. Answer the searcher's question with actionable steps, relatable examples, and real conversational scripts.
-4. Naturally weave the primary keyword into the H1, the first paragraph, and 2-3 H2 subheadings without stuffing (keep density between 0.5% and 2.0%).
+4. Open contentHtml with a short paragraph directly answering the topic in plain language, before any H2. Use keywords naturally without density targets, repeated headings or forced mentions.
 5. Include 4 Quick Key Takeaways at the start.
 6. Include 2-3 detailed FAQ questions with helpful answers.
 7. Naturally integrate contextual links to Meetly features:
@@ -101,7 +118,10 @@ STRICT EDITORIAL RULES:
    - <a href="/random-video-chat">random video chat</a>
    - <a href="/anonymous-text-chat">anonymous text chat</a>
    - <a href="/safety">Safety Center</a>
-8. ${topic.category === "Wellbeing & Connection" ? "CRITICAL SAFETY: Include a prominent mental health disclaimer clarifying Meetly is for casual adult social connection, not therapy. Include 24/7 helpline directory: Tele-MANAS (14416 in India), KIRAN (1800-599-0019 in India), and international lines." : ""}
+8. ${topic.category === "Wellbeing & Connection" ? "Clarify Meetly is casual adult social connection, not therapy or emergency support. Do not provide unverified medical advice or helpline numbers." : ""}
+9. Write genuinely topic-specific advice and examples. Do not invent statistics, research, citations, legal compliance, user counts, personal experience, or promises of safety or ranking. AEO/GEO means useful direct answers and clear facts, not a guaranteed score or special AI markup.
+10. Product facts: Google sign-in is required before matchmaking; it does not verify age. Matching depends on available people and interests are not guaranteed. Video can start automatically after matching and browser permissions. Direct WebRTC may expose public IPs. Report and uploaded image evidence may be retained; no total anonymity or zero-data promise. Link to /privacy for details.
+11. Use only simple article HTML, no scripts, iframes, event handlers, inline styles or forms. Avoid repeating the same introductory paragraphs or FAQ answers across articles. Do not add external factual claims unless their sources have actually been checked.
 
 Return ONLY a valid JSON object matching this exact schema:
 {
@@ -119,10 +139,11 @@ Return ONLY a valid JSON object matching this exact schema:
 `;
 
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL || "gemini-flash-latest"}:generateContent`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          signal: AbortSignal.timeout(90000),
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
@@ -144,7 +165,7 @@ Return ONLY a valid JSON object matching this exact schema:
       console.warn("[Blog Engine] Gemini API call error:", apiErr.message);
     }
   } else {
-    console.log("[Blog Engine] No GEMINI_API_KEY detected in environment. Using high-quality offline editorial synthesis engine.");
+    console.log("[Blog Engine] No GEMINI_API_KEY configured. Offline template output must pass originality checks or be held as a draft.");
   }
 
   // High-Quality Offline Synthesis Engine (Deterministic & Complete)
@@ -208,18 +229,7 @@ function generateEditorialSynthesis(topic) {
   }
 
   if (isLoneliness) {
-    bodyHtml += `
-      <h2>Important Mental Health &amp; Crisis Support Resources</h2>
-      <p>Meetly is an informal social discovery platform designed for casual peer-to-peer conversations between adults. We are not a healthcare provider or emergency crisis service. If you are experiencing acute emotional distress or persistent depression, please reach out to these free, confidential, 24/7 national helplines:</p>
-      <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:20px;border-radius:12px;margin:20px 0">
-        <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.7;color:#166534">
-          <li><strong>Tele-MANAS (Govt. of India):</strong> Call <strong>14416</strong> or <strong>1800-891-4416</strong> (24/7 Toll-free mental health support)</li>
-          <li><strong>KIRAN (Govt. of India):</strong> Call <strong>1800-599-0019</strong> (24/7 National mental health rehabilitation)</li>
-          <li><strong>Vandrevala Foundation:</strong> Call <strong>+91 9999 666 555</strong> (Free, professional counseling)</li>
-          <li><strong>International Support:</strong> Visit <strong>www.befrienders.org</strong> or <strong>findahelpline.com</strong> for global local resources.</li>
-        </ul>
-      </div>
-    `;
+    bodyHtml += '<h2>When casual conversation is not enough</h2><p>Meetly is for informal adult conversation, not therapy, medical advice or emergency support. Consider qualified professional support when you need more than a casual chat.</p>';
   }
 
   const faqs = [
@@ -244,8 +254,8 @@ function generateEditorialSynthesis(topic) {
     description: `A practical, in-depth guide on ${topic.primaryKeyword}. Learn how to connect naturally and safely with new people online on Meetly.`,
     category: topic.category,
     readTime: "6 min read",
-    publishedDate: new Date().toISOString().split("T")[0],
-    lastUpdated: new Date().toISOString().split("T")[0],
+    publishedDate: indiaDate(),
+    lastUpdated: indiaDate(),
     author: "Meetly Editorial Team",
     targetKeywords: [topic.primaryKeyword, ...topic.secondaryKeywords],
     searchIntent: topic.searchIntent || "Informational",
@@ -265,8 +275,8 @@ function formatGeneratedOutput(topic, parsed) {
     description: parsed.description || `Practical guide on ${topic.primaryKeyword}. Discover safe ways to connect on Meetly.`,
     category: topic.category,
     readTime: parsed.readTime || "6 min read",
-    publishedDate: new Date().toISOString().split("T")[0],
-    lastUpdated: new Date().toISOString().split("T")[0],
+    publishedDate: indiaDate(),
+    lastUpdated: indiaDate(),
     author: "Meetly Editorial Team",
     targetKeywords: [topic.primaryKeyword, ...topic.secondaryKeywords],
     searchIntent: topic.searchIntent || "Informational",
@@ -280,7 +290,7 @@ function formatGeneratedOutput(topic, parsed) {
 
 // 5. Multi-Point Quality Gate & Validation
 function runQualityGate(article, topic) {
-  const issues = [];
+  const issues = contentIssues(article, articles);
   const plainText = (article.contentHtml || "").replace(/<[^>]+>/g, " ");
   const wordCount = plainText.trim().split(/\s+/).filter(Boolean).length;
 
@@ -299,9 +309,8 @@ function runQualityGate(article, topic) {
 
   // Gate 3: Safety / Mental Health Compliance
   if (topic.category === "Wellbeing & Connection") {
-    const hasHelpline = article.contentHtml.includes("14416") || article.contentHtml.includes("Tele-MANAS") || article.contentHtml.includes("KIRAN");
-    if (!hasHelpline) {
-      issues.push("Missing mandatory mental health helpline directory for Wellbeing topic.");
+    if (!/not (?:a |an )?(?:healthcare|therapy|medical)|not therapy/i.test(article.contentHtml)) {
+      issues.push("Clarify that Meetly is not therapy or medical support.");
     }
   }
 
@@ -330,6 +339,11 @@ async function run() {
   console.log(`[Blog Engine] Quality Gate Result: Passed = ${gateResult.passed} (${gateResult.wordCount} words, Keyword Density: ${gateResult.kwDensity})`);
 
   if (!gateResult.passed) {
+    if (isDryRun) {
+      console.error("[Blog Engine] Dry-run quality rejection:", gateResult.issues.join("; "));
+      process.exitCode = 1;
+      return;
+    }
     console.warn("[Blog Engine] Quality Gate FAILED. Saving as draft for editorial review.");
     if (!fs.existsSync(draftsDir)) {
       fs.mkdirSync(draftsDir, { recursive: true });
@@ -343,6 +357,7 @@ async function run() {
       wordCount: gateResult.wordCount,
       reasons: gateResult.issues,
     });
+    process.exitCode = 1;
     return;
   }
 
@@ -382,7 +397,7 @@ function updateSitemap(newArticle) {
   try {
     if (!fs.existsSync(sitemapPath)) return;
     let sitemap = fs.readFileSync(sitemapPath, "utf-8");
-    const today = new Date().toISOString().split("T")[0];
+    const today = indiaDate();
 
     const newUrlEntry = `  <url>\n    <loc>https://meet-ly.in/blog/${newArticle.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
 
