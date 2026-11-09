@@ -531,5 +531,45 @@
       "how-to-chat-safely-with-strangers-online"
     ],
     "isPublished": true
+  },
+  {
+    "slug": "how-to-avoid-scams-while-chatting-with-strangers",
+    "title": "How to Avoid Scams While Chatting With Strangers Online",
+    "seoTitle": "How to Avoid Scams While Chatting With Strangers Online | Meetly",
+    "description": "Spot financial pressure, account-access requests and suspicious links while chatting with strangers online.",
+    "category": "Online Safety",
+    "readTime": "3 min read",
+    "publishedDate": "2026-11-09",
+    "lastUpdated": "2026-11-09",
+    "author": "Meetly Editorial Team",
+    "targetKeywords": [
+      "avoid scams while chatting online",
+      "online stranger scam red flags",
+      "pig butchering scams chat",
+      "romance scam prevention"
+    ],
+    "searchIntent": "Informational",
+    "keyTakeaways": [
+      "Pause when a friendly chat turns into an urgent request.",
+      "Do not share passwords or one-time codes.",
+      "Verify support channels independently."
+    ],
+    "contentHtml": "<p>To reduce scam risks in stranger chats, slow down whenever a conversation turns into a request for money, account access, downloads or urgent action. Do not treat friendliness or shared interests as proof of identity. Leave and report pressure or suspicious requests, and contact the relevant bank or account provider through a channel you independently verify if you have already shared something sensitive.</p><h2>Notice the change from conversation to transaction</h2><p>A stranger may begin with a convincing shared interest before introducing an emergency, investment opportunity or payment problem. The important signal is the request, not how believable the introduction sounded. A person who respects your boundary will accept &#39;I do not send money to people I meet in chat.&#39; You do not need to investigate every detail of their story. Avoid arguing about whether they are genuine; ending the exchange is a reasonable response to financial pressure, secrecy or demands for an immediate decision.</p><h2>Keep authentication information outside the conversation</h2><p>Never give a stranger a password, recovery code, one-time login code or access to your screen. Someone claiming to be technical support should not be trusted because they use a logo, familiar name or confident language. Close the conversation and reach the service through an address you locate independently. If you receive an unexpected login or reset message while chatting, stop and review the account through its official application. Do not follow instructions from the person who may have triggered the message.</p><h2>Treat links and downloads as a separate decision</h2><p>An invitation to join a game, view a photograph or claim a reward may involve leaving the chat interface. A familiar-looking label does not establish where a link leads. Do not install a file or sign into a page just because a new acquaintance asks. You can decline with &#39;I do not open downloads from chat.&#39; Meetly limits links in ordinary text messages, but filters cannot establish that every person or suggestion is safe. Obfuscated instructions and requests to move elsewhere still need judgment.</p><h2>Respond promptly if you have already shared information</h2><p>Stop communicating with the person and make a short note of what happened without redistributing sensitive material. Use the official account provider&#39;s recovery tools if login information was exposed, or contact your payment provider through a verified channel if money was involved. Use the site&#39;s report mechanism for the session. Do not pay an additional stranger who promises an instant recovery service. A report can support review, but it does not guarantee that funds will be returned or an account will be restored immediately.</p><h2>Using Meetly thoughtfully</h2><p>Meetly offers adults one-to-one text and video conversations, with Google sign-in required before matching. Sign-in does not independently verify age. Availability affects matching, and no particular partner or interest is guaranteed. Keep personal details private and use Leave, Block or Report when appropriate. Read the <a href=\"/safety\">Safety Center</a> and <a href=\"/privacy\">privacy notice</a> before choosing how to chat.</p>",
+    "faqs": [
+      {
+        "question": "Is someone trustworthy because they share my hobbies?",
+        "answer": "No. Shared interests and a convincing conversation do not verify identity or make financial requests safe."
+      },
+      {
+        "question": "Should I send a one-time code to someone claiming to help me?",
+        "answer": "No. Keep authentication and recovery codes private, and contact the service through an independently verified support channel."
+      }
+    ],
+    "relatedSlugs": [
+      "how-to-make-friends-online-as-an-adult",
+      "how-to-start-a-conversation-with-someone-new",
+      "how-to-chat-safely-with-strangers-online"
+    ],
+    "isPublished": true
   }
 ]
